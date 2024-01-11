@@ -80,7 +80,22 @@ router.post("/api/register", (req, res) => {
     );
   })
 // You can define other routes here using router
+app.get("/api/district", (req, res) => {
+  // Retrieve only active (not soft-deleted) districts from the 'districts' table
+  const getAllDistrictsQuery =
+    "SELECT * FROM district WHERE is_deleted = false";
 
+  req.mysql.query(getAllDistrictsQuery, (error, results) => {
+    if (error) {
+      console.error("Error retrieving districts:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal Server Error" });
+    }
+
+    res.json(results);
+  });
+});
 // Use the router for the '/.netlify/functions/api' path
 app.use('/.netlify/functions/api', router);
 
