@@ -9,9 +9,22 @@ module.exports = {
         exclude: /node_modules/,
         use: {
           loader: "babel-loader",
+          options: {
+            presets: ['@babel/preset-env'],
+          },
         },
       },
-      // Add other loaders as needed
+      {
+        test: /\.m?js$/,
+        include: /node_modules\/(mysql2|lru-cache)/,
+        use: {
+          loader: "raw-loader",
+        },
+      },
+      {
+        test:/\.css$/,
+        use:['css-loader']
+      }
     ],
   },
 };

@@ -1,7 +1,7 @@
 const express = require('express');
 const serverless = require('serverless-http');
 const bodyParser = require('body-parser');
-const mysql = require('mysql2');
+const mysql = require('mysql');
 const cors = require('cors');
 const crypto = require('crypto');
 
@@ -38,6 +38,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(bodyParser.json({ limit: '5mb' }));
+app.use(express.json());
 
 // Define your API routes using the router
 router.get('/', (req, res) => {
