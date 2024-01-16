@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { District, Taluka } from 'src/app/common/interfaces/commonInterfaces';
 import { DevelopmentService } from 'src/app/common/services/development.service';
 import { DistrictService } from 'src/app/common/services/district.service';
@@ -12,7 +13,7 @@ declare const bootstrap: any;
   styleUrls: ['./taluka.component.scss']
 })
 export class TalukaComponent implements OnInit, AfterViewInit {
-
+  paramDist: any;
   talukas: Taluka[] = [];
   districts: District[] = [];
   selectedDistrict!: District | null | any;
@@ -45,7 +46,9 @@ export class TalukaComponent implements OnInit, AfterViewInit {
     private fb: FormBuilder,
     private DS: DevelopmentService,
     private el: ElementRef,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     const newForm = this.fb.group({
       'name': ['', [Validators.required]],
@@ -65,6 +68,12 @@ export class TalukaComponent implements OnInit, AfterViewInit {
     this.currentForm = newForm;
     this.filterTaluka = this.fb.group({
       district: ['', Validators.required]
+    });
+    this.route.queryParams.subscribe((params) => {
+      const districtParam = params['district'];
+      if (districtParam) {
+        this.paramDist = districtParam;
+      }
     });
   }
   ngAfterViewInit() {
@@ -155,10 +164,15 @@ export class TalukaComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.loadDistrict();
     this.filterTaluka.get('district')?.valueChanges.subscribe((value) => {
-      this.districtService.getDistrictById(value).subscribe((value) => {
-        if (value) {
+      this.districtService.getDistrictById(value).subscribe((data) => {
+        if (data) {
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { district: value },
+            queryParamsHandling: 'merge', // preserve existing query parameters
+          });
           this.loadTaluka();
-          this.selectedDistrict = value;
+          this.selectedDistrict = data;
           this.loadDeletedTalukaLength();
         }
       });
@@ -170,8 +184,8 @@ export class TalukaComponent implements OnInit, AfterViewInit {
       this.districts = data;
       if (data.length) {
         data.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        this.selectedDistrict = data[0];
-        this.filterTaluka.get('district')?.setValue(this.selectedDistrict?.id);
+        if (!this.paramDist) this.selectedDistrict = data[0];
+        this.filterTaluka.get('district')?.setValue(this.paramDist || this.selectedDistrict?.id);
       }
     });
   }

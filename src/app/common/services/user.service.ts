@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { User } from '../interfaces/commonInterfaces';
+import { Router } from '@angular/router';
 
 
 
@@ -14,7 +15,7 @@ export class UserService {
   private userSubject: BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
   private apiUrl = environment.MasterApi + '/auth';
   private token: string | null = localStorage.getItem('token'); // Retrieve token from local storage
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient,private router: Router) {
     // Initialize the user subject based on stored user details
     const storedUser = localStorage.getItem('user');
     
@@ -39,6 +40,11 @@ export class UserService {
     this.userSubject.next(user);
     // Optionally, store user details in local storage
     localStorage.setItem('user', JSON.stringify(user));
+    if (!user.image) {
+      setTimeout(() => {
+        this.router.navigate(['/user-profile/view']);
+      }, 1500);
+    }
   }
 
   clearUser(): void {

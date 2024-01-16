@@ -68,9 +68,6 @@ export class HeaderComponent {
       icon: 'fa-database',
       link: '/view',
       subItems: [{
-        label: 'State',
-        link: '/view/state',
-      }, {
         label: 'Districts',
         link: '/view/district',
       }, {

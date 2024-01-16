@@ -103,7 +103,7 @@ export class UserProfileComponent implements OnInit, AfterViewInit {
           scalable: true,
           viewMode: 3, // Ensure the crop box is always within the container
           crop: (event) => {
-            this.handleCropEvent(event)
+            
           },
           autoCropArea: 1, // Ensure the initial crop area covers the entire image
           dragMode: 'move', // Allow dragging to move the image within the container
@@ -118,13 +118,12 @@ export class UserProfileComponent implements OnInit, AfterViewInit {
         // Set image source for Cropper
         this.cropper.replace(imageSrc);
       };
-
       reader.readAsDataURL(file);
     } else {
       this.imageSelect.show();
     }
   }
-  handleCropEvent(event: Cropper.CropEvent): void {
+  handleCropEvent(): void {
     if (this.cropper) {
       const croppedCanvas = this.cropper.getCroppedCanvas();
       const resizedCanvas = document.createElement('canvas');
@@ -137,6 +136,7 @@ export class UserProfileComponent implements OnInit, AfterViewInit {
     }
   }
   saveCroppedImage(): void {
+    this.handleCropEvent();
     if (this.profilePictureForm.valid) {
       if (this.user) {
         let formValue = this.profilePictureForm.value;

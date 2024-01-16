@@ -1,7 +1,7 @@
 <div class="h-100 overflow-only-y d-flex flex-column">
     <div class="container pt-3">
         <form action="" [formGroup]="filterTaluka" class="row g-2 align-items-center">
-            <div class="col-4">
+            <div class="col-lg-4 col-6">
                 <div class="form-group row g-2 align-items-center" *ngIf="filterTaluka.get('district')">
                     <div class="col-4 text-end">
                         <label for="district" class="form-label mb-0">District</label>
@@ -26,10 +26,10 @@
     <div class="flex-grow-1 p-3 m-3 bg-white">
         <div class="h-100 container position-relative overflow-y-auto p-0">
             <div class="position-absolute h-100 w-100 table-responsive">
-                <table class="table w-100 m-0 max-h-100-p max-w-100-p bg-white">
+                <table class="table w-100 m-0 max-h-100-p max-w-100-p bg-white text-nowrap">
                     <thead class="sticky-top bg-light">
                         <tr>
-                            <th>SR No</th>
+                            <th>No.</th>
                             <th>Code</th>
                             <th>Name</th>
                             <th>Gujarati Name</th>
