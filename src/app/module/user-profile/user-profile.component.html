@@ -26,9 +26,16 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 offset-md-3">
-                                <h5 class="card-title">{{ user.username }}</h5>
+                                <h5 class="card-title">{{ user.firstName +" "+ user.lastName }} <small
+                                        class="d-block fw-normal">{{ user.username }}</small></h5>
+                                <p class="card-text">Mobile: {{ user.mobile }}</p>
                                 <p class="card-text">Email: {{ user.email }}</p>
                                 <p class="card-text">Roles: {{ user.roles }}</p>
+                                <ng-container *ngIf="village">
+                                    <p class="card-text">Village: {{ village.name +' - '+ village.gu_name }}</p>
+                                    <p class="card-text">Taluka: {{ village.taluka_name +' - '+ village.taluka_gu_name  }}</p>
+                                    <p class="card-text">District: {{ village.district_name +' - '+ village.district_gu_name  }}</p>
+                                </ng-container>
                                 <input #imageInput type="file" (change)="handleImageInputChange($event)"
                                     style="display: none">
                             </div>

@@ -12,7 +12,7 @@ import { User } from '../interfaces/commonInterfaces';
 })
 export class UserService {
   private userSubject: BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
-  private apiUrl = environment.MasterApi + 'api';
+  private apiUrl = environment.MasterApi + '/auth';
   private token: string | null = localStorage.getItem('token'); // Retrieve token from local storage
   constructor(private http: HttpClient) {
     // Initialize the user subject based on stored user details
@@ -50,6 +50,6 @@ export class UserService {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.token}`,
     });
-    return this.http.put(`${this.apiUrl}/updateUser/${user}`, updatedData, { headers });
+    return this.http.post(`${this.apiUrl}/updateUser/${user}`, updatedData, { headers });
   }
 }

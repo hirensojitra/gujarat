@@ -6,7 +6,6 @@
     </div>
     <div class="card-body flex-grow-1 position-relative p-0">        
         <div class="h-100 w-100 p-3 position-absolute start-0 top-0 overflow-auto">
-            <img [src]="validateImage(user.image)" alt="" [ngClass]="{'img-thumbnail rounded-circle':user.image}">
             <form [formGroup]="userForm" class="row g-3" (ngSubmit)="false;">
                 <div class="col-lg-3 col-md-4 col-sm-6" *ngIf="userForm.get('firstName') !== null;">
                     <div class="form-group mt-1">
@@ -33,9 +32,9 @@
                     </div>
                 </div>
                 <div class="col-6 col-lg-3">
-                    <div class="form-group mt-1" *ngIf="userForm.get('district')">
-                        <label for="district" class="form-label">District</label>
-                        <select class="form-select" id="district" formControlName="district" selectDropdown
+                    <div class="form-group mt-1" *ngIf="userForm.get('district_id')">
+                        <label for="district_id" class="form-label">District</label>
+                        <select class="form-select" id="district_id" formControlName="district_id" selectDropdown
                             [options]="districts">
                             <option value="" disabled selected>Select a district</option>
                             <option *ngFor="let d of districts" [value]="d.id">{{ d.name }}</option>
@@ -43,9 +42,9 @@
                     </div>
                 </div>
                 <div class="col-6 col-lg-3">
-                    <div class="form-group mt-1" *ngIf="userForm.get('taluka')">
-                        <label for="taluka" class="form-label">Taluka</label>
-                        <select class="form-select" id="taluka" formControlName="taluka" selectDropdown
+                    <div class="form-group mt-1" *ngIf="userForm.get('taluka_id')">
+                        <label for="taluka_id" class="form-label">Taluka</label>
+                        <select class="form-select" id="taluka_id" formControlName="taluka_id" selectDropdown
                             [options]="talukas">
                             <option value="" disabled selected>Select a Taluka</option>
                             <option *ngFor="let t of talukas" [value]="t.id">{{ t.name }}</option>
@@ -53,9 +52,9 @@
                     </div>
                 </div>
                 <div class="col-6 col-lg-3">
-                    <div class="form-group mt-1" *ngIf="userForm.get('village')">
-                        <label for="village" class="form-label">Taluka</label>
-                        <select class="form-select" id="village" formControlName="village" selectDropdown
+                    <div class="form-group mt-1" *ngIf="userForm.get('village_id')">
+                        <label for="village_id" class="form-label">Taluka</label>
+                        <select class="form-select" id="village_id" formControlName="village_id" selectDropdown
                             [options]="villages">
                             <option value="" disabled selected>Select a Taluka</option>
                             <option *ngFor="let v of villages" [value]="v.id">{{ v.name }}</option>

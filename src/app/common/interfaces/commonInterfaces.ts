@@ -6,9 +6,9 @@ export interface User {
     firstName: string;
     lastName: string;
     mobile: string;
-    district: string,
-    taluka: string,
-    village: string,
+    district_id: string,
+    taluka_id: string,
+    village_id: string,
     [key: string]: any
 }
 
@@ -30,9 +30,11 @@ export interface Village {
     name: string,
     gu_name?: string,
     district: string,
-    'district-name': string,
+    district_name: string,
+    district_gu_name: string,
     taluka: string,
-    'taluka-name': string,
+    taluka_name: string,
+    taluka_gu_name: string,
     hasMember?: boolean
     [key: string]: any,
     is_deleted: boolean

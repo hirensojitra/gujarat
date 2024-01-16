@@ -3,8 +3,9 @@ import { UserService } from 'src/app/common/services/user.service';
 import Cropper from 'cropperjs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DevelopmentService } from 'src/app/common/services/development.service';
+import { VillageService } from 'src/app/common/services/village.service';
 import { Subscription } from 'rxjs';
-import { User } from 'src/app/common/interfaces/commonInterfaces';
+import { User, Village } from 'src/app/common/interfaces/commonInterfaces';
 declare const bootstrap: any;
 
 
@@ -27,7 +28,7 @@ export class UserProfileComponent implements OnInit {
     private fb: FormBuilder,
     private US: UserService,
     private DS: DevelopmentService,
-
+    private villageService: VillageService
   ) {
     this.profilePictureForm = this.fb.group({
       username: ['', Validators.required],
@@ -37,7 +38,7 @@ export class UserProfileComponent implements OnInit {
       if (user) {
         this.user = user;
         this.profilePictureForm.get('username')?.setValue(user.username);
-        console.log(this.user)
+        this.getVillage(user.village_id)
       }
     });
   }
@@ -167,5 +168,19 @@ export class UserProfileComponent implements OnInit {
         }
       );
     }
+  }
+  village!:Village;
+  getVillage(id:any){
+    this.villageService.getVillageById(id).subscribe(
+      (data) => {
+        const village = data.data;
+        if (village) {
+          this.village = village;
+        }
+      },
+      (error) => {
+
+      }
+    );
   }
 }

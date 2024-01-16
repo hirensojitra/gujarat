@@ -42,9 +42,9 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       mobile: ['', Validators.required],
-      district: [null, Validators.required],
-      taluka: [null, Validators.required],
-      village: [null, Validators.required],
+      district_id: [null, Validators.required],
+      taluka_id: [null, Validators.required],
+      village_id: [null, Validators.required],
       image: [null]
     });
 
@@ -55,9 +55,9 @@ export class EditProfileComponent implements OnInit, OnDestroy {
           firstName: user.firstName || '',
           lastName: user.lastName || '',
           mobile: user.mobile || '',
-          district: user.district || '',
-          taluka: user.taluka || '',
-          village: user.village || '',
+          district_id: user.district_id || '',
+          taluka_id: user.taluka_id || '',
+          village_id: user.village_id || '',
           image: user.image
         };
         this.userForm.setValue(filteredValue);
@@ -67,26 +67,26 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.userForm.get('district')?.valueChanges.pipe(
+    this.userForm.get('district_id')?.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((districtId) => {
-      this.userForm.get('taluka')?.markAsUntouched;
-      this.userForm.get('village')?.markAsUntouched;
+      this.userForm.get('taluka_id')?.markAsUntouched;
+      this.userForm.get('village_id')?.markAsUntouched;
       this.selectedDistrict = this.districts.find(district => district.id === districtId);
       this.talukas = [];
       this.villages = [];
       this.loadTalukas();
-      this.userForm.get('taluka')?.setValue(null);
+      this.userForm.get('taluka_id')?.setValue(null);
     });
 
-    this.userForm.get('taluka')?.valueChanges.pipe(
+    this.userForm.get('taluka_id')?.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((talukaId) => {
-      this.userForm.get('village')?.markAsUntouched;
+      this.userForm.get('village_id')?.markAsUntouched;
       this.selectedTaluka = this.talukas.find(taluka => taluka.id === talukaId);
       this.villages = [];
       this.loadVillages();
-      this.userForm.get('village')?.setValue(null);
+      this.userForm.get('village_id')?.setValue(null);
     });
   }
 
@@ -96,8 +96,8 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     ).subscribe((districts: District[]) => {
       this.districts = districts;
       if (districts.length) {
-        this.selectedDistrict = districts.find(district => district.id === this.user?.district);
-        this.userForm.get('district')?.setValue(this.selectedDistrict?.id || null);
+        this.selectedDistrict = districts.find(district => district.id === this.user?.district_id);
+        this.userForm.get('district_id')?.setValue(this.selectedDistrict?.id || null);
       }
     });
 
@@ -105,31 +105,31 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   }
 
   loadTalukas(): void {
-    const districtId = this.userForm.get('district')?.value;
+    const districtId = this.userForm.get('district_id')?.value;
     if (districtId) {
       this.talukaService.getTalukaByDistrict(districtId).pipe(
         takeUntil(this.destroy$)
       ).subscribe((talukas: Taluka[]) => {
         this.talukas = talukas;
         if (talukas.length) {
-          this.selectedTaluka = talukas.find(taluka => taluka.id === this.user?.taluka);
-          this.userForm.get('taluka')?.setValue(this.selectedTaluka?.id || null);
+          this.selectedTaluka = talukas.find(taluka => taluka.id === this.user?.taluka_id);
+          this.userForm.get('taluka_id')?.setValue(this.selectedTaluka?.id || null);
         }
       });
     }
   }
 
   loadVillages(): void {
-    const talukaId = this.userForm.get('taluka')?.value;
-    const districtId = this.userForm.get('district')?.value;
+    const talukaId = this.userForm.get('taluka_id')?.value;
+    const districtId = this.userForm.get('district_id')?.value;
     if (talukaId && districtId) {
       this.villageService.getVillageByTaluka(talukaId).pipe(
         takeUntil(this.destroy$)
       ).subscribe((villages: Village[]) => {
         this.villages = villages;
         if (villages.length) {
-          this.selectedVillage = villages.find(village => village.id === this.user?.village);
-          this.userForm.get('village')?.setValue(this.selectedVillage?.id || null);
+          this.selectedVillage = villages.find(village => village.id === this.user?.village_id);
+          this.userForm.get('village_id')?.setValue(this.selectedVillage?.id || null);
         }
       });
     }
