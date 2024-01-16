@@ -84,6 +84,10 @@ export class HeaderComponent {
       label: 'User Profile',
       icon: 'fa-user',
       link: '/user-profile'
+    }, {
+      label: 'Images',
+      icon: 'fa-image',
+      link: '/img'
     }
   ];
   user!: User;

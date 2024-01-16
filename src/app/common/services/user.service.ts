@@ -17,6 +17,7 @@ export class UserService {
   constructor(private http: HttpClient) {
     // Initialize the user subject based on stored user details
     const storedUser = localStorage.getItem('user');
+    
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
