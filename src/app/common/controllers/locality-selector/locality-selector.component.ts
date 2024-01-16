@@ -65,7 +65,7 @@ export class LocalitySelectorComponent implements OnInit {
   loadVillages(): void {
     const talukaId = this.parentForm.get('locality.taluka')?.value;
     const districtId = this.parentForm.get('locality.district')?.value;
-    this.villageService.getVillageByTaluka(districtId,talukaId).subscribe((data) => {
+    this.villageService.getVillageByTaluka(talukaId).subscribe((data) => {
       this.villages = data;
       // Additional logic if needed
     });

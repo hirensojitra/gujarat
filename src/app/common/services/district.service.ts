@@ -10,7 +10,7 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root',
 })
 export class DistrictService {
-  private apiUrl = environment.MasterApi + 'api/';
+  private apiUrl = environment.MasterApi + '/district';
   constructor(
     private http: HttpClient
   ) {
@@ -22,25 +22,25 @@ export class DistrictService {
   /***************** District *******************/
   /**********************************************/
   getDistrict(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}district/`);
+    return this.http.get<any[]>(`${this.apiUrl}/`);
   }
   getDistrictById(id:string): Observable<District> {
-    return this.http.get<District>(`${this.apiUrl}district/${id}`);
+    return this.http.get<District>(`${this.apiUrl}/${id}`);
   }
   
   deleteDistrict(id: string): Observable<any> {
-    const url = `${this.apiUrl}district/${id}`;
+    const url = `${this.apiUrl}/${id}`;
     return this.http.delete<any>(url);
   }
   addDistrict(districtData: { name: string, is_deleted?: boolean }): Observable<{ success: boolean, message?: string, id?: number }> {
-    return this.http.post<{ success: boolean, message?: string, id?: number }>(this.apiUrl+`district`, districtData);
+    return this.http.post<{ success: boolean, message?: string, id?: number }>(this.apiUrl, districtData);
   }
   updateDistrict(districtId: string, districtData: { name: string, is_deleted?: boolean }): Observable<{ success: boolean, message?: string }> {
-    const updateUrl = `${this.apiUrl}district/${districtId}`;
+    const updateUrl = `${this.apiUrl}/${districtId}`;
     return this.http.put<{ success: boolean, message?: string }>(updateUrl, districtData);
   }
   checkDistrictNameAvailability(name: string): Observable<{ isTaken: boolean }> {
-    return this.http.post<{ isTaken: boolean }>(`${this.apiUrl}district-name/`, { name });
+    return this.http.post<{ isTaken: boolean }>(`${this.apiUrl}/district-name`, { name });
   }
   checkDistrictNameAvailabilityValidator(): AsyncValidatorFn {
     return (control: AbstractControl): Observable<ValidationErrors | null> => {
@@ -52,7 +52,7 @@ export class DistrictService {
     };
   }
   checkDistrictIdAvailability(id: string): Observable<{ isTaken: boolean }> {
-    return this.http.post<{ isTaken: boolean }>(`${this.apiUrl}district-id/`, { id });
+    return this.http.post<{ isTaken: boolean }>(`${this.apiUrl}/district-id/`, { id });
   }
   checkDistrictIdAvailabilityValidator(): AsyncValidatorFn {
     return (control: AbstractControl): Observable<ValidationErrors | null> => {
@@ -64,15 +64,15 @@ export class DistrictService {
     };
   }
   getDeletedDistrictLength(): Observable<{ deletedDistrictCount: number }> {
-    return this.http.get<{ deletedDistrictCount: number }>(`${this.apiUrl}deleted-districts/length`);
+    return this.http.get<{ deletedDistrictCount: number }>(`${this.apiUrl}/deleted/count`);
   }
 
   getDeletedDistrict(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}deleted-districts`);
+    return this.http.get<any[]>(`${this.apiUrl}/deleted`);
   }
 
   toggleDistrictActive(id: number): Observable<{ success: boolean, message: string }> {
-    return this.http.put<{ success: boolean, message: string }>(`${this.apiUrl}toggle-district/${id}`, {});
+    return this.http.delete<any>(`${this.apiUrl}/restore/${id}`);
   }
 
 }

@@ -29,7 +29,7 @@ export class LoginComponent implements OnInit {
   login() {
     const pass = this.loginForm.get('password')?.value;
     const md5 = new Md5();
-    this.loginForm.get('password')?.setValue(md5.appendStr(pass).end() as string);
+    this.loginForm.get('password')?.setValue(pass as string);
     if (this.loginForm.valid) {
       const { username, password } = this.loginForm.value;
       this.authService.login({ username, password }).subscribe(

@@ -9,7 +9,7 @@ import { Taluka } from '../interfaces/commonInterfaces';
   providedIn: 'root',
 })
 export class TalukaService {
-  private apiUrl = environment.MasterApi + `api/`;
+  private apiUrl = environment.MasterApi+'/taluka';
   constructor(
     private http: HttpClient
   ) {
@@ -21,27 +21,23 @@ export class TalukaService {
   /***************** Taluka *******************/
   /**********************************************/
   getTaluka(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}taluka/`);
+    return this.http.get<any[]>(`${this.apiUrl}`);
   }
   getTalukaByDistrict(districtId: string): Observable<any[]> {
-    const requestData = { districtId };
-    return this.http.post<any[]>(this.apiUrl + `district/taluka`, requestData);
-  }
-  getVillageByTaluka(district: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}taluka/` + district + `/village`);
+    return this.http.get<any[]>(this.apiUrl + `/district/${districtId}`);
   }
   getTalukaById(id: any): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}taluka/${id}`);
+    return this.http.get<any>(`${this.apiUrl}/${id}`);
   }
   deleteTaluka(id: string): Observable<any> {
-    const url = `${this.apiUrl}taluka/${id}`;
-    return this.http.delete<any>(url);
+    const url = `${this.apiUrl}/delete/${id}`;
+    return this.http.put<any>(url,{});
   }
   addTaluka(newTaluka: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}taluka/`, newTaluka);
+    return this.http.post<any>(`${this.apiUrl}`, newTaluka);
   }
   updateTaluka(talukaId: string | number, talukaData: any): Observable<any> {
-    const url = `${this.apiUrl}taluka/${talukaId}`;
+    const url = `${this.apiUrl}/${talukaId}`;
     return this.http.put(url, talukaData);
   }
   checkTalukaNameAvailability(name: string): Observable<{ isTaken: boolean }> {
@@ -69,14 +65,12 @@ export class TalukaService {
     };
   }
   getDeletedTalukaLength(districtId: number): Observable<any> {
-    const requestData = { districtId };
-    return this.http.post<any[]>(`${this.apiUrl}district/deleted-taluka/length`, requestData);
+    return this.http.get<any[]>(`${this.apiUrl}/deleted/${districtId}`);
   }
   getDeletedTaluka(districtId: number): Observable<any> {
-    const requestData = { districtId };
-    return this.http.post<any[]>(this.apiUrl + `district/deleted-taluka`, requestData);
+    return this.http.get<any[]>(this.apiUrl + `/deleted-by-district/${districtId}`);
   }
   toggleTalukaActive(talukaId: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}toggle-taluka/${talukaId}`, {});
+    return this.http.put(`${this.apiUrl}/restore/${talukaId}`, {});
   }
 }

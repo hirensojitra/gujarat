@@ -123,7 +123,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     const talukaId = this.userForm.get('taluka')?.value;
     const districtId = this.userForm.get('district')?.value;
     if (talukaId && districtId) {
-      this.villageService.getVillageByTaluka(districtId, talukaId).pipe(
+      this.villageService.getVillageByTaluka(talukaId).pipe(
         takeUntil(this.destroy$)
       ).subscribe((villages: Village[]) => {
         this.villages = villages;

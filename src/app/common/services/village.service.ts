@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable, of } from 'rxjs';
 import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
 import { Village } from '../interfaces/commonInterfaces';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class VillageService {
 
-  private apiUrl = 'http://localhost:1111/api/';
+  private apiUrl = environment.MasterApi+'/village';
   constructor(
     private http: HttpClient
   ) {
@@ -21,25 +22,24 @@ export class VillageService {
   /***************** Village *******************/
   /**********************************************/
   getVillage(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}village/`);
+    return this.http.get<any[]>(`${this.apiUrl}`);
   }
   getVillageById(village: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}village/${village}`);
+    return this.http.get<any>(`${this.apiUrl}/${village}`);
   }
-  getVillageByTaluka(districtId: number | string, talukaId: number | string): Observable<any[]> {
-    const body = { districtId, talukaId };
-    return this.http.post<any[]>(`${this.apiUrl}district/taluka/village`, body);
+  getVillageByTaluka(talukaId: string): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrl + `/taluka/${talukaId}`);
   }
 
   deleteVillage(id: string): Observable<any> {
-    const url = `${this.apiUrl}village/${id}`;
-    return this.http.delete<any>(url);
+    const url = `${this.apiUrl}/delete/${id}`;
+    return this.http.put<any>(url,{});
   }
   addVillage(villageData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}village/`, villageData);
+    return this.http.post(`${this.apiUrl}`, villageData);
   }
   updateVillageName(villageId: number | string, villageData: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}village/${villageId}`, villageData);
+    return this.http.put(`${this.apiUrl}/${villageId}`, villageData);
   }
   checkVillageNameAvailability(name: string): Observable<{ isTaken: boolean }> {
     return this.http.post<{ isTaken: boolean }>(`${this.apiUrl}village-name/`, { name });
@@ -66,15 +66,12 @@ export class VillageService {
     };
   }
   getDeletedVillageLength(districtId: string, talukaId: string): Observable<any> {
-    const requestData = { districtId, talukaId };
-    console.log(requestData)
-    return this.http.post<any[]>(`${this.apiUrl}district/taluka/deleted-village/length`, requestData);
+    return this.http.get<any[]>(`${this.apiUrl}/deleted/${talukaId}`);
   }
-  getDeletedVillage(districtId: any,talukaId:any): Observable<any> {
-    const requestData = { districtId,talukaId };
-    return this.http.post<any[]>(this.apiUrl + `district/taluka/deleted-village`, requestData);
+  getDeletedVillage(talukaId:any): Observable<any> {
+    return this.http.get<any[]>(this.apiUrl + `/deleted-by-taluka/${talukaId}`);
   }
   toggleVillageActive(villageId: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}toggle-village/${villageId}`, {});
+    return this.http.put(`${this.apiUrl}/restore/${villageId}`, {});
   }
 }

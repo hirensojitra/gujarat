@@ -40,6 +40,7 @@ export class ImgProcessComponent implements OnInit {
       if (villageId) {
         this.villageService.getVillageById(villageId).subscribe(
           (data) => {
+            console.log(data)
             this.village = data;
             if (this.village) {
               this.drawOnCanvas();

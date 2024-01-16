@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
   providedIn: 'root',
 })
 export class AuthenticationService {
-  private apiUrl = environment.MasterApi + 'api';
+  private apiUrl = environment.MasterApi + '/auth';
   constructor(
     private http: HttpClient,
     private userService: UserService,
@@ -67,9 +67,11 @@ export class AuthenticationService {
     };
   }
   login(credentials: { username: string; password: string; }): Observable<boolean> {
+    console.log(credentials)
     return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
       map((response) => {
-        if (response.success) {
+        console.log(response)
+        if (response.token) {
           const user = response.user; // Assuming the API returns user details
           const token = response.token; // Assuming the API returns user details
           this.userService.setUser(user);

@@ -128,12 +128,16 @@ export class VillageComponent implements OnInit, AfterViewInit {
     this.currentForm.get('id')?.setValue(d.id);
     this.currentForm.get('name')?.setValue(d.name);
     this.currentForm.get('gu_name')?.setValue(d.gu_name);
+    this.currentForm.get('is_deleted')?.setValue(d.is_deleted);
     this.villageModal.show();
     this.needUpdate = true;
   }
   addVillage() {
     this.currentForm = this.villageForm;
     this.currentForm.reset()
+    alert(this.selectedTaluka?.id)
+    this.currentForm.get('taluka_id')?.setValue(this.selectedTaluka?.id);
+    this.currentForm.get('is_deleted')?.setValue(false);
     this.needAdd = true;
     this.villageModalTitle = "Add Village";
     this.villageModal.show();
@@ -163,21 +167,18 @@ export class VillageComponent implements OnInit, AfterViewInit {
             this.selectedDistrict = value;
           }
         });
-        console.log(data)
         this.loadTaluka();
       }
     })
     this.filterVillage.get('taluka')?.valueChanges.subscribe((data) => {
+      console.log(data)
       if (data) {
         this.talukaService.getTalukaById(data).subscribe((value) => {
           if (value) {
-            this.selectedTaluka = value;
-          } else {
-            this.selectedTaluka = null;
+            this.selectedTaluka = value.data[0];
+            console.log(this.selectedTaluka)
           }
-          this.loadVillage();
         });
-      } else {
         this.loadVillage();
       }
     })
@@ -210,7 +211,7 @@ export class VillageComponent implements OnInit, AfterViewInit {
     const districtId = this.filterVillage.get('district')?.value;
     this.villages = [];
     if (districtId && talukaId) {
-      this.villageService.getVillageByTaluka(Number(districtId), Number(talukaId)).subscribe(
+      this.villageService.getVillageByTaluka(talukaId).subscribe(
         (response) => {
           response.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
           this.villages = response;
@@ -253,7 +254,7 @@ export class VillageComponent implements OnInit, AfterViewInit {
       }
     );
   }
-  loadDeletedVillageLength(show?:boolean): void {
+  loadDeletedVillageLength(show?: boolean): void {
     const districtId = this.selectedDistrict?.id;
     const talukaId = this.selectedTaluka?.id;
     if (districtId && talukaId) {
@@ -261,7 +262,7 @@ export class VillageComponent implements OnInit, AfterViewInit {
         (data) => {
           this.deletedVillageCount = data.deletedVillageCount;
           (!data.deletedVillagesLength) ? this.villageDeletedModal.hide() : false;
-          if(show){
+          if (show) {
             this.openDeletedModal();
           }
         },
@@ -272,9 +273,8 @@ export class VillageComponent implements OnInit, AfterViewInit {
     }
   }
   loadDeletedVillage(): void {
-    const districtId = this.selectedDistrict?.id;
     const talukaId = this.selectedTaluka?.id;
-    this.villageService.getDeletedVillage(districtId, talukaId).subscribe(
+    this.villageService.getDeletedVillage(talukaId).subscribe(
       (data) => {
         this.deletedVillageList = data;
       },

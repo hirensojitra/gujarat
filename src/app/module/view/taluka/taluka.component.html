@@ -68,6 +68,8 @@
             </div>
             <div class="modal-body h-100 overflow-auto py-0 my-3 d-flex flex-column">
                 <form [formGroup]="currentForm" class="mt-3">
+                    <input type="hidden" placeholder="" formControlName="is_deleted"
+                        *ngIf="currentForm.get('is_deleted') !== null;">
                     <div class="form-group row g-2 align-items-center mb-3"
                         *ngIf="currentForm.get('id') !== null && needUpdate">
                         <div class="col-4 text-end">

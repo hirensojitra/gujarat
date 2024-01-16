@@ -127,9 +127,12 @@ export class TalukaComponent implements OnInit, AfterViewInit {
     this.needUpdate = true;
   }
   addTaluka() {
+    console.log(this.talukaForm.controls)
     this.currentForm = this.talukaForm;
     this.currentForm.reset()
     this.needAdd = true;
+    this.currentForm.get('is_deleted')?.setValue(false);
+    this.currentForm.get('district_id')?.setValue(this.selectedDistrict.id);
     this.talukaModalTitle = "Add Taluka";
     this.talukaModal.show();
   }
@@ -140,7 +143,6 @@ export class TalukaComponent implements OnInit, AfterViewInit {
         this.updateTaluka(this.currentForm.value)
       }
       if (this.needAdd) {
-        this.newTaluka = this.currentForm.value
         this.addNewTaluka()
       }
       this.talukaModal.hide();
@@ -164,6 +166,7 @@ export class TalukaComponent implements OnInit, AfterViewInit {
   }
   loadDistrict(): void {
     this.districtService.getDistrict().subscribe((data) => {
+      console.log(data)
       this.districts = data;
       if (data.length) {
         data.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -179,7 +182,8 @@ export class TalukaComponent implements OnInit, AfterViewInit {
     });
   }
   addNewTaluka(): void {
-    this.talukaService.addTaluka(this.newTaluka).subscribe((data) => {
+    console.log(this.currentForm.value)
+    this.talukaService.addTaluka(this.currentForm.value).subscribe((data) => {
       console.log('Taluka added successfully:', data);
       this.loadTaluka();
     });
@@ -197,7 +201,7 @@ export class TalukaComponent implements OnInit, AfterViewInit {
       name: value.name,
       gu_name: value.gu_name,
       district_id: value.district_id,
-      is_deleted: value.is_deleted
+      is_deleted: value.is_deleted || false
     };
     console.log(talukaId, updatedData)
     this.talukaService.updateTaluka(talukaId, updatedData).subscribe(
@@ -216,7 +220,7 @@ export class TalukaComponent implements OnInit, AfterViewInit {
     if (districtId) {
       this.talukaService.getDeletedTalukaLength(districtId).subscribe(
         (data) => {
-          this.deletedTalukaCount = data.deletedTalukasLength;
+          this.deletedTalukaCount = data.deletedTalukaCount;
           (!data.deletedTalukasLength) ? this.talukaDeletedModal.hide() : false;
         },
         (error) => {
@@ -230,6 +234,7 @@ export class TalukaComponent implements OnInit, AfterViewInit {
     const districtId = this.selectedDistrict?.id; // Replace this with the actual way you get the district ID
     this.talukaService.getDeletedTaluka(districtId).subscribe(
       (data) => {
+        console.log(data)
         this.deletedTalukaList = data;
       },
       (error) => {

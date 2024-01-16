@@ -34,7 +34,8 @@ export interface Village {
     taluka: string,
     'taluka-name': string,
     hasMember?: boolean
-    [key: string]: any
+    [key: string]: any,
+    is_deleted: boolean
 }
 
 export interface selectKey {
