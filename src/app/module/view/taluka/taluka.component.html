@@ -1,0 +1,165 @@
+<div class="h-100 overflow-only-y d-flex flex-column">
+    <div class="container pt-3">
+        <form action="" [formGroup]="filterTaluka" class="row g-2 align-items-center">
+            <div class="col-4">
+                <div class="form-group row g-2 align-items-center" *ngIf="filterTaluka.get('district')">
+                    <div class="col-4 text-end">
+                        <label for="district" class="form-label mb-0">District</label>
+                    </div>
+                    <div class="col-8">
+                        <select class="form-select" id="district" formControlName="district" selectDropdown
+                            [options]="districts">
+                            <option value="" disabled selected>Select a district</option>
+                            <option *ngFor="let d of districts" [value]="d.id">{{ d.name }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto ms-auto">
+                <button class="btn btn-success me-2" (click)="addTaluka()"><i class="fa fa-plus me-2"></i>Add
+                    Taluka</button>
+                <button class="btn btn-primary" (click)="openDeletedModal()" *ngIf="deletedTalukaCount > 0"><i
+                        class="fa fa-refresh me-2"></i>Restore</button>
+            </div>
+        </form>
+    </div>
+    <div class="flex-grow-1 p-3 m-3 bg-white">
+        <div class="h-100 container position-relative overflow-y-auto p-0">
+            <div class="position-absolute h-100 w-100 table-responsive">
+                <table class="table w-100 m-0 max-h-100-p max-w-100-p bg-white">
+                    <thead class="sticky-top bg-light">
+                        <tr>
+                            <th>SR No</th>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Gujarati Name</th>
+                            <th [width]="100" class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let taluka of talukas; let i = index" class="align-middle">
+                            <td>{{ i + 1 }}</td>
+                            <td>{{ taluka.id }}</td>
+                            <td>{{ taluka.name }}</td>
+                            <td>{{ taluka.gu_name }}</td>
+                            <td class="text-center">
+                                <button class="btn btn-flat btn-md me-2" (click)="editTaluka(taluka)"><i
+                                        class="fa fa-edit"></i></button>
+                                <button class="btn btn-flat btn-md" (click)="deleteTaluka(taluka.id)"><i
+                                        class="fa fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="talukaModal" tabindex="-1" aria-labelledby="talukaModalLabel">
+    <div class="modal-dialog p-0 my-0 modal-dialog-centered position-relative h-100">
+        <div class="modal-content">
+            <div class="modal-header bg-success py-2">
+                <h5 class="modal-title text-white" id="talukaModalLabel">{{talukaModalTitle}}</h5>
+                <button type="button" class="btn" data-bs-dismiss="modal" aria-label="Close"
+                    (click)="talukaModal.hide()">
+                    <i class="fa fa-close btn-flat text-white"></i>
+                </button>
+            </div>
+            <div class="modal-body h-100 overflow-auto py-0 my-3 d-flex flex-column">
+                <form [formGroup]="currentForm" class="mt-3">
+                    <div class="form-group row g-2 align-items-center mb-3"
+                        *ngIf="currentForm.get('id') !== null && needUpdate">
+                        <div class="col-4 text-end">
+                            <label for="taluka-id" class="form-label mb-0">Taluka ID</label>
+                        </div>
+                        <div class="col-8">
+                            <div class="form-control bg-light">
+                                {{currentForm.get('id')?.value}}
+                                <input type="hidden" placeholder="" formControlName="id">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row g-2 align-items-center mb-3" *ngIf="currentForm.get('district_id')">
+                        <div class="col-4 text-end">
+                            <label for="district_id" class="form-label mb-0">District</label>
+                        </div>
+                        <div class="col-8">
+                            <select *ngIf="needUpdate" class="form-select" id="district_id"
+                                formControlName="district_id">
+                                <option value="" disabled selected>Select a district</option>
+                                <option *ngFor="let d of districts" [value]="d.id">{{ d.name }}</option>
+                            </select>
+                            <div class="div" *ngIf="!needUpdate">
+                                <div class="form-control">{{selectedDistrict?.name}}</div>
+                                <input type="hidden" placeholder="" formControlName="district_id">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row g-2 align-items-center mb-3" *ngIf="currentForm.get('name') !== null;">
+                        <div class="col-4 text-end">
+                            <label for="taluka-name" class="form-label mb-0">Taluka Name</label>
+                        </div>
+                        <div class="col-8">
+                            <input class="form-control" type="text" placeholder="" formControlName="name"
+                                id="taluka-name">
+                        </div>
+                    </div>
+                    <div class="form-group row g-2 align-items-center mb-3"
+                        *ngIf="currentForm.get('gu_name') !== null;">
+                        <div class="col-4 text-end">
+                            <label for="gu_name" class="form-label mb-0">Gujarati Name</label>
+                        </div>
+                        <div class="col-8">
+                            <input class="form-control" type="text" placeholder="" formControlName="gu_name"
+                                id="gu_name">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-md btn-success ms-2" (click)="saveTaluka()">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                    (click)="talukaModal.hide(false)">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="talukaDeletedModal" tabindex="-1" aria-labelledby="talukaDeletedModalLabel">
+    <div class="modal-dialog modal-xl p-0 my-0 modal-dialog-centered position-relative h-100">
+        <div class="modal-content">
+            <div class="modal-header bg-success py-2">
+                <h5 class="modal-title text-white" id="talukaDeletedModalLabel">{{talukaDeletedModalTitle}}</h5>
+                <button type="button" class="btn" data-bs-dismiss="modal" aria-label="Close"
+                    (click)="talukaDeletedModal.hide()">
+                    <i class="fa fa-close btn-flat text-white"></i>
+                </button>
+            </div>
+            <div class="modal-body h-100 overflow-auto py-0 my-3 d-flex flex-column">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">No.</th>
+                            <th scope="col">ID</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Gujarati Name</th>
+                            <th scope="col" class="w-80-px text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let taluka of deletedTalukaList; let i = index">
+                            <th scope="row">{{ i + 1 }}</th>
+                            <td>{{ taluka.id }}</td>
+                            <td>{{ taluka.name }}</td>
+                            <td>{{ taluka.gu_name }}</td>
+                            <td class="text-center">
+                                <button class="btn btn-success btn-sm"
+                                    (click)="toggleTalukaActive(taluka.id)">Restore</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

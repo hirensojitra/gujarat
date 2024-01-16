@@ -1,0 +1,28 @@
+<div class="form-container">
+  <h2 class="mt-auto">Login</h2>
+  <p>Don’t Have an Account? <a routerLink="/auth/register">Register</a></p>
+  <form captcha [character]="2" [captchaStyle]="'floating'" [formGroup]="loginForm" class="mb-auto"  (ngSubmit)="login()">
+    <div class="form-floating mb-4">
+      <input type="input" class="form-control" id="floatingInput" placeholder="name@example.com" formControlName="username"/>
+      <label for="floatingInput">Enter Login Id <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating mb-4">
+      <input type="password" class="form-control" id="floatingPassword" placeholder="Password" togglePassword formControlName="password"/>
+      <label for="floatingPassword">Enter Password <span class="text-danger">*</span></label>
+    </div>
+    <div class="row">
+      <div class="col-6">
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="rememberMe">
+          <label class="form-check-label" for="rememberMe">Remember Me</label>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="mb-3 text-end">
+          <a routerLink="/auth/forgot-password">Forgot Password?</a>
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-2 btn-lg w-100">Sign In</button>
+  </form>
+</div>

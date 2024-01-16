@@ -1,0 +1,60 @@
+<div class="header-container d-flex flex-md-row">
+  <abs [menuData]="menu" [menuHover]="true" [toggleOutside]="true" [logo]="'assets/images/svg/logo.svg'"
+    [compactLogo]="'assets/images/svg/compact-logo.svg'"></abs>
+  <button class="btn btn-primary menu-toggle m-0" (click)="toggleMenu()">
+    <span class="fa fa-bars" [style.transform]="(menuStatus | async) ? 'rotate(-45deg)' : 'none'"></span>
+  </button>
+  <!-- <div class="d-flex align-items-center">
+    <div class="d-flex d-md-none flex-grow-1 me-2">
+      <img src="assets/images/svg/logo-blue.svg" class="img-fluid d-none d-sm-block d-md-none" />
+      <img src="assets/images/svg/compact-logo-blue.svg" class="d-block d-sm-none" />
+    </div>
+    <div class="breadcrumbs ps-3 d-none d-md-flex">
+      <ng-container *ngFor="let crumb of breadcrumbs; let last = last">
+        <ng-container *ngIf="!last">
+          <a [routerLink]="crumb.link">{{ crumb.label }}<i class="fa fa-angle-right mx-2"></i></a>
+        </ng-container>
+        <ng-container *ngIf="last"><span>{{ crumb.label }}</span></ng-container>
+      </ng-container>
+    </div>
+  </div> -->
+  <h1 class="h4 my-0 mx-auto">Village Directory</h1>
+  <div class="d-flex align-items-center">
+    <!-- <div class="btn search me-4 p-0">
+      <i class="fa fa-search"></i>
+    </div> -->
+    <div class="btn notification me-4 p-0">
+      <i class="fa fa-bell-o"></i>
+      <span class="badge bg-danger">5</span>
+    </div>
+    <div class="dropdown border-start">
+      <a class="btn dropdown-toggle py-0" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown"
+        aria-expanded="false">
+        <img [src]="validateImage(user.image)" class="img-thumbnail rounded-circle p-0" alt="{{user.firstName}}">
+        <span class="d-none d-md-block">{{userFullName ||"User Name"}}</span>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end pb-0 pt-md-2" aria-labelledby="userDropdown">
+        <li class="d-block d-md-none">
+          <span class="dropdown-item fw-bold">
+            {{userFullName ||"User Name"}}
+            <small *ngIf="user.email" class="d-block fw-normal">{{user.email}}</small>
+          </span>
+        </li>
+        <li class="d-block d-md-none p-0">
+          <hr class="dropdown-divider mb-0" />
+        </li>
+        <li><a class="dropdown-item border-bottom" routerLink="/user-profile/view">Profile</a></li>
+        <li><a class="dropdown-item border-bottom btn" href="#">Settings</a></li>
+        <li><a class="dropdown-item border-bottom btn" (click)="logout();false" href="#">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="breadcrumbs ps-3 border-start d-flex py-2">
+  <ng-container *ngFor="let crumb of breadcrumbs; let last = last">
+    <ng-container *ngIf="!last">
+      <a [routerLink]="crumb.link"><span>{{ crumb.label }}</span><i class="fa fa-angle-right mx-2"></i></a>
+    </ng-container>
+    <ng-container *ngIf="last"><span>{{ crumb.label }}</span></ng-container>
+  </ng-container>
+</div>

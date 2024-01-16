@@ -1,0 +1,9 @@
+<div class="h-100-vh w-100-vw">
+    <router-outlet></router-outlet>
+</div>
+<div class="toast-container">
+    <app-toast></app-toast>
+</div>
+<div class="loader-container" [ngClass]="{ 'show': loaderService.showLoader$ | async}">
+    <app-loader [@fadeInOut]="loaderService.showLoader$ | async">{{loaderService.getTitle()}}</app-loader>
+</div>

@@ -1,0 +1,134 @@
+<div class="h-100 overflow-only-y d-flex flex-column">
+    <div class="container pt-3">
+        <div class="row g-2 align-items-center">
+            <div class="col-auto ms-auto">
+                <button class="btn btn-success me-2" (click)="addDistrict()"><i class="fa fa-plus me-2"></i> Add
+                    District</button>
+                <button class="btn btn-primary" (click)="openDeletedModal()" *ngIf="deletedDistrictCount > 0"><i
+                        class="fa fa-refresh me-2"></i>Restore</button>
+            </div>
+        </div>
+    </div>
+    <div class="flex-grow-1 p-3 m-3 bg-white">
+        <div class="h-100 container position-relative overflow-y-auto p-0">
+            <div class="position-absolute h-100 w-100 table-responsive">
+                <table class="table w-100 m-0 max-h-100-p max-w-100-p bg-white">
+                    <thead class="sticky-top bg-light">
+                        <tr>
+                            <th>SR No</th>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Gujarati Name</th>
+                            <th [width]="100" class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let district of districts; let i = index" class="align-middle">
+                            <td>{{ i + 1 }}</td>
+                            <td>{{ district.id }}</td>
+                            <td>{{ district.name }}</td>
+                            <td>{{ district.gu_name }}</td>
+                            <td class="text-center">
+                                <button class="btn btn-flat btn-md me-2" (click)="editDistrict(district)"><i
+                                        class="fa fa-edit"></i></button>
+                                <button class="btn btn-flat btn-md" (click)="deleteDistrict(district.id)"><i
+                                        class="fa fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="districtModal" tabindex="-1" aria-labelledby="districtModalLabel">
+    <div class="modal-dialog p-0 my-0 modal-dialog-centered position-relative h-100">
+        <div class="modal-content">
+            <div class="modal-header bg-success py-2">
+                <h5 class="modal-title text-white" id="districtModalLabel">{{districtModalTitle}}</h5>
+                <button type="button" class="btn" data-bs-dismiss="modal" aria-label="Close"
+                    (click)="districtModal.hide()">
+                    <i class="fa fa-close btn-flat text-white"></i>
+                </button>
+            </div>
+            <div class="modal-body h-100 overflow-auto py-0 my-3 d-flex flex-column">
+                <form [formGroup]="currentForm" class="mt-3">
+                    <input type="hidden" placeholder="" formControlName="is_deleted"
+                        *ngIf="currentForm.get('is_deleted') !== null;">
+                    <div class="form-group row align-items-center mb-3" *ngIf="currentForm.get('id') !== null;">
+                        <div class="col-4 text-end">
+                            <label for="district-id" class="form-label mb-0">District ID</label>
+                        </div>
+                        <div class="col-8">
+                            <div *ngIf="needUpdate" class="form-control bg-light">
+                                {{currentForm.get('id')?.value}}
+                                <input type="hidden" placeholder="" formControlName="id">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center mb-3" *ngIf="currentForm.get('name') !== null;">
+                        <div class="col-4 text-end">
+                            <label for="district-name" class="form-label mb-0">Name</label>
+                        </div>
+                        <div class="col-8">
+                            <input class="form-control" type="text" placeholder="" formControlName="name"
+                                id="district-name">
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center mb-3" *ngIf="currentForm.get('gu_name') !== null;">
+                        <div class="col-4 text-end">
+                            <label for="district-name" class="form-label mb-0">Gujarati Name</label>
+                        </div>
+                        <div class="col-8">
+                            <input class="form-control" type="text" placeholder="" formControlName="gu_name"
+                                id="district-name">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-md btn-success ms-2" (click)="saveDistrict()">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                    (click)="districtModal.hide(false)">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="districtDeletedModal" tabindex="-1" aria-labelledby="districtDeletedModalLabel">
+    <div class="modal-dialog modal-xl p-0 my-0 modal-dialog-centered position-relative h-100">
+        <div class="modal-content">
+            <div class="modal-header bg-success py-2">
+                <h5 class="modal-title text-white" id="districtDeletedModalLabel">{{districtDeletedModalTitle}}</h5>
+                <button type="button" class="btn" data-bs-dismiss="modal" aria-label="Close"
+                    (click)="districtDeletedModal.hide()">
+                    <i class="fa fa-close btn-flat text-white"></i>
+                </button>
+            </div>
+            <div class="modal-body h-100 overflow-auto py-0 my-3 d-flex flex-column">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">No.</th>
+                            <th scope="col">ID</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Gujarati Name</th>
+                            <th scope="col" class="w-80-px text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let district of deletedDistrictList; let i = index">
+                            <th scope="row">{{ i + 1 }}</th>
+                            <td>{{ district.id }}</td>
+                            <td>{{ district.name }}</td>
+                            <td>{{ district.gu_name }}</td>
+                            <td class="text-center">
+                                <button class="btn btn-success btn-sm"
+                                    (click)="toggleDistrictActive(district.id)">Restore</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

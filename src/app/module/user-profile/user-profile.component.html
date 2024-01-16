@@ -1,0 +1,68 @@
+<div class="h-100 d-flex flex-column">
+    <div class="p-3 d-flex flex-column flex-grow-1">
+        <div class="row flex-grow-1 g-3">
+            <div class="col-sm-4">
+                <div class="card h-100 w-100 rounded-0 p-3">
+                    <!-- <div class="card-header">User Info</div> -->
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-12">
+                            <div class="mx-auto max-w-140-px">
+                                <img [src]="validateImage(user.image)" class="w-100"
+                                    [ngClass]="{'img-thumbnail rounded-circle':user.image}" alt="{{user.firstName}}">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <button class="btn btn-primary btn-sm" [ngClass]="{'me-2':user.image}"
+                                    (click)="openImageCropperDialog()"><i class="fa me-2"
+                                        [ngClass]="{'fa-pencil':user.image,'fa-plus':!user.image}"></i>{{user.image?"Change&nbsp;Photo":"Add&nbsp;Photo"}}</button>
+                                <button class="btn btn-danger btn-sm" *ngIf="user.image" (click)="deleteImage()"><i
+                                        class="fa fa-trash"></i></button>
+                            </div>
+
+                        </div>
+                    </div>
+                    {{user.image}}
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 offset-md-3">
+                                <h5 class="card-title">{{ user.username }}</h5>
+                                <p class="card-text">Email: {{ user.email }}</p>
+                                <p class="card-text">Roles: {{ user.roles }}</p>
+                                <input #imageInput type="file" (change)="handleImageInputChange($event)"
+                                    style="display: none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-8">
+                <div class="card h-100 w-100 rounded-0 position-relative">
+                    <router-outlet></router-outlet>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cropperModal" tabindex="-1" aria-labelledby="cropperModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cropperModalLabel">Crop Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="cropper" alt="Crop" class="w-100">
+                <form [formGroup]="profilePictureForm">
+                    <input type="hidden" formControlName="username">
+                    <input type="hidden" formControlName="image">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" (click)="saveCroppedImage()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>

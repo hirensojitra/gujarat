@@ -1,0 +1,48 @@
+<div class="sidebar {{ menuDir }}" [ngClass]="{ 'menu-open': menuStatus }">
+  <div
+    class="head-block d-flex align-items-center"
+    [ngClass]="{
+      'justify-content-between': menuStatus,
+      'justify-content-start': !menuStatus && !toggleOutside,
+      'justify-content-center': toggleOutside
+    }"
+  >
+    <div class="flex-grow-1">
+      <img
+        alt="IION"
+        class="menu-img"
+        [src]="compactLogo"
+        [ngClass]="{ 'd-none': menuStatus }"
+      /><img
+        alt="IION"
+        class="menu-img"
+        [src]="logo"
+        [ngClass]="{ 'd-none': !menuStatus }"
+      />
+      <button
+        *ngIf="!toggleOutside"
+        (click)="bootstrapAngularSidebarService.toggleMenu()"
+        class="btn-dark btn menu-toggle d-md-flex d-none"
+      >
+        <span
+          class="fa fa-bars"
+          [style.transform]="menuStatus ? 'rotate(-45deg)' : 'none'"
+        ></span>
+      </button>
+    </div>
+    <button
+      (click)="bootstrapAngularSidebarService.toggleMenu()"
+      class="btn btn-md btn-mobile ms-3 btn-outline-light"
+    >
+      <i class="fa fa-close"></i>
+    </button>
+  </div>
+  <div
+    sidebarMenu
+    [menuData]="menuData"
+    [(menuActive)]="menuStatus"
+    [menuHover]="menuHover"
+    class="sidebar-menu"
+    [ngClass]="{ 'menu-open': menuStatus }"
+  ></div>
+</div>

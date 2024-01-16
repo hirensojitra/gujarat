@@ -1,0 +1,25 @@
+<ng-container *ngIf="parentForm">
+    <div class="form-group" *ngIf="parentForm.get('district')">
+        <label for="district" class="form-label">District</label>
+        <select class="form-select" id="district" formControlName="district">
+            <option value="" disabled>Select a district</option>
+            <option *ngFor="let district of districts" [value]="district.id">{{ district.name }}</option>
+        </select>
+    </div>
+
+    <div class="form-group" *ngIf="parentForm.get('taluka')">
+        <label for="taluka" class="form-label">Taluka</label>
+        <select class="form-select" id="taluka" formControlName="taluka">
+            <option value="" disabled>Select a Taluka</option>
+            <option *ngFor="let taluka of talukas" [value]="taluka.id">{{ taluka.name }}</option>
+        </select>
+    </div>
+
+    <div class="form-group" *ngIf="parentForm.get('village')">
+        <label for="village" class="form-label">Select Village</label>
+        <select class="form-select" id="village" formControlName="village">
+            <option value="" disabled>Select a Village</option>
+            <option *ngFor="let village of villages" [value]="village.id">{{ village.name }}</option>
+        </select>
+    </div>
+</ng-container>

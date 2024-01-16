@@ -1,0 +1,66 @@
+<div class="form-container">
+  <h2 class="mt-auto">User Registration</h2>
+  <div class="row g-2">
+    <div class="col">
+      <p class="text-nowrap">
+        Already have an Account? <a [routerLink]="['/auth/login']">Login</a>
+      </p>
+    </div>
+    <div class="col text-end"><a href="#">Clear</a></div>
+  </div>
+  <form class="mb-auto" [formGroup]="registrationForm" (ngSubmit)="register()">
+    <div class="form-floating mb-4">
+      <input type="text" id="username" name="username" formControlName="username" class="form-control"
+        placeholder="Enter User Name" label="Username" />
+      <label for="username">Username</label>
+    </div>
+    <div class="form-floating mb-4">
+      <input type="email" id="email" name="email" formControlName="email" class="form-control" placeholder="Enter Email"
+        label="Email" />
+      <label for="email">Email <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating mb-4">
+      <input type="password" id="password" name="password" formControlName="password" class="form-control"
+        placeholder="Enter Password" togglePassword [label]="'Password'" />
+      <label for="password">Password <span class="text-danger">*</span></label>
+    </div>
+    <input type="hidden" formControlName="roles">
+    <input type="hidden" formControlName="emailVerified">
+    <button type="submit" class="btn btn-primary mt-2 btn-lg w-100 ms-auto">Submit</button>
+  </form>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-otp">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title small" id="exampleModalLabel">
+          Verify Email ID
+        </h5>
+      </div>
+      <div class="modal-body">
+        <h6 class="text-center mb-4">Verify Your Registration with OTP</h6>
+        <form>
+          <div class="mb-3">
+            <label>Enter Your OTP</label>
+            <input type="text" placeholder="Enter Your OTP" class="form-control" />
+            <div class="text-danger" style="display: none">
+              <small>OTP is not valid</small>
+            </div>
+          </div>
+        </form>
+        <div class="row">
+          <div class="col"><span class="time">2:00 Min</span></div>
+          <div class="col text-end"><a href="#" class="link">Resend OTP</a></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="d-flex justify-content-between w-100">
+          <button type="submit" class="btn btn-primary w-100 me-2">SUBMIT</button>
+          <button type="button" class="btn btn-secondary w-100 ms-2" data-bs-dismiss="modal">CANCEL
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

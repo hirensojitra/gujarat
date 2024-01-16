@@ -1,0 +1,148 @@
+/* For WebKit browsers (Chrome, Safari) */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    /* Color of the thumb */
+    border-radius: 8px;
+    /* Rounded corners */
+}
+
+::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+    /* Color of the track */
+    /* Rounded corners */
+}
+
+/* For Firefox */
+/* Note: Firefox supports scrollbar styling starting from Firefox 64 */
+
+
+/* Set rounded corners for the scrollbar thumb */
+body::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+}
+
+/* Set rounded corners for the scrollbar track */
+body::-webkit-scrollbar-track {
+    border-radius: 8px;
+}
+
+html {
+    font-size: 14px;
+}
+
+body {
+    font-family: 'Hind Vadodara', sans-serif;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) #f1f1f1;
+}
+
+::selection {
+    background-color: #408253;
+    /* Change this to the desired background color */
+    color: #FFF;
+    /* Change this to the desired text color */
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+@for $i from 5 through 100 {
+    .min-vh-#{$i} {
+        min-height: #{$i}vh !important;
+    }
+}
+
+@for $i from 1 through 500 {
+    .h-#{$i}-px {
+        height: #{$i}px !important;
+    }
+
+    .w-#{$i}-px {
+        width: #{$i}px !important;
+    }
+
+    .min-h-#{$i}-px {
+        min-height: #{$i}px !important;
+    }
+
+    .min-w-#{$i}-px {
+        min-width: #{$i}px !important;
+    }
+
+    .max-h-#{$i}-px {
+        max-height: #{$i}px !important;
+    }
+
+    .max-w-#{$i}-px {
+        max-width: #{$i}px !important;
+    }
+}
+
+@for $i from 1 through 100 {
+    .max-h-#{$i}-vh {
+        max-height: #{$i}vh !important;
+    }
+
+    .min-h-#{$i}-vh {
+        min-height: #{$i}vh !important;
+    }
+
+    .max-w-#{$i}-vw {
+        max-width: #{$i}vw !important;
+    }
+
+    .min-w-#{$i}-vw {
+        min-width: #{$i}vw !important;
+    }
+
+    .h-#{$i}-vh {
+        height: #{$i}vh !important;
+    }
+
+    .max-h-#{$i}-p {
+        max-height: calc(#{$i} * 1%) !important;
+    }
+
+    .min-h-#{$i}-p {
+        min-height: calc(#{$i} * 1%) !important;
+    }
+
+    .h-#{$i}-p {
+        height: calc(#{$i} * 1%) !important;
+    }
+
+    .w-#{$i}-p {
+        width: calc(#{$i} * 1%) !important;
+    }
+}
+.form-floating{
+    position: relative;
+    .error{
+        position: absolute;
+        top: 100%;
+    }
+}
+.sticky-top{
+    z-index: 1;
+}
+.cropper-container{
+    margin: 0 auto;
+}
+.form-label{
+    margin-bottom: 0.15rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
