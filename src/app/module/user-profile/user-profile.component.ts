@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { UserService } from 'src/app/common/services/user.service';
 import Cropper from 'cropperjs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -15,15 +15,17 @@ declare const bootstrap: any;
   styleUrls: ['./user-profile.component.scss']
 })
 
-export class UserProfileComponent implements OnInit {
+export class UserProfileComponent implements OnInit, AfterViewInit {
 
   user!: User | any;
 
   @ViewChild('imageInput') imageInput!: ElementRef;
+  @ViewChild('imageInputBtn') imageInputBtn!: ElementRef;
   cropper!: Cropper;
   cropperModal: any;
+  imageSelect: any;
   profilePictureForm: FormGroup<any>;
-  userSubscription: Subscription;
+  userSubscription!: Subscription;
   constructor(
     private fb: FormBuilder,
     private US: UserService,
@@ -34,13 +36,6 @@ export class UserProfileComponent implements OnInit {
       username: ['', Validators.required],
       image: ['']
     })
-    this.userSubscription = this.US.getUser().subscribe((user: User | null) => {
-      if (user) {
-        this.user = user;
-        this.profilePictureForm.get('username')?.setValue(user.username);
-        this.getVillage(user.village_id)
-      }
-    });
   }
 
   ngOnInit(): void {
@@ -55,17 +50,46 @@ export class UserProfileComponent implements OnInit {
       this.profilePictureForm.get('username')?.setValue(this.user.username)
       // this.profilePictureForm.get('image')?.setValue(this.user.image)
     });
+    this.imageSelect = new bootstrap.Modal(document.getElementById('imageSelect')!, { focus: false, keyboard: false, static: false });
+    this.imageSelect._element.addEventListener('hidden.bs.modal', () => {
+      const inputElement = this.imageInput.nativeElement as HTMLInputElement;
+      if (inputElement.files && inputElement.files.length > 0) {
+
+      } else {
+        // No file selected
+        this.imageSelect.show();
+      }
+      // this.profilePictureForm.reset();
+    });
+    this.imageSelect._element.addEventListener('show.bs.modal', () => {
+      this.profilePictureForm.get('username')?.setValue(this.user.username)
+      // this.profilePictureForm.get('image')?.setValue(this.user.image)
+    });
+    this.userSubscription = this.US.getUser().subscribe((user: User | null) => {
+      if (user) {
+        this.user = user;
+        this.profilePictureForm.get('username')?.setValue(user.username);
+        this.getVillage(user.village_id);
+        if (!this.user.image) { this.imageSelect.show(); }
+      }
+    });
+  }
+  ngAfterViewInit(): void {
+
   }
   openImageCropperDialog(): void {
     const inputElement = this.imageInput.nativeElement;
-    inputElement.click(); // Trigger click on the hidden file input
-    inputElement.value = null;
+    if (inputElement) {
+      inputElement.click(); // Trigger click on the hidden file input
+      inputElement.value = null;
+    }
   }
 
   handleImageInputChange(event: Event): void {
     const inputElement = event.target as HTMLInputElement;
     const file = inputElement.files?.[0];
     if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+      this.imageSelect.hide();
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageSrc = e.target?.result as string;
@@ -96,6 +120,8 @@ export class UserProfileComponent implements OnInit {
       };
 
       reader.readAsDataURL(file);
+    } else {
+      this.imageSelect.show();
     }
   }
   handleCropEvent(event: Cropper.CropEvent): void {
@@ -103,10 +129,10 @@ export class UserProfileComponent implements OnInit {
       const croppedCanvas = this.cropper.getCroppedCanvas();
       const resizedCanvas = document.createElement('canvas');
       const resizedContext = resizedCanvas.getContext('2d')!;
-      resizedCanvas.width = 20;
-      resizedCanvas.height = 20;
-      resizedContext.drawImage(croppedCanvas, 0, 0, 20, 20);
-      const resizedImageData = resizedCanvas.toDataURL('image/jpeg'); // Adjust format as needed
+      resizedCanvas.width = 200;
+      resizedCanvas.height = 200;
+      resizedContext.drawImage(croppedCanvas, 0, 0, 200, 200);
+      const resizedImageData = resizedCanvas.toDataURL('image/png'); // Adjust format as needed
       this.profilePictureForm.get('image')?.setValue(resizedImageData);
     }
   }
@@ -119,16 +145,19 @@ export class UserProfileComponent implements OnInit {
           return;
         }
         const username = this.user?.username || '';
-        this.US.updateUserData(username, formValue).subscribe(
-          (response: any) => {
-            this.US.setUser(response.user);
-            this.cropperModal.hide();
-          },
-          error => {
-            console.error('Error updating user:', error);
-            // Handle error, e.g., show an error message to the user
-          }
-        );
+        this.user.image = formValue.image;
+        this.cropperModal.hide();
+        this.US.setUser(this.user)
+        // this.US.updateUserData(username, formValue).subscribe(
+        //   (response: any) => {
+        //     this.US.setUser(response.user);
+        //     this.cropperModal.hide();
+        //   },
+        //   error => {
+        //     console.error('Error updating user:', error);
+        //     // Handle error, e.g., show an error message to the user
+        //   }
+        // );
       }
     }
   }
@@ -155,22 +184,25 @@ export class UserProfileComponent implements OnInit {
         return;
       }
       const username = this.user?.username || '';
-      this.US.updateUserData(username, formValue).subscribe(
-        (response: any) => {
-          console.log('User updated successfully:', response);
-          this.US.setUser(response.user);
-          this.cropperModal.hide();
-          this.profilePictureForm.reset();
-        },
-        error => {
-          console.error('Error updating user:', error);
-          // Handle error, e.g., show an error message to the user
-        }
-      );
+      this.user.image = null;
+      this.US.setUser(this.user);
+
+      // this.US.updateUserData(username, formValue).subscribe(
+      //   (response: any) => {
+      //     console.log('User updated successfully:', response);
+      //     this.US.setUser(response.user);
+      //     this.cropperModal.hide();
+      //     this.profilePictureForm.reset();
+      //   },
+      //   error => {
+      //     console.error('Error updating user:', error);
+      //     // Handle error, e.g., show an error message to the user
+      //   }
+      // );
     }
   }
-  village!:Village;
-  getVillage(id:any){
+  village!: Village;
+  getVillage(id: any) {
     this.villageService.getVillageById(id).subscribe(
       (data) => {
         const village = data.data;

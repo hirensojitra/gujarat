@@ -37,7 +37,6 @@ export class ImgProcessComponent implements OnInit, AfterViewInit {
     }, 1500);
   }
   ngOnInit(): void {
-
     this.route.queryParams.subscribe((params: Params) => {
       const districtId = params['district'];
       const villageId = params['village'];
@@ -101,10 +100,10 @@ export class ImgProcessComponent implements OnInit, AfterViewInit {
           textY += 30; // Move to the next line
         }
 
-        if (this.village.name) {
+        if (this.village.gu_name) {
           ctx!.font = '20px "Hind Vadodara", sans-serif'; // Use the desired font size
-          ctx!.fillText(`${this.village.name}`, textX, textY);
-          textX += ctx!.measureText(`${this.village.name}`).width + 20; // Move to the next position
+          ctx!.fillText(`${this.village.gu_name}`, textX, textY);
+          textX += ctx!.measureText(`${this.village.gu_name}`).width + 15; // Move to the next position
         }
 
         if (this.village.taluka_name) {

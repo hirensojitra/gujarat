@@ -152,6 +152,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
         updateUser$.subscribe(
           (response: any) => {
             console.log('User updated successfully:', response);
+            response.user.image = this.user.image;
             this.userService.setUser(response.user);
             this.toastService.show(response.message, { class: 'bg-success' });
           },

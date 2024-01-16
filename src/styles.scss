@@ -127,6 +127,12 @@ input[type=number] {
     .w-#{$i}-p {
         width: calc(#{$i} * 1%) !important;
     }
+    .max-w-#{$i} {
+        max-width: calc(#{$i} * 1%) !important;
+    }
+    .max-h-#{$i} {
+        max-height: calc(#{$i} * 1%) !important;
+    }
 }
 .form-floating{
     position: relative;
