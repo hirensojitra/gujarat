@@ -85,6 +85,17 @@ export class HeaderComponent {
       label: 'Images',
       icon: 'fa-image',
       link: '/img'
+    }, {
+      label: 'Canvas',
+      icon: 'fa-image',
+      link: '/canvas',
+      subItems:[{
+        label:'Image List',
+        link:'/canvas/list'
+      },{
+        label:'Image Editor',
+        link:'/canvas/editor'
+      }]
     }
   ];
   user!: User;
