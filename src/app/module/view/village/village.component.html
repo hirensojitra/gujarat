@@ -47,7 +47,6 @@
                             <th>Code</th>
                             <th>Name</th>
                             <th>Gujarati Name</th>
-                            <th class="text-center">Members</th>
                             <th [width]="100" class="text-center">Action</th>
                         </tr>
                     </thead>
@@ -57,12 +56,6 @@
                             <td>{{ Village.id }}</td>
                             <td>{{ Village.name }}</td>
                             <td>{{ Village.gu_name }}</td>
-                            <td class="text-center"><button *ngIf="Village.hasMember; else notMemberIcon"
-                                    class="btn btn-primary btn-sm"><i class="fa fa-eye me-2"></i>View</button>
-                                <ng-template #notMemberIcon>
-                                    <i class="fa fa-eye-slash"></i>
-                                </ng-template>
-                            </td>
                             <td class="text-center">
                                 <button class="btn btn-flat btn-md me-2" (click)="editVillage(Village)"><i
                                         class="fa fa-edit"></i></button>
@@ -163,7 +156,8 @@
 </div>
 
 <div class="modal fade" id="villageDeletedModal" tabindex="-1" aria-labelledby="villageDeletedModalLabel">
-    <div class="modal-dialog modal-dialog-scrollable modal-xl modal-dialog-centered position-relative  modal-dialog-scrollable">
+    <div
+        class="modal-dialog modal-dialog-scrollable modal-xl modal-dialog-centered position-relative  modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-success py-2">
                 <h5 class="modal-title text-white" id="villageDeletedModalLabel">{{villageDeletedModalTitle}}</h5>

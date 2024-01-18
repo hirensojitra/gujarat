@@ -78,6 +78,10 @@ export class HeaderComponent {
         link: '/view/village',
       }]
     }, {
+      label: 'Canvas Generator',
+      icon: 'fa-image',
+      link: '/canvas-generator'
+    }, {
       label: 'User Profile',
       icon: 'fa-user',
       link: '/user-profile'

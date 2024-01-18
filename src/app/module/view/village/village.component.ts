@@ -86,6 +86,7 @@ export class VillageComponent implements OnInit, AfterViewInit {
     const showListener = () => {
       this.currentForm.get('district_id')?.setValue(this.selectedDistrict?.id)
       this.currentForm.get('taluka_id')?.setValue(this.selectedTaluka?.id)
+      this.currentForm.get('is_deleted')?.setValue(false)
     };
 
     const hiddenListener = () => {
@@ -128,7 +129,7 @@ export class VillageComponent implements OnInit, AfterViewInit {
     this.currentForm.get('id')?.setValue(d.id);
     this.currentForm.get('name')?.setValue(d.name);
     this.currentForm.get('gu_name')?.setValue(d.gu_name);
-    this.currentForm.get('is_deleted')?.setValue(d.is_deleted);
+    this.currentForm.get('is_deleted')?.setValue(false);
     this.villageModal.show();
     this.needUpdate = true;
   }

@@ -44,8 +44,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       mobile: ['', Validators.required],
       district_id: [null, Validators.required],
       taluka_id: [null, Validators.required],
-      village_id: [null, Validators.required],
-      image: [null]
+      village_id: [null, Validators.required]
     });
 
     this.userSubscription = this.userService.getUser().subscribe((user: User | null) => {
@@ -57,8 +56,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
           mobile: user.mobile || '',
           district_id: user.district_id || '',
           taluka_id: user.taluka_id || '',
-          village_id: user.village_id || '',
-          image: user.image
+          village_id: user.village_id || ''
         };
         this.userForm.setValue(filteredValue);
         this.loadDistricts();

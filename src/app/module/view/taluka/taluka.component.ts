@@ -71,12 +71,28 @@ export class TalukaComponent implements OnInit, AfterViewInit {
     });
     this.route.queryParams.subscribe((params) => {
       const districtParam = params['district'];
+      alert(districtParam)
       if (districtParam) {
         this.paramDist = districtParam;
       }
     });
+
+  }
+  ngOnInit(): void {
+
   }
   ngAfterViewInit() {
+    this.loadDistrict();
+    this.filterTaluka.get('district')?.valueChanges.subscribe((value): any => {
+      if (!value) { this.selectedDistrict = null; return false; }
+      this.districtService.getDistrictById(value).subscribe((data) => {
+        if (data) {
+          this.loadTaluka();
+          this.selectedDistrict = data;
+          this.loadDeletedTalukaLength();
+        }
+      });
+    });
     this.talukaModalElement = this.el.nativeElement.querySelector('#talukaModal');
     this.talukaModalOptions = {
       backdrop: true,
@@ -161,31 +177,14 @@ export class TalukaComponent implements OnInit, AfterViewInit {
       this.toastService.show(msg, { class: 'bg-danger' });
     }
   }
-  ngOnInit(): void {
-    this.loadDistrict();
-    this.filterTaluka.get('district')?.valueChanges.subscribe((value) => {
-      this.districtService.getDistrictById(value).subscribe((data) => {
-        if (data) {
-          this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: { district: value },
-            queryParamsHandling: 'merge', // preserve existing query parameters
-          });
-          this.loadTaluka();
-          this.selectedDistrict = data;
-          this.loadDeletedTalukaLength();
-        }
-      });
-    })
-  }
+
   loadDistrict(): void {
     this.districtService.getDistrict().subscribe((data) => {
-      console.log(data)
       this.districts = data;
       if (data.length) {
         data.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        if (!this.paramDist) this.selectedDistrict = data[0];
-        this.filterTaluka.get('district')?.setValue(this.paramDist || this.selectedDistrict?.id);
+        this.selectedDistrict = this.paramDist !== undefined ? data.find(district => district.id === this.paramDist) || data[0] : data[0];
+        this.filterTaluka.get('district')?.setValue(this.selectedDistrict?.id);
       }
     });
   }

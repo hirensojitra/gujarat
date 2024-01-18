@@ -20,7 +20,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
   ]
 })
 export class AppComponent implements OnInit{
-  title = 'dss-app';
+  title = 'Village Directory';
   breadcrumbs: { label: string, link: string }[] = [];
   constructor(private breadcrumbService: BreadcrumbService, private titleService: Title, public loaderService: LoaderService,
     private router: Router) {
