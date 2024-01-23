@@ -1,13 +1,15 @@
-import { DecimalDirective } from 'src/app/common/directives/decimal.directive';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-import { AccordionActiveDirective } from '../directives/accordion-active.directive';
 import { CaptchaDirective } from '../directives/captcha.directive';
-import { SelectDropdownDirective } from '../directives/select-dropdown.directive';
 import { TogglePasswordDirective } from '../directives/toggle-password.directive';
+import { AccordionActiveDirective } from '../directives/accordion-active.directive';
+import { SelectDropdownDirective } from '../directives/select-dropdown.directive';
 import { AsteriskDirective } from '../directives/asterisk.directive';
+import { DecimalDirective } from 'src/app/common/directives/decimal.directive';
 import { LocalitySelectorComponent } from '../controllers/locality-selector/locality-selector.component';
+import { DraggableDirective } from '../directives/draggable.directive';  // Add this line
+import { KeysPipe } from '../pipes/keys.pipe';
 
 @NgModule({
   imports: [
@@ -21,7 +23,9 @@ import { LocalitySelectorComponent } from '../controllers/locality-selector/loca
     SelectDropdownDirective,
     AsteriskDirective,
     DecimalDirective,
-    LocalitySelectorComponent
+    LocalitySelectorComponent,
+    DraggableDirective,
+    KeysPipe
   ],
   exports: [
     CaptchaDirective,
@@ -30,9 +34,10 @@ import { LocalitySelectorComponent } from '../controllers/locality-selector/loca
     SelectDropdownDirective,
     AsteriskDirective,
     DecimalDirective,
-    LocalitySelectorComponent
+    LocalitySelectorComponent,
+    DraggableDirective,
+    KeysPipe
   ],
-  providers: [
-  ]
+  providers: [KeysPipe]
 })
 export class SharedModule { }
