@@ -9,7 +9,7 @@ import { UserService } from 'src/app/common/services/user.service';
   styleUrls: ['./canvas-list.component.scss']
 })
 export class CanvasListComponent implements AfterViewInit {
-  @ViewChild('imageDraw') imageDraw!: ElementRef<SVGElement>;
+  @ViewChild('imageDraw') imageDraw!: ElementRef<SVGElement | HTMLElement>;
 
   viewBox = "0 0 1024 1024";
   svgWidth = 1024;
@@ -31,14 +31,34 @@ export class CanvasListComponent implements AfterViewInit {
       if (user) {
         this.user = user;
         this.elements = [
-          { type: 'text', x: 300, y: 300, text: 'John Doe' },
-          { type: 'avatar', x: 300, y: 300, r: 75, imageUrl: this.user.image || 'assets/images/jpeg/profile-1.jpeg' },
+          { type: 'text', x: 300, y: 30, text: 'John Doe' },
+          { type: 'avatar', x: 300, y: 300, r: 100, imageUrl: this.user.image || 'assets/images/jpeg/profile-1.jpeg' },
         ]
         this.drawCanvas();
       }
     });
   }
-  drawCanvas(): void {
+  async getImageDataUrl(imageUrl: string): Promise<string> {
+    try {
+      // Fetch the image
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+
+      // Convert the blob to a data URL
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error fetching or converting image:', error);
+      throw error;
+    }
+  }
+
+  async drawCanvas() {
+    this.backgroundUrl = await this.getImageDataUrl(this.backgroundUrl);
     const svg = this.imageDraw.nativeElement;
     // Set viewBox and dimensions
     this.renderer.setAttribute(svg, 'viewBox', this.viewBox);
@@ -56,20 +76,30 @@ export class CanvasListComponent implements AfterViewInit {
     this.elements.forEach((element: any) => {
       if (element.type === 'text') {
         const text = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
-        this.renderer.setAttribute(text, 'data-type', 'text'); // Ensure a unique data-type attribute
-        this.renderer.setAttribute(text, 'x', element.x.toString());
-        this.renderer.setAttribute(text, 'y', element.y.toString());
-        this.renderer.setAttribute(text, 'font-size', '20');
-        this.renderer.setStyle(text, '-webkit-user-select', 'none');
-        this.renderer.setAttribute(text, 'fill', '#FFFFFF');
-        this.renderer.setAttribute(text, 'text-anchor', 'start');
-        this.renderer.setAttribute(text, 'dominant-baseline', 'hanging');
+        const textAttributes = {
+          'data-type': 'text',
+          'x': element.x.toString(),
+          'y': element.y.toString(),
+          'font-size': '40',
+          'fill': '#FFFFFF',
+          'text-anchor': 'start',
+          'dominant-baseline': 'hanging',
+        };
+        const textStyles = {
+          '-webkit-user-select': 'none',
+          'font-family': "'Hind Vadodara', sans-serif",
+          'font-weight': '600'
+        };
+
+        Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(text, key, value));
+        Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(text, key, value));
+
         if (element.text) {
           this.renderer.appendChild(text, this.renderer.createText(element.text));
         }
-
         this.renderer.appendChild(svg, text);
-      } else if (element.type === 'avatar') {
+      }
+      else if (element.type === 'avatar') {
         // Create the circle
         const circle = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
         this.renderer.setAttribute(circle, 'data-type', 'avatar'); // Ensure a unique data-type attribute
@@ -95,7 +125,7 @@ export class CanvasListComponent implements AfterViewInit {
         this.renderer.setAttribute(image, 'y', '0');
         this.renderer.setAttribute(image, 'width', '100');
         this.renderer.setAttribute(image, 'height', '100');
-        this.renderer.setAttribute(image, 'href', this.user.image); // Replace with your image path
+        this.renderer.setAttribute(image, 'href', element.imageUrl); // Replace with your image path
 
         this.renderer.appendChild(imagePattern, image);
         this.renderer.appendChild(svg, imagePattern);
@@ -137,6 +167,7 @@ export class CanvasListComponent implements AfterViewInit {
         };
 
         const onMouseMove = (event: MouseEvent) => {
+          event.preventDefault();
           if (isDragging) {
             const svgPoint = this.getMousePosition(event, svgElement);
             const draggableElement = svgElement.querySelector(`[data-type="${element.type}"]`) as SVGGraphicsElement;
@@ -188,9 +219,14 @@ export class CanvasListComponent implements AfterViewInit {
           isDragging = false;
           this.renderer.setAttribute(draggableElement, 'cursor', 'grab');
         };
+
+
         this.renderer.listen(draggableElement, 'mousedown', onMouseDown);
+        this.renderer.listen(draggableElement, 'touchstart', onMouseDown);
         this.renderer.listen(svgElement, 'mousemove', onMouseMove);
+        this.renderer.listen(svgElement, 'touchmove', onMouseMove);
         this.renderer.listen(svgElement, 'mouseup', onMouseUp);
+        this.renderer.listen(svgElement, 'touchend', onMouseUp);
       }
     });
   }
@@ -198,11 +234,14 @@ export class CanvasListComponent implements AfterViewInit {
   downloadCanvas(): void {
     // Implement logic to download the SVG as an image or save the SVG content
   }
-  getMousePosition(evt: MouseEvent, svg: SVGSVGElement): { x: number, y: number } {
+  getMousePosition(evt: TouchEvent | MouseEvent, svg: SVGSVGElement): { x: number, y: number } {
+    evt.preventDefault();
+    const touchOrMouse = 'touches' in evt ? evt.touches[0] : evt;
     const CTM = svg.getScreenCTM();
+
     return {
-      x: (evt.x - CTM!.e) / CTM!.a,
-      y: (evt.y - CTM!.f) / CTM!.d
+      x: (touchOrMouse.clientX - CTM!.e) / CTM!.a,
+      y: (touchOrMouse.clientY - CTM!.f) / CTM!.d
     };
   }
   buildForm(selectedElement: any): void {
@@ -221,4 +260,83 @@ export class CanvasListComponent implements AfterViewInit {
     // Create the FormGroup using FormBuilder
     this.elementForm = this.fb.group(formGroupConfig);
   }
+  captureScreenshot(): void {
+    const svgElement = this.imageDraw.nativeElement as HTMLElement;
+
+    // Set the SVG element dimensions (assuming you want to set them to the viewport size)
+    svgElement.setAttribute('width', `${this.svgWidth}px`);
+    svgElement.setAttribute('height', `${this.svgHeight}px`);
+
+    // Create a canvas element with the same dimensions as the SVG viewport
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d') as CanvasRenderingContext2D;
+    canvas.width = this.svgWidth;
+    canvas.height = this.svgHeight;
+
+    // Draw the SVG content onto the canvas
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const image = new Image();
+    image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+
+    image.onload = () => {
+      context.drawImage(image, 0, 0);
+
+      // Convert the canvas content to a Blob with JPEG format
+      canvas.toBlob((blob) => {
+        if (blob) {
+          // Create a Blob URL
+          const blobUrl = URL.createObjectURL(blob);
+
+          // Create a link element for downloading the image
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          link.download = `screenshot_${timestamp}.jpg`;
+
+          // Simulate a click on the link to trigger the download
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Revoke the Blob URL to release resources
+          URL.revokeObjectURL(blobUrl);
+        }
+
+        // Remove the width and height attributes from the SVG element to restore original size
+        svgElement.removeAttribute('width');
+        svgElement.removeAttribute('height');
+      }, 'image/jpeg', 1); // Specify JPEG quality (0.0 to 1.0)
+    };
+  }
+
+
+  openImageInNewWindow(dataURL: string): void {
+    // Open a new window with a blank page
+    const newWindow = window.open('', '_blank');
+
+    if (newWindow) {
+      // Write an HTML document to the new window with an img element pointing to the data URL
+      newWindow.document.write('<html><head><title>Image Preview</title></head><body style="margin: 0; text-align: center;">');
+      newWindow.document.write('<img src="' + dataURL + '" style="max-width: 100%; max-height: 100vh;"/>');
+
+      // Add a download button
+      newWindow.document.write('<button onclick="downloadImage()">Download</button>');
+
+      // Add a script for downloading the image
+      newWindow.document.write('<script>');
+      newWindow.document.write('function downloadImage() {');
+      newWindow.document.write('  var link = document.createElement("a");');
+      newWindow.document.write('  link.href = "' + dataURL + '";');
+      newWindow.document.write('  link.download = "image.jpg";');
+      newWindow.document.write('  link.click();');
+      newWindow.document.write('}');
+      newWindow.document.write('</script>');
+
+      newWindow.document.write('</body></html>');
+      newWindow.document.close();
+    } else {
+      console.error('Failed to open a new window.');
+    }
+  }
+
 }
