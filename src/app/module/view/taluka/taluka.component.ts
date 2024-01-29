@@ -233,7 +233,7 @@ export class TalukaComponent implements OnInit, AfterViewInit {
     if (districtId) {
       this.talukaService.getDeletedTalukaLength(districtId).subscribe(
         (data) => {
-          this.deletedTalukaCount = data.deletedTalukaCount;
+          this.deletedTalukaCount = data.deletedtalukacount;
           (!data.deletedTalukasLength) ? this.talukaDeletedModal.hide() : false;
         },
         (error) => {

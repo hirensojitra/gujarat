@@ -92,9 +92,9 @@ export class DistrictComponent implements OnInit, AfterViewInit {
       keyboard: false
     };
     this.districtDeletedModal = new bootstrap.Modal(this.districtDeletedModalElement, this.districtModalOptions);
-    const districtDeletedShowListener = () => {};
-    const districtDeletedHiddenListener = () => {};
-    const districtDeletedHideListener = () => {};
+    const districtDeletedShowListener = () => { };
+    const districtDeletedHiddenListener = () => { };
+    const districtDeletedHideListener = () => { };
 
     this.districtDeletedModalElement.addEventListener('show.bs.modal', districtDeletedShowListener);
     this.districtDeletedModalElement.addEventListener('hidden.bs.modal', districtDeletedHiddenListener);
@@ -142,7 +142,17 @@ export class DistrictComponent implements OnInit, AfterViewInit {
   }
   loadDistrict(): void {
     this.districtService.getDistrict().subscribe((data) => {
-      this.districts = data;
+      this.districts = data.sort((a, b) => {
+        const nameA = a.name.toLowerCase();
+        const nameB = b.name.toLowerCase();
+        if (nameA < nameB) {
+          return -1; // Name A comes before name B
+        }
+        if (nameA > nameB) {
+          return 1; // Name A comes after name B
+        }
+        return 0; // Names are equal
+      });
     });
   }
   addNewDistrict(): void {
