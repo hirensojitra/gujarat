@@ -22,7 +22,7 @@ export class LoginComponent implements OnInit {
     private toast: ToastService
   ) {
     this.loginForm = this.formBuilder.group({
-      username: ['hiren', [Validators.required]],
+      username: ['', [Validators.required]],
       password: ['', [Validators.required]],
     });
   }
