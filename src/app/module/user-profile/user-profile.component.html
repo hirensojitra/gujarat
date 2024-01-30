@@ -8,7 +8,7 @@
                         <div class="col-md-12">
                             <div class="mx-auto max-w-140-px">
                                 <img [src]="validateImage(user.image)" class="w-100"
-                                    [ngClass]="{'img-thumbnail rounded-circle':user.image}" alt="{{user.firstName}}">
+                                    [ngClass]="{'img-thumbnail rounded-circle':user.image}" alt="{{user.firstname}}">
                             </div>
                         </div>
                         <div class="col-md-12">
@@ -25,7 +25,7 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 offset-md-3">
-                                <h5 class="card-title">{{ user.firstName +" "+ user.lastName }} <small
+                                <h5 class="card-title">{{ user.firstname +" "+ user.lastname }} <small
                                         class="d-block fw-normal">{{ user.username }}</small></h5>
                                 <p class="card-text">Mobile: {{ user.mobile }}</p>
                                 <p class="card-text">Email: {{ user.email }}</p>

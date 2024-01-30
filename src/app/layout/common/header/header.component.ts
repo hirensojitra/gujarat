@@ -140,9 +140,9 @@ export class HeaderComponent {
     return imageUrl || `https://dummyimage.com/300x300/F4F4F4/000000&text=${this.imageText()}`;
   }
   imageText(): string {
-    if (this.user && this.user.firstName && this.user.lastName) {
-      const firstCharFirstName = this.user.firstName.charAt(0);
-      const firstCharLastName = this.user.lastName.charAt(0);
+    if (this.user && this.user.firstname && this.user.lastname) {
+      const firstCharFirstName = this.user.firstname.charAt(0);
+      const firstCharLastName = this.user.lastname.charAt(0);
       return `${firstCharFirstName}${firstCharLastName}`;
     } else {
       return 'USER';
@@ -152,7 +152,7 @@ export class HeaderComponent {
     this.US.getUser().subscribe((value) => {
       if (value) {
         this.user = value;
-        this.userFullName = this.user.firstName+' '+this.user.lastName;
+        this.userFullName = this.user.firstname+' '+this.user.lastname;
       }
     })
   }

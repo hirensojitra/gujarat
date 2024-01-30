@@ -7,18 +7,18 @@
     <div class="card-body flex-grow-1 position-relative p-0">        
         <div class="h-100 w-100 p-3 position-md-absolute start-0 top-0 overflow-auto">
             <form [formGroup]="userForm" class="row g-3" (ngSubmit)="false;">
-                <div class="col-lg-3 col-md-4 col-sm-6" *ngIf="userForm.get('firstName') !== null;">
+                <div class="col-lg-3 col-md-4 col-sm-6" *ngIf="userForm.get('firstname') !== null;">
                     <div class="form-group mt-1">
                         <label class="form-label">First Name</label>
                         <input type="text" class="form-control" placeholder="" aria-label="First name"
-                            formControlName="firstName">
+                            formControlName="firstname">
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-4 col-sm-6" *ngIf="userForm.get('lastName') !== null;">
+                <div class="col-lg-3 col-md-4 col-sm-6" *ngIf="userForm.get('lastname') !== null;">
                     <div class="form-group mt-1">
                         <label class="form-label">Last Name</label>
                         <input type="text" class="form-control" placeholder="" aria-label="Last name"
-                            formControlName="lastName">
+                            formControlName="lastname">
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-6" *ngIf="userForm.get('mobile') !== null;">

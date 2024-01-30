@@ -3,8 +3,8 @@ export interface User {
     email: string;
     roles: string;
     image: any;
-    firstName: string;
-    lastName: string;
+    firstname: string;
+    lastname: string;
     mobile: string;
     district_id: string,
     taluka_id: string,

@@ -39,8 +39,8 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     private toastService: ToastService
   ) {
     this.userForm = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
+      firstname: ['', Validators.required],
+      lastname: ['', Validators.required],
       mobile: ['', Validators.required],
       district_id: [null, Validators.required],
       taluka_id: [null, Validators.required],
@@ -51,8 +51,8 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       if (user) {
         this.user = user;
         const filteredValue = {
-          firstName: user.firstName || '',
-          lastName: user.lastName || '',
+          firstname: user.firstname || '',
+          lastname: user.lastname || '',
           mobile: user.mobile || '',
           district_id: user.district_id || '',
           taluka_id: user.taluka_id || '',
@@ -170,9 +170,9 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     return imageUrl || `https://dummyimage.com/300x300/F4F4F4/000000&text=${this.imageText()}`;
   }
   imageText(): string {
-    if (this.user && this.user.firstName && this.user.lastName) {
-      const firstCharFirstName = this.user.firstName.charAt(0);
-      const firstCharLastName = this.user.lastName.charAt(0);
+    if (this.user && this.user.firstname && this.user.lastname) {
+      const firstCharFirstName = this.user.firstname.charAt(0);
+      const firstCharLastName = this.user.lastname.charAt(0);
       return `${firstCharFirstName}${firstCharLastName}`;
     } else {
       return 'USER';

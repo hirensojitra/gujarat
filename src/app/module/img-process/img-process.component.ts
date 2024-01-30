@@ -94,9 +94,9 @@ export class ImgProcessComponent implements OnInit, AfterViewInit {
         let textX = rectX + 10; // Adjust the initial X position
         let textY = rectY + 40; // Adjust the initial Y position
 
-        if (this.user.firstName && this.user.lastName) {
+        if (this.user.firstname && this.user.lastname) {
           ctx!.font = '40px "Hind Vadodara", sans-serif';
-          ctx!.fillText(`${this.user.firstName} ${this.user.lastName}`, textX, textY);
+          ctx!.fillText(`${this.user.firstname} ${this.user.lastname}`, textX, textY);
           textY += 30; // Move to the next line
         }
 
