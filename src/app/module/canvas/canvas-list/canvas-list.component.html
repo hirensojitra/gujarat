@@ -1,60 +1,89 @@
 <div class="h-100 d-flex flex-column p-3">
   <div class="flex-grow-1 position-relative overflow-hidden">
-    <div class="position-absolute h-100 w-100 d-flex overflow-auto">
-      <div class="container h-100">
-        <form [formGroup]="postForm">
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group mb-3">
-                <label class="form-label">Post Type</label>
-                <select class="form-select" selectDropdown [options]="types" id="type" formControlName="type">
-                  <option value="" disabled selected>Select a type</option>
-                  <option *ngFor="let type of types" [value]="type.id">{{ type.name }}</option>
-                </select>
-              </div>
-              <div class="row g-3">
-                <div class="col-lg-3 col-md-6 col-sm-3 col-6">
-                  <div class="form-group mb-3 py-2 px-3 border border-5"
-                    [ngClass]="postForm.get('avatar')?.value ? 'border-success' : 'border-light'" for="avatarSwitch">
-                    <div class="form-check form-switch">
-                      <label class="form-check-label" for="avatarSwitch">Avatar</label>
-                      <input class="form-check-input" type="checkbox" formControlName="avatar" id="avatarSwitch">
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-3 col-6">
-                  <div class="form-group mb-3 py-2 px-3 border border-5"
-                    [ngClass]="postForm.get('name')?.value ? 'border-success' : 'border-light'" for="nameSwitch">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" formControlName="name" id="nameSwitch">
-                      <label class="form-check-label" for="nameSwitch">Name</label>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-3 col-6">
-                  <div class="form-group mb-3 py-2 px-3 border border-5"
-                    [ngClass]="postForm.get('address')?.value ? 'border-success' : 'border-light'" for="avatarSwitch">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" formControlName="address" id="addressSwitch">
-                      <label class="form-check-label" for="addressSwitch">Address</label>
-                    </div>
-                  </div>
-                </div>
-                <!-- <div class="col-lg-3 col-md-6 col-sm-3 col-6">
-                  <div class="form-group mb-3 py-2 px-3 border border-5"
-                    [ngClass]="postForm.get('text-group')?.value ? 'border-success' : 'border-light'"
-                    for="avatarSwitch">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" formControlName="text-group" id="textGroupSwitch">
-                      <label class="form-check-label" for="textGroupSwitch">Text Group</label>
-                    </div>
-                  </div>
-                </div> -->
+    <div class="position-absolute h-100 w-100 d-flex overflow-auto flex-column">
+      <div class="container h-100 w-100">
+        <svg #imageDraw class="w-500-px max-w-100-p" viewBox="0 0 0 0"></svg>
+        
+        <ng-container *ngIf="showList">
+          <div class="col-12 pb-3">
+            <button class="btn btn-success" (click)="showControl('add')"><i class="fa fa-plus me-2"></i>Image</button>
+          </div>
+          <div class="row g-3" *ngIf="posts.length">
+            <div class="col-lg-3 col-md-4 col-sm-6 col-12" *ngFor="let post of posts">
+              <a href="#" (click)="showControl('edit',post.id)"><img src="{{post.details.backgroundUrl}}" alt=""
+                  class="img w-100"></a>
+            </div>
+            <div class="col-12">
+              <div class="btn-group btn-group-toggle py-3">
+                <button class="btn btn-outline-dark" (click)="onPageChange(1)"
+                  [disabled]="currentPage === 1">First</button>
+                <button class="btn btn-outline-dark" (click)="onPageChange(currentPage - 1)"
+                  [disabled]="currentPage === 1">Previous</button>
+                <button class="btn" *ngFor="let page of getPaginationControls()" (click)="onPageChange(page)"
+                  [ngClass]="{'btn-outline-dark': page !== currentPage, 'btn-outline-primary active': page === currentPage}">
+                  {{ page }}
+                </button>
+                <button class="btn btn-outline-dark" (click)="onPageChange(currentPage + 1)"
+                  [disabled]="currentPage === totalPages">Next</button>
+                <button class="btn btn-outline-dark" (click)="onPageChange(totalPages)"
+                  [disabled]="currentPage === totalPages">Last</button>
               </div>
             </div>
-            <div class="col-md-6">
-              <ng-container formArrayName="details">
-                <ng-container *ngFor="let detail of detailsForms.controls; let i = index" [formGroupName]="i">
+          </div>
+        </ng-container>
+        <ng-container *ngIf="addImage">
+          <form [formGroup]="postForm" (ngSubmit)="onSubmit()">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-group mb-3">
+                  <label class="form-label">Post Type</label>
+                  <select class="form-select" selectDropdown [options]="types" id="type" formControlName="type">
+                    <option value="" disabled selected>Select a type</option>
+                    <option *ngFor="let type of types" [value]="type.id">{{ type.name }}</option>
+                  </select>
+                  <input type="text" formControlName="deleted_at" hidden>
+                </div>
+                <div class="row g-3">
+                  <div class="col-lg-3 col-md-6 col-sm-3 col-6">
+                    <div class="form-group mb-3 py-2 px-3 border border-5"
+                      [ngClass]="postForm.get('avatar')?.value ? 'border-success' : 'border-light'" for="avatarSwitch">
+                      <div class="form-check form-switch">
+                        <label class="form-check-label" for="avatarSwitch">Avatar</label>
+                        <input class="form-check-input" type="checkbox" formControlName="avatar" id="avatarSwitch">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-3 col-md-6 col-sm-3 col-6">
+                    <div class="form-group mb-3 py-2 px-3 border border-5"
+                      [ngClass]="postForm.get('name')?.value ? 'border-success' : 'border-light'" for="nameSwitch">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" formControlName="name" id="nameSwitch">
+                        <label class="form-check-label" for="nameSwitch">Name</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-3 col-md-6 col-sm-3 col-6">
+                    <div class="form-group mb-3 py-2 px-3 border border-5"
+                      [ngClass]="postForm.get('address')?.value ? 'border-success' : 'border-light'" for="avatarSwitch">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" formControlName="address" id="addressSwitch">
+                        <label class="form-check-label" for="addressSwitch">Address</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-3 col-md-6 col-sm-3 col-6">
+                    <div class="form-group mb-3 py-2 px-3 border border-5"
+                      [ngClass]="postForm.get('text_group')?.value ? 'border-success' : 'border-light'"
+                      for="avatarSwitch">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" formControlName="text_group"
+                          id="textGroupSwitch">
+                        <label class="form-check-label" for="textGroupSwitch">Text Group</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <ng-container formGroupName="details">
                   <div class="row g-3">
                     <div class="col-6">
                       <div class="form-group">
@@ -76,153 +105,233 @@
                       </div>
                     </div>
                   </div>
-                  <div formArrayName="data" class="row g-3">
-                    <ng-container *ngIf="getDataControls(detail)">
-                      <ng-container *ngFor="let data of getDataControls(detail); let j = index">
-                        <ng-container [formGroupName]="j">
-                          <ng-container *ngIf="postForm.get('avatar')?.value && data.get('type')?.value == 'avatar'">
-                            <div class="col-12">
-                              <h5 class="text-capitalize mt-3 mb-2">{{data.get('type')?.value}}</h5>
-                              <hr class="m-0">
-                              <input type="text" formControlName="type" value="avatar" hidden>
+                  <div formArrayName="data" class="row g-3" *ngIf="detailsData.controls.length">
+                    <ng-container *ngFor="let data of detailsData.controls; let j = index">
+                      <ng-container [formGroupName]="j">
+                        <ng-container *ngIf="postForm.get('avatar')?.value && data.get('type')?.value == 'avatar'">
+                          <div class="col-12">
+                            <h5 class="text-capitalize mt-3 mb-2">{{data.get('type')?.value}}</h5>
+                            <hr class="m-0">
+                            <input type="text" formControlName="type" value="avatar" hidden>
+                          </div>
+                          <div class="col-6" *ngIf="data.get('x')">
+                            <div class="form-group">
+                              <label class="form-label">X</label>
+                              <input class="form-control" type="number" formControlName="x" placeholder="X">
                             </div>
-                            <div class="col-6" *ngIf="data.get('x')">
-                              <div class="form-group">
-                                <label class="form-label">X</label>
-                                <input class="form-control" type="number" formControlName="x" placeholder="X">
-                              </div>
+                          </div>
+                          <div class="col-6" *ngIf="data.get('y')">
+                            <div class="form-group">
+                              <label class="form-label">Y</label>
+                              <input class="form-control" type="number" formControlName="y" placeholder="Y">
                             </div>
-                            <div class="col-6" *ngIf="data.get('y')">
-                              <div class="form-group">
-                                <label class="form-label">Y</label>
-                                <input class="form-control" type="number" formControlName="y" placeholder="Y">
-                              </div>
+                          </div>
+                          <div class="col-6" *ngIf="data.get('radius')">
+                            <div class="form-group">
+                              <label class="form-label">Radius</label>
+                              <input class="form-control" type="number" formControlName="radius" placeholder="Radius">
                             </div>
-                            <div class="col-6" *ngIf="data.get('radius')">
-                              <div class="form-group">
-                                <label class="form-label">Radius</label>
-                                <input class="form-control" type="number" formControlName="radius" placeholder="Radius">
-                              </div>
+                          </div>
+                          <div class="col-6" *ngIf="data.get('borderwidth')">
+                            <div class="form-group">
+                              <label class="form-label">Border Width</label>
+                              <input class="form-control" type="number" formControlName="borderwidth"
+                                placeholder="Border Width">
                             </div>
-                            <div class="col-6" *ngIf="data.get('borderwidth')">
-                              <div class="form-group">
-                                <label class="form-label">Border Width</label>
-                                <input class="form-control" type="number" formControlName="borderwidth"
-                                  placeholder="Border Width">
-                              </div>
+                          </div>
+                          <div class="col-6" *ngIf="data.get('bordercolor')">
+                            <div class="form-group">
+                              <label class="form-label">Border Color</label>
+                              <input class="form-control" type="text" formControlName="bordercolor"
+                                placeholder="Border Color">
                             </div>
-                            <div class="col-6" *ngIf="data.get('bordercolor')">
-                              <div class="form-group">
-                                <label class="form-label">Border Color</label>
-                                <input class="form-control" type="text" formControlName="bordercolor"
-                                  placeholder="Border Color">
-                              </div>
-                            </div>
-                          </ng-container>
-                          <ng-container *ngIf="postForm.get('name')?.value && data.get('type')?.value == 'name'">
-                            <div class="col-12">
-                              <h5 class="text-capitalize mt-3 mb-2">{{data.get('type')?.value}}</h5>
-                              <hr class="m-0">
-                              <input type="text" formControlName="type" [value]="data.get('type')?.value" hidden>
-                            </div>
-                            <div class="col-6" *ngIf="data.get('x')">
-                              <div class="form-group">
-                                <label class="form-label">X</label>
-                                <input class="form-control" type="number" formControlName="x" placeholder="X">
-                              </div>
-                            </div>
-                            <div class="col-6" *ngIf="data.get('y')">
-                              <div class="form-group">
-                                <label class="form-label">Y</label>
-                                <input class="form-control" type="number" formControlName="y" placeholder="Y">
-                              </div>
-                            </div>
-                            <div class="col-6" *ngIf="data.get('fs')">
-                              <div class="form-group">
-                                <label class="form-label">Font Size</label>
-                                <input class="form-control" type="number" formControlName="fs" placeholder="Font Size">
-                              </div>
-                            </div>
-                          </ng-container>
-                          <ng-container *ngIf="postForm.get('address')?.value && data.get('type')?.value == 'address'">
-                            <div class="col-12">
-                              <h5 class="text-capitalize mt-3 mb-2">{{data.get('type')?.value}}</h5>
-                              <hr class="m-0">
-                              <input type="text" formControlName="type" [value]="data.get('type')?.value" hidden>
-                            </div>
-                            <div class="col-6" *ngIf="data.get('x')">
-                              <div class="form-group">
-                                <label class="form-label">X</label>
-                                <input class="form-control" type="number" formControlName="x" placeholder="X">
-                              </div>
-                            </div>
-                            <div class="col-6" *ngIf="data.get('y')">
-                              <div class="form-group">
-                                <label class="form-label">Y</label>
-                                <input class="form-control" type="number" formControlName="y" placeholder="Y">
-                              </div>
-                            </div>
-                            <div class="col-6" *ngIf="data.get('fs')">
-                              <div class="form-group">
-                                <label class="form-label">Font Size</label>
-                                <input class="form-control" type="number" formControlName="fs" placeholder="Font Size">
-                              </div>
-                            </div>
-                          </ng-container>
-                          <ng-container
-                            *ngIf="postForm.get('text-group')?.value && data.get('type')?.value === 'text-group'">
-                            <ng-container *ngIf="data.get('data')">
-                              <div class="col-12">
-                                <h5 class="text-capitalize mt-3 mb-2">{{data.get('type')?.value}}</h5>
-                                <hr class="m-0">
-                                <input type="text" formControlName="type" [value]="data.get('type')?.value" hidden>
-                              </div>
-                              <div formArrayName="data" class="col-12">
-                                <div
-                                  *ngFor="let item of convertArrayToFormArray(data.get('data')?.value).controls; let k = index"
-                                  class="border rounded-2 p-3 mb-3">
-                                  <div [formGroupName]="k" class="row">
-                                    <ng-container
-                                      *ngIf="item.get('type')?.value === 'name' || item.get('type')?.value === 'address'">
-                                      <div class="col-12">
-                                        <h6 class="text-capitalize mb-2">{{item.get('type')?.value}}</h6>
-                                        <hr class="m-0">
-                                        <input type="text" formControlName="type" [value]="item.get('type')?.value"
-                                          hidden>
-                                      </div>
-                                      <div class="col-6" *ngIf="item.get('x')">
-                                        <div class="form-group">
-                                          <label class="form-label">X</label>
-                                          <input class="form-control" type="number" formControlName="x" placeholder="X">
-                                        </div>
-                                      </div>
-                                      <div class="col-6" *ngIf="item.get('y')">
-                                        <div class="form-group">
-                                          <label class="form-label">Y</label>
-                                          <input class="form-control" type="number" formControlName="y" placeholder="Y">
-                                        </div>
-                                      </div>
-                                      <div class="col-6" *ngIf="item.get('fs')">
-                                        <div class="form-group">
-                                          <label class="form-label">Font Size</label>
-                                          <input class="form-control" type="number" formControlName="fs" placeholder="Font Size">
-                                        </div>
-                                      </div>
-                                    </ng-container>
-                                  </div>
+                          </div>
+                        </ng-container>
+                        <ng-container *ngIf="data.get('type')?.value == 'name'||data.get('type')?.value == 'address'">
+                          <div class="col-12">
+                            <h5 class="text-capitalize mt-3 mb-2">{{data.get('type')?.value}}</h5>
+                            <hr class="m-0">
+                            <input type="text" formControlName="type" [value]="data.get('type')?.value" hidden>
+                          </div>
+                          <div class="col-6" *ngIf="data.get('x') && data.get('y')">
+                            <div class="row g-3">
+                              <div class="col-6">
+                                <div class="form-group">
+                                  <label class="form-label">X</label>
+                                  <input class="form-control" type="number" formControlName="x" placeholder="X">
                                 </div>
                               </div>
-                            </ng-container>
+                              <div class="col-6">
+                                <div class="form-group">
+                                  <label class="form-label">Y</label>
+                                  <input class="form-control" type="number" formControlName="y" placeholder="Y">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-6" *ngIf="data.get('fs')">
+                            <div class="form-group">
+                              <label class="form-label">Font Size</label>
+                              <input class="form-control" type="number" formControlName="fs" placeholder="Font Size">
+                            </div>
+                          </div>
+                          <div formGroupName="fontStyle" class="col-6" *ngIf="data.get('fontStyle')">
+                            <div class="form-group">
+                              <label class="form-label">Font Style</label>
+                              <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                                <label class="btn btn-outline-dark"
+                                  [class.active]="data.get('fontStyle')?.get('bold')?.value">
+                                  <input type="checkbox" autocomplete="off" formControlName="bold" class="d-none"><i
+                                    class="fa fa-bold"></i>
+                                </label>
+                                <label class="btn btn-outline-dark"
+                                  [class.active]="data.get('fontStyle')?.get('italic')?.value">
+                                  <input type="checkbox" autocomplete="off" formControlName="italic" class="d-none"><i
+                                    class="fa fa-italic"></i>
+                                </label>
+                                <label class="btn btn-outline-dark"
+                                  [class.active]="data.get('fontStyle')?.get('underline')?.value">
+                                  <input type="checkbox" autocomplete="off" formControlName="underline"
+                                    class="d-none"><i class="fa fa-underline"></i>
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-6" *ngIf="data.get('textAlign')">
+                            <div class="form-group">
+                              <label class="form-label">Text Align</label>
+                              <div class="btn-group w-100" role="group" data-toggle="buttons">
+                                <input type="radio" class="btn-check" [id]="'radioLeft'+j" formControlName="textAlign"
+                                  [value]="'left'" autocomplete="off">
+                                <label class="btn btn-outline-dark" [for]="'radioLeft'+j">
+                                  <i class="fa fa-align-left"></i>
+                                </label>
+                                <input type="radio" class="btn-check" [id]="'radioCenter'+j" formControlName="textAlign"
+                                  [value]="'center'" autocomplete="off">
+                                <label class="btn btn-outline-dark" [for]="'radioCenter'+j">
+                                  <i class="fa fa-align-center"></i>
+                                </label>
+                                <input type="radio" class="btn-check" [id]="'radioRight'+j" formControlName="textAlign"
+                                  [value]="'right'" autocomplete="off">
+                                <label class="btn btn-outline-dark" [for]="'radioRight'+j">
+                                  <i class="fa fa-align-right"></i>
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        </ng-container>
+                        <ng-container
+                          *ngIf="postForm.get('text_group')?.value && data.get('type')?.value === 'text_group'">
+                          <ng-container *ngIf="data.get('data')">
+                            <div class="col-12">
+                              <h5 class="text-capitalize mt-3 mb-2">{{data.get('type')?.value}}</h5>
+                              <hr class="m-0">
+                              <input type="text" formControlName="type" [value]="data.get('type')?.value" hidden>
+                            </div>
+                            <div formArrayName="data" class="col-12">
+                              <div *ngFor="let item of formArray(data.get('data')).controls; let k = index"
+                                class="border rounded-2 p-3 mb-3">
+                                <div [formGroupName]="k" class="row">
+                                  <ng-container
+                                    *ngIf="item.get('type')?.value === 'name' || item.get('type')?.value === 'address'">
+                                    <div class="col-12">
+                                      <h6 class="text-capitalize mb-2">{{item.get('type')?.value}}</h6>
+                                      <hr class="m-0">
+                                      <input type="text" formControlName="type" [value]="item.get('type')?.value"
+                                        hidden>
+                                    </div>
+                                    <div class="col-6" *ngIf="item.get('x') && item.get('y')">
+                                      <div class="row g-3">
+                                        <div class="col-6">
+                                          <div class="form-group">
+                                            <label class="form-label">X</label>
+                                            <input class="form-control" type="number" formControlName="x"
+                                              placeholder="X">
+                                          </div>
+                                        </div>
+                                        <div class="col-6">
+                                          <div class="form-group">
+                                            <label class="form-label">Y</label>
+                                            <input class="form-control" type="number" formControlName="y"
+                                              placeholder="Y">
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div class="col-6" *ngIf="item.get('fs')">
+                                      <div class="form-group">
+                                        <label class="form-label">Font Size</label>
+                                        <input class="form-control" type="number" formControlName="fs"
+                                          placeholder="Font Size">
+                                      </div>
+                                    </div>
+                                    <div formGroupName="fontStyle" class="col-6" *ngIf="item.get('fontStyle')">
+                                      <div class="form-group">
+                                        <label class="form-label">Font Style</label>
+                                        <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                                          <label class="btn btn-outline-dark"
+                                            [class.active]="item.get('fontStyle')?.get('bold')?.value">
+                                            <input type="checkbox" autocomplete="off" formControlName="bold"
+                                              class="d-none"><i class="fa fa-bold"></i>
+                                          </label>
+                                          <label class="btn btn-outline-dark"
+                                            [class.active]="item.get('fontStyle')?.get('italic')?.value">
+                                            <input type="checkbox" autocomplete="off" formControlName="italic"
+                                              class="d-none"><i class="fa fa-italic"></i>
+                                          </label>
+                                          <label class="btn btn-outline-dark"
+                                            [class.active]="item.get('fontStyle')?.get('underline')?.value">
+                                            <input type="checkbox" autocomplete="off" formControlName="underline"
+                                              class="d-none"><i class="fa fa-underline"></i>
+                                          </label>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div class="col-6" *ngIf="item.get('textAlign')">
+                                      <div class="form-group">
+                                        <label class="form-label">Text Align</label>
+                                        <div class="btn-group w-100" role="group" data-toggle="buttons">
+                                          <input type="radio" class="btn-check" [id]="'radioLeft-'+k"
+                                            formControlName="textAlign" [value]="'left'" autocomplete="off">
+                                          <label class="btn btn-outline-dark" [for]="'radioLeft-'+k">
+                                            <i class="fa fa-align-left"></i>
+                                          </label>
+                                          <input type="radio" class="btn-check" [id]="'radioCenter-'+k"
+                                            formControlName="textAlign" [value]="'center'" autocomplete="off">
+                                          <label class="btn btn-outline-dark" [for]="'radioCenter-'+k">
+                                            <i class="fa fa-align-center"></i>
+                                          </label>
+                                          <input type="radio" class="btn-check" [id]="'radioRight-'+k"
+                                            formControlName="textAlign" [value]="'right'" autocomplete="off">
+                                          <label class="btn btn-outline-dark" [for]="'radioRight-'+k">
+                                            <i class="fa fa-align-right"></i>
+                                          </label>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </ng-container>
+                                </div>
+                              </div>
+                            </div>
                           </ng-container>
                         </ng-container>
                       </ng-container>
                     </ng-container>
                   </div>
                 </ng-container>
-              </ng-container>
+              </div>
+              <div class="col-md-6">
+                <pre>{{this.postForm.value | json}}</pre>
+              </div>
+              <div class="col-12 d-flex">
+                <button class="btn btn-success me-2" type="submit" [disabled]="!postForm.valid">Submit</button>
+                <button class="btn btn-danger me-2" type="button" (click)="showControl('list')">Cancel</button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </ng-container>
+        <ng-container *ngIf="editImage">
+        </ng-container>
       </div>
     </div>
   </div>

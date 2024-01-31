@@ -136,7 +136,6 @@ export class VillageComponent implements OnInit, AfterViewInit {
   addVillage() {
     this.currentForm = this.villageForm;
     this.currentForm.reset()
-    alert(this.selectedTaluka?.id)
     this.currentForm.get('taluka_id')?.setValue(this.selectedTaluka?.id);
     this.currentForm.get('is_deleted')?.setValue(false);
     this.needAdd = true;

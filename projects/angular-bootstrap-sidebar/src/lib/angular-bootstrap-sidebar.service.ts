@@ -38,7 +38,6 @@ export class ABSService {
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     if (event.ctrlKey && event.shiftKey && event.key === 'S') {
-      alert()
       event.preventDefault();
       this.toggleMenu();
     }

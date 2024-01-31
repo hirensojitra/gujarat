@@ -71,7 +71,6 @@ export class TalukaComponent implements OnInit, AfterViewInit {
     });
     this.route.queryParams.subscribe((params) => {
       const districtParam = params['district'];
-      alert(districtParam)
       if (districtParam) {
         this.paramDist = districtParam;
       }
