@@ -29,7 +29,6 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
 
   }
   ngAfterViewInit(): void {
-
     this.types = [
       { id: 'post', name: 'Post' }
     ];
@@ -96,16 +95,19 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
       svgHeight: h || 0,
       background: backgroundUrl || '',
       viewBox: "0 0 " + (w || 0) + " " + (h || 0),
-      elements: data.map(item => {
+      elements: data.map((item, index) => {
         if (item.type === 'text_group') {
           return {
+            index: index,
             type: 'text_group',
-            data: (item as TextGroupDetails).data.map((textItem: TextDetails) => {
+            data: (item as TextGroupDetails).data.map((textItem: TextDetails, index) => {
               return {
+                index: index,
                 type: textItem.type,
                 x: textItem.x,
                 y: textItem.y,
                 fs: textItem.fs,
+                fw: textItem.fw,
                 fontStyle: {
                   bold: textItem.fontStyle?.bold || false,
                   italic: textItem.fontStyle?.italic || false,
@@ -117,6 +119,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           };
         } else if (item.type === 'avatar') {
           return {
+            index: index,
             type: 'avatar',
             radius: (item as AvatarDetails).radius || 0,
             borderwidth: (item as AvatarDetails).borderwidth || 0,
@@ -126,11 +129,13 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           };
         } else if (item.type === 'name' || item.type === 'address') {
           return {
+            index: index,
             type: item.type,
             x: item.x,
             y: item.y,
             fs: item.fs,
             text: item.type,
+            fw: item.fw,
             fontStyle: {
               bold: item.fontStyle?.bold || false,
               italic: item.fontStyle?.italic || false,
@@ -139,7 +144,9 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
             textAlign: item.textAlign || ''
           };
         } else {
-          return null;
+          return {
+            index: index,
+          };
         }
       }).filter(item => item !== null)
     };
@@ -157,7 +164,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
         return 'center';
     }
   }
-  
+
   async drawSVG(e: any) {
     const { svgWidth, svgHeight, background, viewBox, elements } = e;
     const backgroundUrl = await this.getImageDataUrl(background)
@@ -174,7 +181,6 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
     this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
     this.renderer.setAttribute(b, 'href', backgroundUrl);
     this.renderer.appendChild(svg, b);
-    console.log(elements)
     elements.forEach((element: any) => {
       if (element.type === 'name' || element.type === 'address') {
         const text = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
@@ -187,12 +193,21 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           'text-anchor': this.textPosition(element.textAlign),
           'dominant-baseline': 'auto',
         };
+        let textDecoration = '';
+        let fontstyle = '';
+        if (element.fontStyle.underline) {
+          textDecoration += 'underline ';
+        }
+        if (element.fontStyle.italic) {
+          fontstyle += 'italic ';
+        }
         const textStyles = {
           '-webkit-user-select': 'none',
           'font-family': "'Hind Vadodara', sans-serif",
-          'font-weight': '600'
+          'font-weight': element.fw.toString(),
+          'text-decoration': textDecoration.trim(),
+          'font-style': fontstyle.trim(),
         };
-
         Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(text, key, value));
         Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(text, key, value));
 
@@ -228,6 +243,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
       x: [10, Validators.required],
       y: [10, Validators.required],
       fs: [30, Validators.required],
+      fw: '400',
       fontStyle: this.fb.group({
         bold: [false],
         italic: [false],
@@ -235,17 +251,16 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
       }),
       textAlign: ['center', Validators.required]
     });
-
     const dataFormArray = this.postForm.get('details.data') as FormArray;
     dataFormArray.push(nameFormGroup);
   }
-
   private addAddressControls() {
     const addressFormGroup = this.fb.group({
       type: ['address'],
       x: [10, Validators.required],
       y: [10, Validators.required],
       fs: [30, Validators.required],
+      fw: '400',
       fontStyle: this.fb.group({ // Add fontStyle group
         bold: [false],
         italic: [false],
@@ -253,13 +268,9 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
       }),
       textAlign: ['center', Validators.required]
     });
-
     const dataFormArray = this.postForm.get('details.data') as FormArray;
     dataFormArray.push(addressFormGroup);
   }
-
-
-
   private addTextGroupControls() {
     const textGroupFormGroup = this.fb.group({
       type: ['text_group'],
@@ -269,6 +280,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           x: [10, Validators.required],
           y: [10, Validators.required],
           fs: [30, Validators.required],
+          fw: '400',
           fontStyle: this.fb.group({
             bold: [false],
             italic: [false],
@@ -281,6 +293,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           x: [10, Validators.required],
           y: [10, Validators.required],
           fs: [30, Validators.required],
+          fw: '400',
           fontStyle: this.fb.group({
             bold: [false],
             italic: [false],
@@ -555,10 +568,12 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
                 const maxX = svgWidth - (draggableElement.getBBox().width + minX) + 2 * r;
                 const maxY = svgHeight - (draggableElement.getBBox().height + minY) + 2 * r;
 
-                const adjustedX = Math.min(Math.max(newX, minX), maxX);
-                const adjustedY = Math.min(Math.max(newY, minY), maxY);
+                const adjustedX = Math.floor(Math.min(Math.max(newX, minX), maxX));
+                const adjustedY = Math.floor(Math.min(Math.max(newY, minY), maxY));
+
                 element.x = adjustedX;
                 element.y = adjustedY;
+
                 if (element.type === 'avatar') {
                   this.renderer.setAttribute(draggableElement, 'cx', adjustedX.toString());
                   this.renderer.setAttribute(draggableElement, 'cy', adjustedY.toString());
@@ -566,6 +581,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
                   this.renderer.setAttribute(draggableElement, 'x', adjustedX.toString());
                   this.renderer.setAttribute(draggableElement, 'y', adjustedY.toString());
                 }
+                this.setData(element)
               }
             }
           }
@@ -599,5 +615,13 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
       formGroupConfig[key] = [selectedElement[key], Validators.required];
     });
     this.elementForm = this.fb.group(formGroupConfig);
+  }
+  setData(element: any) {
+    const dataControl = this.postForm.get('details')?.get('data');
+    if (dataControl instanceof FormArray) {
+      const e = dataControl.controls[element.index];
+      e.get('x')?.patchValue(element.x, { emitEvent: false });
+      e.get('y')?.patchValue(element.y, { emitEvent: false });
+    }
   }
 }

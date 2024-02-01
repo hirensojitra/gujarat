@@ -12,6 +12,7 @@ export interface TextDetails {
     x: number;
     y: number;
     fs: number;
+    fw: string;
     fontStyle: {
         bold: boolean;
         italic: boolean;
