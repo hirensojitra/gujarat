@@ -1,7 +1,7 @@
 import { Component, ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { AvatarDetails, Post, TextDetails, TextGroupDetails } from 'src/app/common/interfaces/post';
 import { PostService } from 'src/app/common/services/post.service';
-
+declare const bootstrap: any;
 @Component({
   selector: 'app-image-view',
   templateUrl: './image-view.component.html',
@@ -24,6 +24,7 @@ export class ImageViewComponent {
     this.PS.getPostById('1').subscribe((value: Post) => {
       this.makeDataForImage(value);
       this.checkValues(this.ele);
+      
     })
   }
   async drawSVG(e: any) {
@@ -190,7 +191,7 @@ export class ImageViewComponent {
       };
     });
     this.dataQuequeue = d;
-
+    
   }
   async getImageDataUrl(imageUrl: string): Promise<string> {
     try {

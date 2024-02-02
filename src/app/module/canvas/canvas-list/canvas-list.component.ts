@@ -200,7 +200,6 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
   async drawSVG(e: any) {
     const { svgWidth, svgHeight, background, viewBox, elements } = e;
     const backgroundUrl = await this.getImageDataUrl(background);
-
     const svg = this.imageDraw.nativeElement;
     while (svg.firstChild) {
       svg.removeChild(svg.firstChild);
