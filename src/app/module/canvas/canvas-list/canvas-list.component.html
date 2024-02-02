@@ -6,7 +6,7 @@
           <div class="col-md-6">
             <svg #imageDraw class="w-100 max-w-100-p" viewBox="0 0 0 0"></svg>
           </div>
-          <div class="col-md-6"><ng-container *ngIf="addImage">
+          <div class="col-md-6"><ng-container *ngIf="addImage">{{color}}
               <form [formGroup]="postForm" (ngSubmit)="onSubmit()">
                 <div class="row g-3">
                   <div class="col-md-12">
@@ -104,10 +104,10 @@
                                   <input class="form-control" type="number" formControlName="y" placeholder="Y">
                                 </div>
                               </div>
-                              <div class="col-6" *ngIf="data.get('radius')">
+                              <div class="col-6" *ngIf="data.get('r')">
                                 <div class="form-group">
                                   <label class="form-label">Radius</label>
-                                  <input class="form-control" type="number" formControlName="radius"
+                                  <input class="form-control" type="number" formControlName="r"
                                     placeholder="Radius">
                                 </div>
                               </div>

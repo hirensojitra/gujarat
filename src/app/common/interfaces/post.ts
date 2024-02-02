@@ -1,6 +1,6 @@
 export interface AvatarDetails {
     type: 'avatar';
-    radius: number;
+    r: number;
     borderwidth: number;
     bordercolor: string;
     x: number;
@@ -14,7 +14,6 @@ export interface TextDetails {
     fs: number;
     fw: string;
     fontStyle: {
-        bold: boolean;
         italic: boolean;
         underline: boolean;
     };

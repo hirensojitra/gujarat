@@ -38,7 +38,9 @@
             ],
             "scripts": [
               "./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
-              "./node_modules/cropperjs/dist/cropper.js"
+              "./node_modules/cropperjs/dist/cropper.js",
+              "./node_modules/colorthief/dist/color-thief.min.js",
+              "./node_modules/colorthief/dist/color-thief.umd.js"
             ]
           },
           "configurations": {
@@ -107,7 +109,9 @@
             ],
             "scripts": [
               "./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
-              "./node_modules/cropperjs/dist/cropper.js"
+              "./node_modules/cropperjs/dist/cropper.js",
+              "./node_modules/colorthief/dist/color-thief.min.js",
+              "./node_modules/colorthief/dist/color-thief.umd.js"
             ]
           }
         }

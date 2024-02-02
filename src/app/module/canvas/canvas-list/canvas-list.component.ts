@@ -1,8 +1,12 @@
 import { Component, ElementRef, OnInit, AfterViewInit, ViewChild, Renderer2 } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, AbstractControl, FormControl, Validators } from '@angular/forms';
-import { selectKey } from 'src/app/common/interfaces/commonInterfaces';
+import { selectKey, User } from 'src/app/common/interfaces/commonInterfaces';
 import { AvatarDetails, Post, TextDetails, TextGroupDetails } from 'src/app/common/interfaces/post';
 import { PostService } from 'src/app/common/services/post.service';
+import { UserService } from 'src/app/common/services/user.service';
+import { VillageService } from 'src/app/common/services/village.service';
+declare const ColorThief: any;
+
 @Component({
   selector: 'app-canvas-list',
   templateUrl: './canvas-list.component.html',
@@ -25,9 +29,37 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
   postForm!: FormGroup;
   types!: selectKey[];
   postEdit!: Post;
-  constructor(private renderer: Renderer2, private fb: FormBuilder, private postService: PostService) {
 
+  user!: User;
+  userFullName!: string;
+  address!: string;
+  color: any;
+  CT: any;
+  addressList: any;
+  constructor(private renderer: Renderer2, private fb: FormBuilder, private postService: PostService,
+    private US: UserService,
+    private VS: VillageService) {
+    this.US.getUser().subscribe(async (value) => {
+      if (value) {
+        this.user = value;
+        console.log(this.user)
+        this.userFullName = this.user.firstname + ' ' + this.user.lastname;
+        this.getVillage(this.user.taluka_id);
+      }
+    })
   }
+  async getVillage(id: any) {
+    this.VS.getVillageById(id).subscribe(
+      (data) => {
+        this.addressList = data.data;
+        this.address = this.addressList.gu_name + ", તાલુકા : " + this.addressList.taluka_gu_name + ", જિલ્લા : " + this.addressList.district_gu_name;
+      },
+      (error: any) => {
+
+      }
+    )
+  }
+
   ngAfterViewInit(): void {
     this.types = [
       { id: 'post', name: 'Post' }
@@ -38,6 +70,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
     this.getTotalDeletedPostLength();
   }
   ngOnInit() {
+    this.CT = new ColorThief();
   }
   showControl(control: string, id?: string) {
     // Reset all flags to false initially
@@ -109,7 +142,6 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
                 fs: textItem.fs,
                 fw: textItem.fw,
                 fontStyle: {
-                  bold: textItem.fontStyle?.bold || false,
                   italic: textItem.fontStyle?.italic || false,
                   underline: textItem.fontStyle?.underline || false
                 },
@@ -121,9 +153,10 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           return {
             index: index,
             type: 'avatar',
-            radius: (item as AvatarDetails).radius || 0,
+            r: (item as AvatarDetails).r || 0,
             borderwidth: (item as AvatarDetails).borderwidth || 0,
             bordercolor: (item as AvatarDetails).bordercolor || '',
+            imageUrl: this.user.image || 'assets/images/jpeg/profile-1.jpeg',
             x: (item as AvatarDetails).x || 0,
             y: (item as AvatarDetails).y || 0
           };
@@ -134,10 +167,9 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
             x: item.x,
             y: item.y,
             fs: item.fs,
-            text: item.type,
+            text: item.type == 'name' ? this.userFullName : item.type == 'address' ? this.address : item.type,
             fw: item.fw,
             fontStyle: {
-              bold: item.fontStyle?.bold || false,
               italic: item.fontStyle?.italic || false,
               underline: item.fontStyle?.underline || false
             },
@@ -155,19 +187,20 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
   textPosition(t: string): string {
     switch (t) {
       case 'center':
-        return 'center';
+        return 'middle';
       case 'left':
         return 'start';
       case 'right':
         return 'end';
       default:
-        return 'center';
+        return 'middle';
     }
   }
 
   async drawSVG(e: any) {
     const { svgWidth, svgHeight, background, viewBox, elements } = e;
-    const backgroundUrl = await this.getImageDataUrl(background)
+    const backgroundUrl = await this.getImageDataUrl(background);
+
     const svg = this.imageDraw.nativeElement;
     while (svg.firstChild) {
       svg.removeChild(svg.firstChild);
@@ -191,7 +224,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           'font-size': element.fs,
           'fill': '#FFF',
           'text-anchor': this.textPosition(element.textAlign),
-          'dominant-baseline': 'auto',
+          'dominant-baseline': 'reset-size',
         };
         let textDecoration = '';
         let fontstyle = '';
@@ -209,26 +242,54 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           'font-style': fontstyle.trim(),
         };
         Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(text, key, value));
-        Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(text, key, value));
+        Object.entries(textStyles).forEach(([key, value]) => {this.renderer.setStyle(text, key, value)});
 
         if (element.text) {
           this.renderer.appendChild(text, this.renderer.createText(element.text));
         }
         this.renderer.appendChild(svg, text);
+      } else if (element.type === 'avatar') {
+        const circle = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
+        this.renderer.setAttribute(circle, 'data-type', 'avatar');
+        this.renderer.setAttribute(circle, 'cx', element.x.toString());
+        this.renderer.setAttribute(circle, 'cy', element.y.toString());
+        this.renderer.setAttribute(circle, 'r', element.r.toString());
+        this.renderer.setAttribute(circle, 'fill', 'url(#image-pattern)');
+        this.renderer.setAttribute(circle, 'stroke', element.bordercolor);
+        this.renderer.setAttribute(circle, 'stroke-width', element.borderwidth);
+        this.renderer.setStyle(circle, 'cursor', 'grab');
+        this.renderer.setStyle(circle, 'filter', 'url(#shadow)');
+        this.renderer.appendChild(svg, circle);
+        const imagePattern = this.renderer.createElement('pattern', 'http://www.w3.org/2000/svg');
+        this.renderer.setAttribute(imagePattern, 'id', 'image-pattern');
+        this.renderer.setAttribute(imagePattern, 'x', '0%');
+        this.renderer.setAttribute(imagePattern, 'y', '0%');
+        this.renderer.setAttribute(imagePattern, 'height', '100%');
+        this.renderer.setAttribute(imagePattern, 'width', '100%');
+        this.renderer.setAttribute(imagePattern, 'viewBox', '0 0 100 100');
+
+        const image = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
+        this.renderer.setAttribute(image, 'x', '0');
+        this.renderer.setAttribute(image, 'y', '0');
+        this.renderer.setAttribute(image, 'width', '100');
+        this.renderer.setAttribute(image, 'height', '100');
+        this.renderer.setAttribute(image, 'href', element.imageUrl);
+
+        this.renderer.appendChild(imagePattern, image);
+        this.renderer.appendChild(svg, imagePattern);
       }
     })
-    this.addDraggableBehavior(svgWidth, svgHeight, elements)
+    this.addDraggableBehavior(svgWidth, svgHeight, elements);
+
   }
   get detailsData(): FormArray {
     return this.postForm.get('details')?.get('data') as FormArray;
   }
-  get detailsForms() {
-    return this.postForm.get('details') as FormArray;
-  }
+  
   private addAvatarControls() {
     const avatarFormGroup = this.fb.group({
       type: ['avatar'],
-      radius: [100, Validators.required],
+      r: [100, Validators.required],
       borderwidth: [10, Validators.required],
       bordercolor: ['#FFF', Validators.required],
       x: [300, Validators.required],
@@ -245,7 +306,6 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
       fs: [30, Validators.required],
       fw: '400',
       fontStyle: this.fb.group({
-        bold: [false],
         italic: [false],
         underline: [false]
       }),
@@ -262,7 +322,6 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
       fs: [30, Validators.required],
       fw: '400',
       fontStyle: this.fb.group({ // Add fontStyle group
-        bold: [false],
         italic: [false],
         underline: [false]
       }),
@@ -282,7 +341,6 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           fs: [30, Validators.required],
           fw: '400',
           fontStyle: this.fb.group({
-            bold: [false],
             italic: [false],
             underline: [false]
           }),
@@ -295,7 +353,6 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           fs: [30, Validators.required],
           fw: '400',
           fontStyle: this.fb.group({
-            bold: [false],
             italic: [false],
             underline: [false]
           }),
@@ -538,15 +595,12 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
           this.offsetX = elementX - clickedX;
           this.offsetY = elementY - clickedY;
           this.renderer.setAttribute(draggableElement, 'cursor', 'grabbing');
-          this.buildForm(element);
         };
 
         const onMouseMove = (event: MouseEvent) => {
-          event.preventDefault();
           if (isDragging) {
             const svgPoint = this.getMousePosition(event, svgElement);
             const draggableElement = svgElement.querySelector(`[data-type="${element.type}"]`) as SVGGraphicsElement;
-            this.buildForm(this.selectedElement);
             if (draggableElement) {
               let x, y;
               let r = 0;
@@ -563,14 +617,35 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
                 const oY = svgPoint.y - y + this.offsetY;
                 const newX = x + oX;
                 const newY = y + oY;
-                const minX = 30 + r;
-                const minY = 30 + r;
-                const maxX = svgWidth - (draggableElement.getBBox().width + minX) + 2 * r;
-                const maxY = svgHeight - (draggableElement.getBBox().height + minY) + 2 * r;
+                let minX = 30 + r;
+                let minY = 30 + r;
+                let maxX = svgWidth - (draggableElement.getBBox().width + minX) + 2 * r;
+                let maxY = svgHeight - (draggableElement.getBBox().height + minY) + 2 * r;
+                const textAnchor = draggableElement.getAttribute('text-anchor');
+                if (textAnchor) {
+                  console.log(draggableElement.getBBox())
+                  minY += draggableElement.getBBox().height / 2;
+                  maxY += draggableElement.getBBox().height;
+                  switch (textAnchor) {
+                    case 'middle':
+                      minX += draggableElement.getBBox().width / 2;
+                      maxX += draggableElement.getBBox().width / 2;
+                      break;
+                    case 'start':
+
+                      break;
+                    case 'end':
+                      minX += draggableElement.getBBox().width;
+                      maxX += draggableElement.getBBox().width;
+                      break;
+                    default:
+                      // Handle other cases if needed
+                      break;
+                  }
+                }
 
                 const adjustedX = Math.floor(Math.min(Math.max(newX, minX), maxX));
                 const adjustedY = Math.floor(Math.min(Math.max(newY, minY), maxY));
-
                 element.x = adjustedX;
                 element.y = adjustedY;
 
@@ -581,7 +656,9 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
                   this.renderer.setAttribute(draggableElement, 'x', adjustedX.toString());
                   this.renderer.setAttribute(draggableElement, 'y', adjustedY.toString());
                 }
-                this.setData(element)
+
+                this.setData(element);
+
               }
             }
           }
@@ -595,6 +672,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
         this.renderer.listen(svgElement, 'mousemove', onMouseMove);
         this.renderer.listen(svgElement, 'touchmove', onMouseMove);
         this.renderer.listen(svgElement, 'mouseup', onMouseUp);
+        this.renderer.listen(svgElement, 'mouseleave', onMouseUp);
         this.renderer.listen(svgElement, 'touchend', onMouseUp);
       }
     });
@@ -608,14 +686,7 @@ export class CanvasListComponent implements OnInit, AfterViewInit {
       y: (touchOrMouse.clientY - CTM!.f) / CTM!.d
     };
   }
-  buildForm(selectedElement: any): void {
-    this.elementForm = null;
-    const formGroupConfig: { [key: string]: any } = {};
-    Object.keys(selectedElement).forEach(key => {
-      formGroupConfig[key] = [selectedElement[key], Validators.required];
-    });
-    this.elementForm = this.fb.group(formGroupConfig);
-  }
+
   setData(element: any) {
     const dataControl = this.postForm.get('details')?.get('data');
     if (dataControl instanceof FormArray) {
