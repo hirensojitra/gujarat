@@ -1,6 +1,7 @@
 export interface AvatarDetails {
+    imageUrl?: string;
     type: 'avatar';
-    r: number;
+    r: any;
     borderwidth: number;
     bordercolor: string;
     x: number;
@@ -8,6 +9,7 @@ export interface AvatarDetails {
 }
 
 export interface TextDetails {
+    text?: any;
     type: string;
     x: number;
     y: number;
@@ -18,6 +20,7 @@ export interface TextDetails {
         underline: boolean;
     };
     textAlign: string;
+    color: string;
 }
 
 export interface TextGroupDetails {
@@ -29,11 +32,11 @@ export interface PostDetails {
     w: number;
     h: number;
     backgroundUrl: string;
-    data: (AvatarDetails | TextDetails | TextGroupDetails)[];
+    data: TextDetails[] | AvatarDetails[] | TextGroupDetails[];
 }
 
 export interface Post {
     type: 'post';
-    id?:string,
+    id?: string,
     details: PostDetails;
 }

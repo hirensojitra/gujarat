@@ -1,111 +1,277 @@
-import { Component, ElementRef, ViewChild, Renderer2 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { User } from 'src/app/common/interfaces/commonInterfaces';
-import { UserService } from 'src/app/common/services/user.service';
 
+import { Component, ElementRef, ViewChild, Renderer2 } from '@angular/core';
+import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { selectKey, User } from 'src/app/common/interfaces/commonInterfaces';
+import { Post } from 'src/app/common/interfaces/post';
+import { PostService } from 'src/app/common/services/post.service';
+import { SVGImageService } from 'src/app/common/services/svgimage-service.service';
+import { UserService } from 'src/app/common/services/user.service';
+import { VillageService } from 'src/app/common/services/village.service';
+import ColorThief from 'colorthief';
+import { ActivatedRoute } from '@angular/router';
 @Component({
   selector: 'app-canvas-editor',
   templateUrl: './canvas-editor.component.html',
   styleUrls: ['./canvas-editor.component.scss']
 })
 export class CanvasEditorComponent {
+
   @ViewChild('imageDraw') imageDraw!: ElementRef<SVGElement | HTMLElement>;
-  viewBox = "0 0 1024 1024";
-  svgWidth = 1024;
-  svgHeight = 1024;
-  backgroundUrl = 'https://images.unsplash.com/photo-1682685796063-d2604827f7b3?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
-  elements: any = [];
-  userSubscription: any;
+
+  postEdit!: Post;
   user!: User;
+  userFullName!: string;
+  addressList: any;
+  address!: string;
+
+  postForm!: FormGroup;
+  types!: selectKey[];
+
+  selectedElement: any;
   offsetX = 0;
   offsetY = 0;
-  selectedElement: any;
-  elementForm!: FormGroup | null;
-  constructor(private renderer: Renderer2, private US: UserService, private fb: FormBuilder) {
+  title: string | undefined = "Add Image";
+  breadcrumb: any | undefined = "Add Image";
+  routeData: any;
 
-  }
-  ngAfterViewInit(): void {
-    this.userSubscription = this.US.getUser().subscribe((user: User | null) => {
-      if (user) {
-        this.user = user;
-        this.elements = [
-          { type: 'text', x: 300, y: 30, text: 'John Doe' },
-          { type: 'avatar', x: 300, y: 300, r: 100, imageUrl: this.user.image || 'assets/images/jpeg/profile-1.jpeg' },
-        ]
-        this.drawCanvas();
+  colorSet: string[] = [];
+  constructor(
+    private renderer: Renderer2,
+    private fb: FormBuilder,
+    private postService: PostService,
+    private US: UserService,
+    private VS: VillageService,
+    private IMG: SVGImageService,
+    private route: ActivatedRoute
+  ) {
+    this.US.getUser().subscribe(async (value) => {
+      if (value) {
+        this.user = value;
+        this.userFullName = this.user.firstname + ' ' + this.user.lastname;
+        this.getVillage(this.user.taluka_id);
       }
     });
   }
-  async getImageDataUrl(imageUrl: string): Promise<string> {
-    try {
-      // Fetch the image
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
+  isAccordionOpen: boolean[] = [];
+  toggleAccordion(index: number) {
+    console.log(index)
+    this.isAccordionOpen[index] = !this.isAccordionOpen[index];
+  }
+  getPostById(postId: any): void {
+    this.postService.getPostById(postId)
+      .subscribe(
+        post => {
 
-      // Convert the blob to a data URL
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error('Error fetching or converting image:', error);
-      throw error;
-    }
+          this.initForm();
+          if (post) {
+            this.postEdit = post;
+            this.postForm.reset();
+            this.postForm?.setValue(this.postEdit);
+          } else {
+          }
+        },
+        error => {
+          console.error('Error fetching post:', error);
+          this.initForm();
+          this.routeData['title'] = "Add Image";
+          this.routeData['breadcrumb'] = "Add Image";
+        }
+      );
   }
 
-  async drawCanvas() {
-    this.backgroundUrl = await this.getImageDataUrl(this.backgroundUrl);
-    const svg = this.imageDraw.nativeElement;
-    // Set viewBox and dimensions
-    this.renderer.setAttribute(svg, 'viewBox', this.viewBox);
-    // Draw background
-    const background = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
-    this.renderer.setAttribute(background, 'x', '0');
-    this.renderer.setAttribute(background, 'y', '0');
-    this.renderer.setAttribute(background, 'width', '100%'); // Set width to 100%
-    this.renderer.setAttribute(background, 'height', '100%'); // Set height to 100%
-    this.renderer.setAttribute(background, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
-    this.renderer.setAttribute(background, 'href', this.backgroundUrl);
-    this.renderer.appendChild(svg, background);
+  async getVillage(id: any) {
+    this.VS.getVillageById(id).subscribe(
+      (data) => {
+        this.addressList = data.data;
+        this.address = this.addressList.gu_name + ", તાલુકા : " + this.addressList.taluka_gu_name + ", જિલ્લા : " + this.addressList.district_gu_name;
+      },
+      (error: any) => {
 
-    // Draw elements
-    this.elements.forEach((element: any) => {
-      if (element.type === 'text') {
+      }
+    )
+  }
+  removeProperties(formData: any, types: string[]) {
+    if (formData && formData.details && formData.details.data) {
+      types.forEach(type => {
+        this.removePropertiesRecursive(formData.details.data, type);
+      });
+    }
+  }
+  removePropertiesRecursive(data: any[], type: string) {
+    data.forEach((item: any) => {
+      if (item.type === type) {
+        if (item.text !== undefined) {
+          item.text = '';
+        }
+        if (item.imageUrl !== undefined) {
+          item.imageUrl = '';
+        }
+      }
+      if (item.data) {
+        this.removePropertiesRecursive(item.data, type);
+      }
+    });
+  }
+  onSubmit() {
+    if (this.postForm.valid) {
+      const formData = this.postForm.value;
+      this.removeProperties(formData, ['name', 'avatar']);
+      if (formData.id === null) {
+        // If id is null, it's a new post, so add it
+        const { id, ...formDataWithoutId } = formData; // Destructure id and get formDataWithoutId
+        this.addPost(formDataWithoutId);
+      } else {
+        this.updatePost(formData);
+      }
+      console.log('Form submitted!', formData);
+      // You can also call a service to send the form data to the server
+    } else {
+      // If the form is invalid, mark all fields as touched to display validation errors
+      this.postForm.markAllAsTouched();
+    }
+  }
+  addPost(newPostData: Post): void {
+    this.postService.addPost(newPostData)
+      .subscribe(response => {
+
+      }, error => {
+        console.error(error); // Handle error appropriately
+      });
+  }
+  updatePost(newData: Post): void {
+    this.postService.updatePost(newData)
+      .subscribe(response => {
+
+      }, error => {
+        console.error(error); // Handle error appropriately
+      });
+  }
+  softDeletePost(postId: string): void {
+    this.postService.softDeletePost(postId)
+      .subscribe(response => {
+      }, error => {
+        console.error(error); // Handle error appropriately
+      });
+  }
+  hardDeletePost(postId: string): void {
+    this.postService.hardDeletePost(postId)
+      .subscribe(response => {
+      }, error => {
+        console.error(error); // Handle error appropriately
+      });
+  }
+  formArray(control: any) {
+    return control as FormArray;
+  }
+  get detailsData(): FormArray {
+    return this.postForm.get('details')?.get('data') as FormArray;
+  }
+  updateTextAndImageUrl(data: Post) {
+    const d: any = data.details;
+    for (let i = 0; i < d.data.length; i++) {
+      const item = d.data[i];
+      if (item.type === 'name' || item.type === 'address') {
+        item.text = item.type == 'name' ? this.userFullName : item.type == 'address' ? this.address : item.type;
+      } else if (item.type === 'avatar') {
+        item.imageUrl = this.user.image || 'assets/images/jpeg/profile-1.jpeg';
+      }
+    }
+    data.details = d;
+    return data;
+  }
+  initForm() {
+    this.postForm = this.fb.group({
+      id: [],
+      type: ['post'],
+      avatar: [false],
+      name: [false],
+      address: [false],
+      deleted_at: [false],
+      text_group: [false],
+      details: this.fb.group({
+        w: [1024, Validators.required],
+        h: [1024, Validators.required],
+        backgroundUrl: ['', Validators.required],
+        data: this.fb.array([])
+      })
+    });
+    // Subscribe to value changes for avatar, name, address, and text_group
+    ['avatar', 'name', 'address', 'text_group'].forEach(controlName => {
+      this.postForm.get(controlName)?.valueChanges.subscribe(value => {
+        if (value) {
+          this.IMG.addControlsByType(controlName, this.postForm.get('details') as FormGroup);
+        } else {
+          this.IMG.removeControlsByType(controlName, this.postForm.get('details') as FormGroup);
+        }
+      });
+    });
+    this.postForm?.valueChanges.subscribe((data: Post) => {
+      const updatedData = this.updateTextAndImageUrl(data);
+      const e = this.IMG.makeDataForImage(updatedData);
+      this.drawSVG(e);
+    })
+  }
+  async drawSVG(e: any) {
+    const { svgWidth, svgHeight, background, viewBox, elements } = e;
+    const backgroundUrl = await this.getImageDataUrl(background);
+    await this.getColors(backgroundUrl);
+    const svg = this.imageDraw.nativeElement;
+    while (svg.firstChild) {
+      svg.removeChild(svg.firstChild);
+    }
+    this.renderer.setAttribute(svg, 'viewBox', viewBox);
+    const b = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
+    this.renderer.setAttribute(b, 'x', '0');
+    this.renderer.setAttribute(b, 'y', '0');
+    this.renderer.setAttribute(b, 'width', '100%'); // Set width to 100%
+    this.renderer.setAttribute(b, 'height', '100%'); // Set height to 100%
+    this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
+    this.renderer.setAttribute(b, 'href', backgroundUrl);
+    this.renderer.appendChild(svg, b);
+    elements.forEach((element: any) => {
+      console.log(element)
+      if (element.type === 'name' || element.type === 'address') {
         const text = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
         const textAttributes = {
-          'data-type': 'text',
+          'data-type': element.type,
           'x': element.x.toString(),
           'y': element.y.toString(),
-          'font-size': '40',
-          'fill': '#FFFFFF',
-          'text-anchor': 'start',
-          'dominant-baseline': 'hanging',
+          'font-size': element.fs,
+          'fill': '#FFF',
+          'text-anchor': this.IMG.textPosition(element.textAlign),
+          'dominant-baseline': 'reset-size',
         };
+        let textDecoration = '';
+        let fontstyle = '';
+        if (element.fontStyle.underline) {
+          textDecoration += 'underline ';
+        }
+        if (element.fontStyle.italic) {
+          fontstyle += 'italic ';
+        }
         const textStyles = {
           '-webkit-user-select': 'none',
           'font-family': "'Hind Vadodara', sans-serif",
-          'font-weight': '600'
+          'font-weight': element.fw.toString(),
+          'text-decoration': textDecoration.trim(),
+          'font-style': fontstyle.trim(),
         };
-
         Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(text, key, value));
-        Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(text, key, value));
+        Object.entries(textStyles).forEach(([key, value]) => { this.renderer.setStyle(text, key, value) });
 
         if (element.text) {
           this.renderer.appendChild(text, this.renderer.createText(element.text));
         }
         this.renderer.appendChild(svg, text);
-      }
-      else if (element.type === 'avatar') {
+      } else if (element.type === 'avatar') {
         const circle = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
         this.renderer.setAttribute(circle, 'data-type', 'avatar');
         this.renderer.setAttribute(circle, 'cx', element.x.toString());
         this.renderer.setAttribute(circle, 'cy', element.y.toString());
         this.renderer.setAttribute(circle, 'r', element.r.toString());
         this.renderer.setAttribute(circle, 'fill', 'url(#image-pattern)');
-        this.renderer.setAttribute(circle, 'stroke', 'white');
-        this.renderer.setAttribute(circle, 'stroke-width', '10');
+        this.renderer.setAttribute(circle, 'stroke', element.bordercolor);
+        this.renderer.setAttribute(circle, 'stroke-width', element.borderwidth);
         this.renderer.setStyle(circle, 'cursor', 'grab');
         this.renderer.setStyle(circle, 'filter', 'url(#shadow)');
         this.renderer.appendChild(svg, circle);
@@ -127,14 +293,13 @@ export class CanvasEditorComponent {
         this.renderer.appendChild(imagePattern, image);
         this.renderer.appendChild(svg, imagePattern);
       }
+    })
+    this.addDraggableBehavior(svgWidth, svgHeight, elements);
 
-    });
-
-    this.addDraggableBehavior();
   }
-
-  addDraggableBehavior(): void {
-    this.elements.forEach((element: any) => {
+  addDraggableBehavior(svgWidth: number,
+    svgHeight: number, elements: any): void {
+    elements.forEach((element: any) => {
       const svgElement = this.imageDraw.nativeElement as SVGSVGElement;
       const draggableElement = svgElement.querySelector(`[data-type="${element.type}"]`);
       if (draggableElement) {
@@ -144,7 +309,7 @@ export class CanvasEditorComponent {
           this.selectedElement = element;
           isDragging = true;
           console.log(event);
-          const svgPoint = this.getMousePosition(event, svgElement);
+          const svgPoint = this.IMG.getMousePosition(event, svgElement);
           const clickedX = svgPoint.x;
           const clickedY = svgPoint.y;
           let elementX;
@@ -159,15 +324,11 @@ export class CanvasEditorComponent {
           this.offsetX = elementX - clickedX;
           this.offsetY = elementY - clickedY;
           this.renderer.setAttribute(draggableElement, 'cursor', 'grabbing');
-          this.buildForm(element);
         };
-
         const onMouseMove = (event: MouseEvent) => {
-          event.preventDefault();
           if (isDragging) {
-            const svgPoint = this.getMousePosition(event, svgElement);
+            const svgPoint = this.IMG.getMousePosition(event, svgElement);
             const draggableElement = svgElement.querySelector(`[data-type="${element.type}"]`) as SVGGraphicsElement;
-            this.buildForm(this.selectedElement);
             if (draggableElement) {
               let x, y;
               let r = 0;
@@ -184,15 +345,37 @@ export class CanvasEditorComponent {
                 const oY = svgPoint.y - y + this.offsetY;
                 const newX = x + oX;
                 const newY = y + oY;
-                const minX = 30 + r;
-                const minY = 30 + r;
-                const maxX = this.svgWidth - (draggableElement.getBBox().width + minX) + 2 * r;
-                const maxY = this.svgHeight - (draggableElement.getBBox().height + minY) + 2 * r;
+                let minX = 30 + r;
+                let minY = 30 + r;
+                let maxX = svgWidth - (draggableElement.getBBox().width + minX) + 2 * r;
+                let maxY = svgHeight - (draggableElement.getBBox().height + minY) + 2 * r;
+                const textAnchor = draggableElement.getAttribute('text-anchor');
+                if (textAnchor) {
+                  minY += draggableElement.getBBox().height / 2;
+                  maxY += draggableElement.getBBox().height;
+                  switch (textAnchor) {
+                    case 'middle':
+                      minX += draggableElement.getBBox().width / 2;
+                      maxX += draggableElement.getBBox().width / 2;
+                      break;
+                    case 'start':
 
-                const adjustedX = Math.min(Math.max(newX, minX), maxX);
-                const adjustedY = Math.min(Math.max(newY, minY), maxY);
+                      break;
+                    case 'end':
+                      minX += draggableElement.getBBox().width;
+                      maxX += draggableElement.getBBox().width;
+                      break;
+                    default:
+                      // Handle other cases if needed
+                      break;
+                  }
+                }
+
+                const adjustedX = Math.floor(Math.min(Math.max(newX, minX), maxX));
+                const adjustedY = Math.floor(Math.min(Math.max(newY, minY), maxY));
                 element.x = adjustedX;
                 element.y = adjustedY;
+
                 if (element.type === 'avatar') {
                   this.renderer.setAttribute(draggableElement, 'cx', adjustedX.toString());
                   this.renderer.setAttribute(draggableElement, 'cy', adjustedY.toString());
@@ -200,6 +383,7 @@ export class CanvasEditorComponent {
                   this.renderer.setAttribute(draggableElement, 'x', adjustedX.toString());
                   this.renderer.setAttribute(draggableElement, 'y', adjustedY.toString());
                 }
+                this.IMG.setData(element, this.postForm.get('details')?.get('data') as FormArray);
               }
             }
           }
@@ -213,77 +397,79 @@ export class CanvasEditorComponent {
         this.renderer.listen(svgElement, 'mousemove', onMouseMove);
         this.renderer.listen(svgElement, 'touchmove', onMouseMove);
         this.renderer.listen(svgElement, 'mouseup', onMouseUp);
+        this.renderer.listen(svgElement, 'mouseleave', onMouseUp);
         this.renderer.listen(svgElement, 'touchend', onMouseUp);
       }
     });
   }
-  getMousePosition(evt: TouchEvent | MouseEvent, svg: SVGSVGElement): { x: number, y: number } {
-    evt.preventDefault();
-    const touchOrMouse = 'touches' in evt ? evt.touches[0] : evt;
-    const CTM = svg.getScreenCTM();
-    return {
-      x: (touchOrMouse.clientX - CTM!.e) / CTM!.a,
-      y: (touchOrMouse.clientY - CTM!.f) / CTM!.d
-    };
-  }
-  buildForm(selectedElement: any): void {
-    this.elementForm = null;
-    const formGroupConfig: { [key: string]: any } = {};
-    Object.keys(selectedElement).forEach(key => {
-      formGroupConfig[key] = [selectedElement[key], Validators.required];
-    });
-    this.elementForm = this.fb.group(formGroupConfig);
-  }
-  captureScreenshot(): void {
-    const svgElement = this.imageDraw.nativeElement as HTMLElement;
-    svgElement.setAttribute('width', `${this.svgWidth}px`);
-    svgElement.setAttribute('height', `${this.svgHeight}px`);
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d') as CanvasRenderingContext2D;
-    canvas.width = this.svgWidth;
-    canvas.height = this.svgHeight;
-    const svgString = new XMLSerializer().serializeToString(svgElement);
-    const image = new Image();
-    image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
-    image.onload = () => {
-      context.drawImage(image, 0, 0);
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const blobUrl = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-          link.download = `screenshot_${timestamp}.jpg`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        }
-        svgElement.removeAttribute('width');
-        svgElement.removeAttribute('height');
-      }, 'image/jpeg', 1);
-    };
-  }
-
-
-  openImageInNewWindow(dataURL: string): void {
-    const newWindow = window.open('', '_blank');
-    if (newWindow) {
-      newWindow.document.write('<html><head><title>Image Preview</title></head><body style="margin: 0; text-align: center;">');
-      newWindow.document.write('<img src="' + dataURL + '" style="max-width: 100%; max-height: 100vh;"/>');
-      newWindow.document.write('<button onclick="downloadImage()">Download</button>');
-      newWindow.document.write('<script>');
-      newWindow.document.write('function downloadImage() {');
-      newWindow.document.write('  var link = document.createElement("a");');
-      newWindow.document.write('  link.href = "' + dataURL + '";');
-      newWindow.document.write('  link.download = "image.jpg";');
-      newWindow.document.write('  link.click();');
-      newWindow.document.write('}');
-      newWindow.document.write('</script>');
-      newWindow.document.write('</body></html>');
-      newWindow.document.close();
-    } else {
-      console.error('Failed to open a new window.');
+  async getImageDataUrl(imageUrl: string): Promise<string> {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const convertedImageUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      return convertedImageUrl;
+    } catch (error) {
+      console.error('Error fetching or converting image:', error);
+      throw error;
     }
+  }
+
+  async getColors(image: string): Promise<void> {
+    try {
+      const colorThief = new ColorThief();
+      const img = new Image();
+      img.src = image;
+      img.crossOrigin = "Anonymous";
+      let colorCounts = 10;
+      img.onload = () => {
+        const dominantColors = colorThief.getPalette(img, colorCounts);
+        this.colorSet = dominantColors.map((rgb: number[]) => this.rgbToHex(rgb[0], rgb[1], rgb[2]));
+        this.colorSet.unshift('#000000', '#FFFFFF');
+      };
+      // img.onerror = (error) => {
+      //     console.error("Error loading image:", error);
+      // };
+    } catch (error) {
+      console.error("Error getting colors:", error);
+    }
+  }
+  rgbToHex(r: number, g: number, b: number): string {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+  getColorClass(isActive: boolean): string {
+    if (isActive) {
+      return '';
+    } else {
+      return 'shadow border border-light border-3';
+    }
+  }
+  selectColor(color: string, control: FormControl) {
+    control.setValue(color);
+  }
+
+  updateColor(event: any, control: AbstractControl<any, any>) {
+    const value = (event.target as HTMLInputElement).value;
+    control.setValue(value);
+  }
+  ngOnInit() {
+    this.routeData = this.route.snapshot.data;
+    this.types = [
+      { id: 'post', name: 'Post' }
+    ];
+    this.initForm();
+    this.route.queryParams.subscribe(params => {
+      const imgParam = params['img'];
+      if (imgParam) {
+        this.getPostById(imgParam);
+      } else {
+        this.initForm();
+      }
+    });
+
   }
 }

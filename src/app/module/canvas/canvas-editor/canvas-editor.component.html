@@ -1,21 +1,470 @@
 <div class="h-100 d-flex flex-column p-3">
   <div class="flex-grow-1 position-relative overflow-hidden">
-    <div class="position-absolute h-100 w-100 text-center d-flex align-items-center justify-content-center"
-      id="canvas-container">
-      <svg #imageDraw class="max-w-100 max-h-100"></svg>
-    </div>
-  </div>
-  <div class="mt-3 d-flex">
-    <div *ngIf="elementForm">
-      <form [formGroup]="elementForm">
-        <div *ngFor="let controlName of elementForm.controls | keyvalue">
-          <label>{{ controlName.key }}</label>
-          <input [formControlName]="controlName.key" [(ngModel)]="selectedElement[controlName.key]" />
+    <div class="position-absolute h-100 w-100 d-flex overflow-auto flex-column">
+      <div class="container h-100 w-100">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <svg #imageDraw class="w-100 max-w-100-p" viewBox="0 0 0 0"></svg>
+          </div>
+          <div class="col-md-6">
+            <form [formGroup]="postForm" (ngSubmit)="onSubmit()">
+              <div class="row g-3">
+                <div class="col-md-12">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Post Type</label>
+                    <select class="form-select" selectDropdown [options]="types" id="type" formControlName="type">
+                      <option value="" disabled selected>Select a type</option>
+                      <option *ngFor="let type of types" [value]="type.id">{{ type.name }}</option>
+                    </select>
+                    <input type="text" formControlName="deleted_at" hidden>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-lg-3 col-md-6 col-sm-3 col-6">
+                      <div class="form-group mb-3 py-2 px-3 border border-5"
+                        [ngClass]="postForm.get('avatar')?.value ? 'border-success' : 'border-light'"
+                        for="avatarSwitch">
+                        <div class="form-check form-switch">
+                          <label class="form-check-label" for="avatarSwitch">Avatar</label>
+                          <input class="form-check-input" type="checkbox" formControlName="avatar" id="avatarSwitch">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-3 col-6">
+                      <div class="form-group mb-3 py-2 px-3 border border-5"
+                        [ngClass]="postForm.get('name')?.value ? 'border-success' : 'border-light'" for="nameSwitch">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" formControlName="name" id="nameSwitch">
+                          <label class="form-check-label" for="nameSwitch">Name</label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-3 col-6">
+                      <div class="form-group mb-3 py-2 px-3 border border-5"
+                        [ngClass]="postForm.get('address')?.value ? 'border-success' : 'border-light'"
+                        for="avatarSwitch">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" formControlName="address" id="addressSwitch">
+                          <label class="form-check-label" for="addressSwitch">Address</label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-3 col-6">
+                      <div class="form-group mb-3 py-2 px-3 border border-5"
+                        [ngClass]="postForm.get('text_group')?.value ? 'border-success' : 'border-light'"
+                        for="avatarSwitch">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" formControlName="text_group"
+                            id="textGroupSwitch">
+                          <label class="form-check-label" for="textGroupSwitch">Text Group</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <ng-container formGroupName="details">
+                    <div class="row g-3">
+                      <div class="col-6">
+                        <div class="form-group">
+                          <label class="form-label">Width</label>
+                          <input class="form-control" type="number" formControlName="w" placeholder="Image Width">
+                        </div>
+                      </div>
+                      <div class="col-6">
+                        <div class="form-group">
+                          <label class="form-label">Height</label>
+                          <input class="form-control" type="number" formControlName="h" placeholder="Image Height">
+                        </div>
+                      </div>
+                      <div class="col-12">
+                        <div class="form-group">
+                          <label class="form-label">Background Image URL</label>
+                          <input class="form-control" type="text" formControlName="backgroundUrl"
+                            placeholder="Background URL">
+                        </div>
+                      </div>
+                    </div>
+                    <div formArrayName="data" class="col-12" *ngIf="detailsData.controls.length">
+                      <div class="accordion mt-3" id="accordionExample">
+                        <ng-container *ngFor="let data of detailsData.controls; let j = index">
+                          <ng-container [formGroupName]="j">
+                            <div class="accordion-item">
+                              <div class="accordion-header" [id]="'heading-'+j">
+                                <button class="accordion-button collapsed p-2" type="button" data-bs-toggle="collapse"
+                                  [attr.data-bs-target]="'#detail-type-'+j" aria-expanded="true" [attr.aria-controls]="'detail-type-'+j">
+                                  <h6 class="text-capitalize m-0">{{ data.get('type')?.value }}</h6>
+                                </button>
+                              </div>
+                              <div [id]="'detail-type-'+j" class="accordion-collapse collapse" [attr.aria-labelledby]="'heading-'+j"
+                                [attr.data-bs-parent]="'#accordionExample'">
+                                <div class="accordion-body">
+                                  <div class="row g-3">
+                                    <ng-container *ngIf="postForm.get('avatar')?.value && data.get('type')?.value == 'avatar'">
+                                      <div class="col-6" *ngIf="data.get('x')">
+                                        <input type="text" formControlName="type" value="avatar" hidden>
+                                        <div class="form-group">
+                                          <label class="form-label">X</label>
+                                          <input class="form-control" type="number" formControlName="x" placeholder="X">
+                                        </div>
+                                      </div>
+                                      <div class="col-6" *ngIf="data.get('y')">
+                                        <div class="form-group">
+                                          <label class="form-label">Y</label>
+                                          <input class="form-control" type="number" formControlName="y" placeholder="Y">
+                                        </div>
+                                      </div>
+                                      <div class="col-6" *ngIf="data.get('r')">
+                                        <div class="form-group">
+                                          <label class="form-label">Radius</label>
+                                          <input class="form-control" type="number" formControlName="r" placeholder="Radius">
+                                        </div>
+                                      </div>
+                                      <div class="col-6" *ngIf="data.get('borderwidth')">
+                                        <div class="form-group">
+                                          <label class="form-label">Border Width</label>
+                                          <input class="form-control" type="number" formControlName="borderwidth"
+                                            placeholder="Border Width">
+                                        </div>
+                                      </div>
+                                      <ng-container *ngIf="data.get('bordercolor') as borderColorControl">
+                                        <div class="col-6">
+                                          <div class="form-group">
+                                            <label class="form-label d-block">Border Color</label>
+                                            <!-- Color Palette -->
+                                            <div class="btn-group rounded-0 d-block" role="group" data-toggle="buttons">
+                                              <ng-container *ngFor="let color of colorSet">
+                                                <input type="radio" class="btn-check" [id]="'border-color-' + color+j"
+                                                  formControlName="bordercolor" [value]="color" autocomplete="off">
+                                                <label class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
+                                                  [for]="'border-color-' + color+j"
+                                                  [class.border-secondary]="data.get('bordercolor')?.value == color">
+                                                  <!-- Display a color sample -->
+                                                  <span [style]="'background-color: '+color+'; display: block;'"
+                                                    class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                    [class]="getColorClass(data.get('bordercolor')?.value == color)"></span>
+                                                </label>
+                                              </ng-container>
+                                              <div class="spinner-border" role="status" *ngIf="!colorSet.length">
+                                                <span class="sr-only">Loading...</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="col-6 d-flex align-items-end">
+                                          <input type="text" class="form-control" [value]="borderColorControl.value"
+                                            (input)="updateColor($event, borderColorControl)">
+                                        </div>
+                                      </ng-container>
+          
+                                    </ng-container>
+                                    <ng-container *ngIf="data.get('type')?.value == 'name'||data.get('type')?.value == 'address'">
+                                      <div class="col-6" *ngIf="data.get('x') && data.get('y')">
+                                        <input type="text" formControlName="type" [value]="data.get('type')?.value" hidden>
+                                        <div class="row g-3">
+                                          <div class="col-6">
+                                            <div class="form-group">
+                                              <label class="form-label">X</label>
+                                              <input class="form-control" type="number" formControlName="x" placeholder="X">
+                                            </div>
+                                          </div>
+                                          <div class="col-6">
+                                            <div class="form-group">
+                                              <label class="form-label">Y</label>
+                                              <input class="form-control" type="number" formControlName="y" placeholder="Y">
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="col-6" *ngIf="data.get('fs')">
+                                        <div class="form-group">
+                                          <label class="form-label">Font Size</label>
+                                          <input class="form-control" type="number" formControlName="fs" placeholder="Font Size">
+                                        </div>
+                                      </div>
+                                      <div formGroupName="fontStyle" class="col-6" *ngIf="data.get('fontStyle')">
+                                        <div class="form-group">
+                                          <label class="form-label">Font Style</label>
+                                          <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                                            <label class="btn btn-outline-dark"
+                                              [class.active]="data.get('fontStyle')?.get('italic')?.value">
+                                              <input type="checkbox" autocomplete="off" formControlName="italic" class="d-none"><i
+                                                class="fa fa-italic"></i>
+                                            </label>
+                                            <label class="btn btn-outline-dark"
+                                              [class.active]="data.get('fontStyle')?.get('underline')?.value">
+                                              <input type="checkbox" autocomplete="off" formControlName="underline"
+                                                class="d-none"><i class="fa fa-underline"></i>
+                                            </label>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="col-6" *ngIf="data.get('textAlign')">
+                                        <div class="form-group">
+                                          <label class="form-label">Text Align</label>
+                                          <div class="btn-group w-100" role="group" data-toggle="buttons">
+                                            <input type="radio" class="btn-check" [id]="'radioLeft'+j" formControlName="textAlign"
+                                              [value]="'left'" autocomplete="off">
+                                            <label class="btn btn-outline-dark" [for]="'radioLeft'+j">
+                                              <i class="fa fa-align-left"></i>
+                                            </label>
+                                            <input type="radio" class="btn-check" [id]="'radioCenter'+j"
+                                              formControlName="textAlign" [value]="'center'" autocomplete="off">
+                                            <label class="btn btn-outline-dark" [for]="'radioCenter'+j">
+                                              <i class="fa fa-align-center"></i>
+                                            </label>
+                                            <input type="radio" class="btn-check" [id]="'radioRight'+j"
+                                              formControlName="textAlign" [value]="'right'" autocomplete="off">
+                                            <label class="btn btn-outline-dark" [for]="'radioRight'+j">
+                                              <i class="fa fa-align-right"></i>
+                                            </label>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <ng-container *ngIf="data.get('color') as colorControl">
+                                        <div class="col-6">
+                                          <div class="form-group">
+                                            <label class="form-label d-block">Border Color</label>
+                                            <!-- Color Palette -->
+                                            <div class="btn-group rounded-0 d-block" role="group" data-toggle="buttons">
+                                              <ng-container *ngFor="let color of colorSet">
+                                                <input type="radio" class="btn-check" [id]="'color-' + color+j"
+                                                  formControlName="color" [value]="color" autocomplete="off">
+                                                <label class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
+                                                  [for]="'color-' + color+j"
+                                                  [class.border-secondary]="data.get('color')?.value == color">
+                                                  <!-- Display a color sample -->
+                                                  <span [style]="'background-color: '+color+'; display: block;'"
+                                                    class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                    [class]="getColorClass(data.get('color')?.value == color)"></span>
+                                                </label>
+                                              </ng-container>
+                                              <div class="spinner-border" role="status" *ngIf="!colorSet.length">
+                                                <span class="sr-only">Loading...</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="col-6 d-flex align-items-end">
+                                          <input type="text" class="form-control" [value]="colorControl.value"
+                                            (input)="updateColor($event, colorControl)">
+                                        </div>
+                                      </ng-container>
+                                      <div class="col-6" *ngIf="data.get('fw')">
+                                        <div class="form-group">
+                                          <label class="form-label">Font Weight</label>
+                                          <div class="btn-group w-100" role="group" data-toggle="buttons">
+                                            <!-- Font Weight 300 -->
+                                            <input type="radio" class="btn-check" [id]="'fw-300'+j" formControlName="fw"
+                                              [value]="'300'" autocomplete="off">
+                                            <label class="btn btn-outline-dark" [for]="'fw-300'+j">
+                                              <span style="font-weight: 300;">A</span>
+                                            </label>
+                                            <!-- Font Weight 400 -->
+                                            <input type="radio" class="btn-check" [id]="'fw-400'+j" formControlName="fw"
+                                              [value]="'400'" autocomplete="off">
+                                            <label class="btn btn-outline-dark" [for]="'fw-400'+j">
+                                              <span style="font-weight: 400;">A</span>
+                                            </label>
+                                            <!-- Font Weight 500 -->
+                                            <input type="radio" class="btn-check" [id]="'fw-500'+j" formControlName="fw"
+                                              [value]="'500'" autocomplete="off">
+                                            <label class="btn btn-outline-dark" [for]="'fw-500'+j">
+                                              <span style="font-weight: 500;">A</span>
+                                            </label>
+                                            <!-- Font Weight 600 -->
+                                            <input type="radio" class="btn-check" [id]="'fw-600'+j" formControlName="fw"
+                                              [value]="'600'" autocomplete="off">
+                                            <label class="btn btn-outline-dark" [for]="'fw-600'+j">
+                                              <span style="font-weight: 600;">A</span>
+                                            </label>
+                                            <!-- Font Weight 700 -->
+                                            <input type="radio" class="btn-check" [id]="'fw-700'+j" formControlName="fw"
+                                              [value]="'700'" autocomplete="off">
+                                            <label class="btn btn-outline-dark" [for]="'fw-700'+j">
+                                              <span style="font-weight: 700;">A</span>
+                                            </label>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </ng-container>
+                                    <ng-container
+                                      *ngIf="postForm.get('text_group')?.value && data.get('type')?.value === 'text_group'">
+                                      <ng-container *ngIf="data.get('data')">
+                                        <input type="text" formControlName="type" [value]="data.get('type')?.value" hidden>
+                                        <div formArrayName="data" class="col-12">
+                                          <div *ngFor="let item of formArray(data.get('data')).controls; let k = index"
+                                            class="border rounded-2 p-3 mb-3">
+                                            <div [formGroupName]="k" class="row">
+                                              <ng-container
+                                                *ngIf="item.get('type')?.value === 'name' || item.get('type')?.value === 'address'">
+                                                <div class="col-12">
+                                                  <h6 class="text-capitalize mb-2">{{item.get('type')?.value}}</h6>
+                                                  <hr class="m-0">
+                                                  <input type="text" formControlName="type" [value]="item.get('type')?.value"
+                                                    hidden>
+                                                </div>
+                                                <div class="col-6" *ngIf="item.get('x') && item.get('y')">
+                                                  <div class="row g-3">
+                                                    <div class="col-6">
+                                                      <div class="form-group">
+                                                        <label class="form-label">X</label>
+                                                        <input class="form-control" type="number" formControlName="x"
+                                                          placeholder="X">
+                                                      </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                      <div class="form-group">
+                                                        <label class="form-label">Y</label>
+                                                        <input class="form-control" type="number" formControlName="y"
+                                                          placeholder="Y">
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                                <div class="col-6" *ngIf="item.get('fs')">
+                                                  <div class="form-group">
+                                                    <label class="form-label">Font Size</label>
+                                                    <input class="form-control" type="number" formControlName="fs"
+                                                      placeholder="Font Size">
+                                                  </div>
+                                                </div>
+                                                <div formGroupName="fontStyle" class="col-6" *ngIf="item.get('fontStyle')">
+                                                  <div class="form-group">
+                                                    <label class="form-label">Font Style</label>
+                                                    <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                                                      <label class="btn btn-outline-dark"
+                                                        [class.active]="item.get('fontStyle')?.get('italic')?.value">
+                                                        <input type="checkbox" autocomplete="off" formControlName="italic"
+                                                          class="d-none"><i class="fa fa-italic"></i>
+                                                      </label>
+                                                      <label class="btn btn-outline-dark"
+                                                        [class.active]="item.get('fontStyle')?.get('underline')?.value">
+                                                        <input type="checkbox" autocomplete="off" formControlName="underline"
+                                                          class="d-none"><i class="fa fa-underline"></i>
+                                                      </label>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                                <div class="col-6" *ngIf="item.get('textAlign')">
+                                                  <div class="form-group">
+                                                    <label class="form-label">Text Align</label>
+                                                    <div class="btn-group w-100" role="group" data-toggle="buttons">
+                                                      <input type="radio" class="btn-check" [id]="'radioLeft-'+k"
+                                                        formControlName="textAlign" [value]="'left'" autocomplete="off">
+                                                      <label class="btn btn-outline-dark" [for]="'radioLeft-'+k">
+                                                        <i class="fa fa-align-left"></i>
+                                                      </label>
+                                                      <input type="radio" class="btn-check" [id]="'radioCenter-'+k"
+                                                        formControlName="textAlign" [value]="'center'" autocomplete="off">
+                                                      <label class="btn btn-outline-dark" [for]="'radioCenter-'+k">
+                                                        <i class="fa fa-align-center"></i>
+                                                      </label>
+                                                      <input type="radio" class="btn-check" [id]="'radioRight-'+k"
+                                                        formControlName="textAlign" [value]="'right'" autocomplete="off">
+                                                      <label class="btn btn-outline-dark" [for]="'radioRight-'+k">
+                                                        <i class="fa fa-align-right"></i>
+                                                      </label>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                                <ng-container *ngIf="item.get('color') as colorControl">
+                                                  <div class="col-6">
+                                                    <div class="form-group">
+                                                      <label class="form-label d-block">Border Color</label>
+                                                      <!-- Color Palette -->
+                                                      <div class="btn-group rounded-0 d-block" role="group" data-toggle="buttons">
+                                                        <ng-container *ngFor="let color of colorSet">
+                                                          <input type="radio" class="btn-check" [id]="'color-group-' + color+k"
+                                                            formControlName="color" [value]="color" autocomplete="off">
+                                                          <label
+                                                            class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
+                                                            [for]="'color-group-' + color+k"
+                                                            [class.border-secondary]="item.get('color')?.value == color">
+                                                            <!-- Display a color sample -->
+                                                            <span [style]="'background-color: '+color+'; display: block;'"
+                                                              class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                              [class]="getColorClass(item.get('color')?.value == color)"></span>
+                                                          </label>
+                                                        </ng-container>
+                                                        <div class="spinner-border" role="status" *ngIf="!colorSet.length">
+                                                          <span class="sr-only">Loading...</span>
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                  <div class="col-6 d-flex align-items-end">
+                                                    <input type="text" class="form-control" [value]="colorControl.value"
+                                                      (input)="updateColor($event, colorControl)">
+                                                  </div>
+                                                </ng-container>
+                                                <div class="col-6" *ngIf="item.get('fw')">
+                                                  <div class="form-group">
+                                                    <label class="form-label">Font Weight</label>
+                                                    <div class="btn-group w-100" role="group" data-toggle="buttons">
+                                                      <!-- Font Weight 300 -->
+                                                      <input type="radio" class="btn-check" [id]="'fw-300-'+k"
+                                                        formControlName="fw" [value]="'300'" autocomplete="off">
+                                                      <label class="btn btn-outline-dark" [for]="'fw-300-'+k">
+                                                        <i class="fa fa-font"></i> 300
+                                                      </label>
+                                                      <!-- Font Weight 400 -->
+                                                      <input type="radio" class="btn-check" [id]="'fw-400-'+k"
+                                                        formControlName="fw" [value]="'400'" autocomplete="off">
+                                                      <label class="btn btn-outline-dark" [for]="'fw-400-'+k">
+                                                        <i class="fa fa-font"></i> 400
+                                                      </label>
+                                                      <!-- Font Weight 500 -->
+                                                      <input type="radio" class="btn-check" [id]="'fw-500-'+k"
+                                                        formControlName="fw" [value]="'500'" autocomplete="off">
+                                                      <label class="btn btn-outline-dark" [for]="'fw-500-'+k">
+                                                        <i class="fa fa-font"></i> 500
+                                                      </label>
+                                                      <!-- Font Weight 600 -->
+                                                      <input type="radio" class="btn-check" [id]="'fw-600-'+k"
+                                                        formControlName="fw" [value]="'600'" autocomplete="off">
+                                                      <label class="btn btn-outline-dark" [for]="'fw-600-'+k">
+                                                        <i class="fa fa-font"></i> 600
+                                                      </label>
+                                                      <!-- Font Weight 700 -->
+                                                      <input type="radio" class="btn-check" [id]="'fw-700-'+k"
+                                                        formControlName="fw" [value]="'700'" autocomplete="off">
+                                                      <label class="btn btn-outline-dark" [for]="'fw-700-'+k">
+                                                        <i class="fa fa-font"></i> 700
+                                                      </label>
+                                                    </div>
+                                                  </div>
+                                                </div>
+          
+                                              </ng-container>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </ng-container>
+                                    </ng-container>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </ng-container>
+                        </ng-container>
+                      </div>
+                      
+                      <ng-container *ngFor="let data of detailsData.controls; let j = index">
+                        <ng-container [formGroupName]="j">
+                          
+                        </ng-container>
+                      </ng-container>
+                    </div>
+                  </ng-container>
+                </div>
+                <div class="col-md-6">
+                </div>
+                <div class="col-12 d-flex">
+                  <button class="btn btn-success me-2" type="submit" [disabled]="!postForm.valid">Submit</button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
-    <button class="btn btn-primary mx-auto" (click)="captureScreenshot()">
-      <i class="fa fa-download me-2"></i>Download
-    </button>
   </div>
 </div>
