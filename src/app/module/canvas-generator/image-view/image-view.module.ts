@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { ImageViewRoutingModule } from './image-view-routing.module';
 import { ImageViewComponent } from './image-view.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 
 @NgModule({
@@ -11,7 +12,9 @@ import { ImageViewComponent } from './image-view.component';
   ],
   imports: [
     CommonModule,
-    ImageViewRoutingModule
+    ImageViewRoutingModule,
+    FormsModule,
+    ReactiveFormsModule
   ]
 })
 export class ImageViewModule { }

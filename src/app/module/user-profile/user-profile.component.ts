@@ -101,7 +101,7 @@ export class UserProfileComponent implements OnInit, AfterViewInit {
         this.cropper = new Cropper(cropperElement, {
           aspectRatio: 1,
           scalable: true,
-          viewMode: 3, // Ensure the crop box is always within the container
+          viewMode: 1, // Ensure the crop box is always within the container
           crop: (event) => {
             
           },
