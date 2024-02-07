@@ -10,8 +10,11 @@
           </div>
           <div class="row g-3" *ngIf="posts.length">
             <div class="col-lg-3 col-md-4 col-sm-6 col-12" *ngFor="let post of posts">
-              <a href="#" (click)="window.open('/canvas/editor?img=' + post.id, '_blank');false"><img
-                  src="{{post.details.backgroundUrl}}" alt="" class="img w-100"></a>
+              <img src="{{post.details.backgroundUrl}}" alt="" class="img w-100">
+              <div class="d-flex">
+                <a class="btn btn-sm me-auto" href="#" (click)="window.open('/canvas/editor?img=' + post.id, '_blank');false"><i class="fa fa-edit"></i> Edit</a>
+                <a class="btn btn-sm ms-auto" href="#" (click)="window.open('/images/view?img=' + post.id, '_blank');false"><i class="fa fa-eye"></i> View</a>
+              </div>
             </div>
             <div class="col-12">
               <div class="btn-group btn-group-toggle py-3">
