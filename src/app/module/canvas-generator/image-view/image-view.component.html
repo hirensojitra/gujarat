@@ -2,13 +2,58 @@
     <div class="flex-grow-1 position-relative overflow-hidden">
         <div class="position-absolute h-100 w-100 text-center d-flex align-items-center justify-content-center"
             id="canvas-container">
-            <pre>{{ele|json}}</pre>
+            <!-- <pre>{{ele|json}}</pre> -->
             <svg #imageDraw class="max-w-100 max-h-100"></svg>
         </div>
     </div>
     <div class="mt-3 d-flex">
-        <button class="btn btn-primary mx-auto" (click)="captureScreenshot()">
+        <button class="btn btn-primary mx-auto" (click)="capturePhoto()" [disabled]="!getDownload">
             <i class="fa fa-download me-2"></i>Download
         </button>
+        <button class="btn btn-primary mx-auto" (click)="shareToWhatsApp()" [disabled]="!getDownload">
+            <i class="fa fa-whatsapp me-2"></i> Share To WhatsApp
+        </button>
+    </div>
+</div>
+<div class="modal fade" id="textModal" tabindex="-1" aria-labelledby="textModalLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="textModalLabel">{{textModalTitle}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-dark">
+                <form [formGroup]="inputTextForm" (ngSubmit)="onTextSubmit()">
+                    <input type="text" formControlName="text" class="form-control form-control-lg fw-bold" #textInput>
+                    <input type="hidden" formControlName="id">
+                    <div class="d-flex mt-4">
+                        <button class="btn btn-primary mx-auto" [disabled]="inputTextForm.invalid"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="cropperModal" tabindex="-1" aria-labelledby="cropperModalLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cropperModalLabel">Profile Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="cropper" alt="Crop" class="w-100" [src]="profilePictureForm.get('image')?.value">
+                <input #imageInput type="file" (change)="handleImageInputChange($event)"
+                                    style="display: none">
+                <form [formGroup]="profilePictureForm" (ngSubmit)="onImageSubmit()">
+                    <input type="hidden" formControlName="id">
+                    <input type="hidden" formControlName="image">
+                    <div class="d-flex mt-4">
+                        <button class="btn btn-success mx-auto" (click)="openImageCropperDialog()" type="button"><i class="fa fa-refresh"></i> Change Photo</button>
+                        <button class="btn btn-primary mx-auto" [disabled]="profilePictureForm.invalid"><i class="fa fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>

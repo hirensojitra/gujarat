@@ -69,7 +69,8 @@ export class SVGImageService {
               italic: item.fontStyle?.italic || false,
               underline: item.fontStyle?.underline || false
             },
-            textAlign: item.textAlign || ''
+            textAlign: item.textAlign || '',
+            color: item.color || ''
           };
         } else {
           return {
@@ -95,8 +96,8 @@ export class SVGImageService {
   setData(element: any, dataControl: FormArray) {
     if (dataControl instanceof FormArray) {
       const e = dataControl.controls[element.index];
-      e.get('x')?.patchValue(element.x, { emitEvent: false });
-      e.get('y')?.patchValue(element.y, { emitEvent: false });
+      e.get('x')?.setValue(element.x, { emitEvent: false });
+      e.get('y')?.setValue(element.y, { emitEvent: false });
     }
   }
   addAvatarControls(dataFormArray: FormArray) {
