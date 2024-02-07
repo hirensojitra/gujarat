@@ -114,7 +114,7 @@
                                       <div class="col-6" *ngIf="data.get('r')">
                                         <div class="form-group">
                                           <label class="form-label">Radius</label>
-                                          <input class="form-control" type="number" formControlName="r" placeholder="Radius">
+                                          <input type="range" class="form-range" min="0" max="150" step="0.5" formControlName="r" >
                                         </div>
                                       </div>
                                       <div class="col-6" *ngIf="data.get('borderwidth')">
@@ -176,7 +176,7 @@
                                       <div class="col-6" *ngIf="data.get('fs')">
                                         <div class="form-group">
                                           <label class="form-label">Font Size</label>
-                                          <input class="form-control" type="number" formControlName="fs" placeholder="Font Size">
+                                          <input type="range" class="form-range" min="20" max="50" step="0.5" formControlName="fs">
                                         </div>
                                       </div>
                                       <div formGroupName="fontStyle" class="col-6" *ngIf="data.get('fontStyle')">
@@ -322,8 +322,7 @@
                                                 <div class="col-6" *ngIf="item.get('fs')">
                                                   <div class="form-group">
                                                     <label class="form-label">Font Size</label>
-                                                    <input class="form-control" type="number" formControlName="fs"
-                                                      placeholder="Font Size">
+                                                    <input type="range" class="form-range" min="20" max="50" step="0.5" formControlName="fs">
                                                   </div>
                                                 </div>
                                                 <div formGroupName="fontStyle" class="col-6" *ngIf="item.get('fontStyle')">

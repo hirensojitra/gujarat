@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 
 import { LoaderService } from './common/services/loader';
@@ -22,6 +22,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 export class AppComponent implements OnInit{
   title = 'Village Directory';
   breadcrumbs: { label: string, link: string }[] = [];
+  pressedKeysArray!: string[];
   constructor(private breadcrumbService: BreadcrumbService, private titleService: Title, public loaderService: LoaderService,
     private router: Router) {
     this.breadcrumbService.breadcrumbs$.subscribe(breadcrumbs => {
@@ -45,5 +46,22 @@ export class AppComponent implements OnInit{
         this.loaderService.hide();
       }
     })
+  }
+  
+  public pressedKeys: Set<string> = new Set<string>();
+  @HostListener('document:keydown', ['$event'])
+  handleKeyDownEvent(event: KeyboardEvent) {
+    this.pressedKeys.add(event.key);
+    this.handleMultipleKeys();
+  }
+
+  @HostListener('document:keyup', ['$event'])
+  handleKeyUpEvent(event: KeyboardEvent) {
+    this.pressedKeys.delete(event.key);
+  }
+
+  handleMultipleKeys() {
+    this.pressedKeys.size == 3;
+    this.pressedKeysArray = Array.from(this.pressedKeys);
   }
 }

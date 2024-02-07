@@ -22,7 +22,7 @@ export class CanvasEditorComponent {
   user!: User;
   userFullName!: string;
   addressList: any;
-  address!: string;
+  address: string = "Enter Address";
 
   postForm!: FormGroup;
   types!: selectKey[];
@@ -35,6 +35,7 @@ export class CanvasEditorComponent {
   routeData: any;
 
   colorSet: string[] = [];
+  imgParam: any;
   constructor(
     private renderer: Renderer2,
     private fb: FormBuilder,
@@ -44,6 +45,11 @@ export class CanvasEditorComponent {
     private IMG: SVGImageService,
     private route: ActivatedRoute
   ) {
+
+    this.initForm();
+    this.route.queryParams.subscribe(params => {
+      this.imgParam = params['img'];
+    });
     this.US.getUser().subscribe(async (value) => {
       if (value) {
         this.user = value;
@@ -54,19 +60,31 @@ export class CanvasEditorComponent {
   }
   isAccordionOpen: boolean[] = [];
   toggleAccordion(index: number) {
-    console.log(index)
     this.isAccordionOpen[index] = !this.isAccordionOpen[index];
   }
   getPostById(postId: any): void {
     this.postService.getPostById(postId)
       .subscribe(
         post => {
-
-          this.initForm();
           if (post) {
             this.postEdit = post;
             this.postForm.reset();
-            this.postForm?.setValue(this.postEdit);
+            const dataArray = this.postForm.get('details')?.get('data') as FormArray;
+            dataArray.clear(); // Clear any existing controls before setting new values
+            // this.postEdit.details.data.forEach((dataItem: any) => {
+            //   const dataGroup: { [key: string]: any } = {};
+            //   Object.entries(dataItem).forEach(([key, value]) => {
+            //     dataGroup[key] = [value]; // Create a form control for each key-value pair
+            //   });
+            //   const formDataGroup = this.fb.group(dataGroup);
+            //   dataArray.push(formDataGroup);
+            // });
+            this.postEdit.details.data.forEach((dataItem: any) => {
+              const formDataGroup = this.createFormGroup(dataItem);
+              dataArray.push(formDataGroup); // Push the new group into the FormArray
+            });
+            this.processPostEdit(this.postEdit)
+            this.postForm?.setValue(this.postEdit, { emitEvent: false });
           } else {
           }
         },
@@ -78,12 +96,30 @@ export class CanvasEditorComponent {
         }
       );
   }
+  createFormGroup(dataItem: any): FormGroup {
+    const group: { [key: string]: any } = {};
 
+    Object.entries(dataItem).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        group[key] = this.fb.array([]); // Create a FormArray for nested arrays
+        value.forEach((arrayItem: any) => {
+          (group[key] as FormArray).push(this.createFormGroup(arrayItem)); // Recursively create FormGroup for each array item
+        });
+      } else if (typeof value === 'object' && value !== null) {
+        group[key] = this.createFormGroup(value); // Recursively create FormGroup for nested objects
+      } else {
+        group[key] = [value]; // Create a form control for each key-value pair
+      }
+    });
+
+    return this.fb.group(group);
+  }
   async getVillage(id: any) {
     this.VS.getVillageById(id).subscribe(
       (data) => {
         this.addressList = data.data;
         this.address = this.addressList.gu_name + ", તાલુકા : " + this.addressList.taluka_gu_name + ", જિલ્લા : " + this.addressList.district_gu_name;
+        this.processPostEdit(this.postForm.value)
       },
       (error: any) => {
 
@@ -123,8 +159,6 @@ export class CanvasEditorComponent {
       } else {
         this.updatePost(formData);
       }
-      console.log('Form submitted!', formData);
-      // You can also call a service to send the form data to the server
     } else {
       // If the form is invalid, mark all fields as touched to display validation errors
       this.postForm.markAllAsTouched();
@@ -206,9 +240,7 @@ export class CanvasEditorComponent {
       });
     });
     this.postForm?.valueChanges.subscribe((data: Post) => {
-      const updatedData = this.updateTextAndImageUrl(data);
-      const e = this.IMG.makeDataForImage(updatedData);
-      this.drawSVG(e);
+      this.processPostEdit(data);
     })
   }
   async drawSVG(e: any) {
@@ -228,8 +260,7 @@ export class CanvasEditorComponent {
     this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
     this.renderer.setAttribute(b, 'href', backgroundUrl);
     this.renderer.appendChild(svg, b);
-    elements.forEach((element: any) => {
-      console.log(element)
+    elements.forEach((element: any, index: number) => {
       if (element.type === 'name' || element.type === 'address') {
         const text = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
         const textAttributes = {
@@ -237,7 +268,7 @@ export class CanvasEditorComponent {
           'x': element.x.toString(),
           'y': element.y.toString(),
           'font-size': element.fs,
-          'fill': '#FFF',
+          'fill': element.color||'#FFF',
           'text-anchor': this.IMG.textPosition(element.textAlign),
           'dominant-baseline': 'reset-size',
         };
@@ -258,11 +289,15 @@ export class CanvasEditorComponent {
         };
         Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(text, key, value));
         Object.entries(textStyles).forEach(([key, value]) => { this.renderer.setStyle(text, key, value) });
-
         if (element.text) {
           this.renderer.appendChild(text, this.renderer.createText(element.text));
+          this.renderer.listen(text, 'click', () => {
+            this.toggleAccordion(index);
+            console.log(index)
+          });
         }
         this.renderer.appendChild(svg, text);
+
       } else if (element.type === 'avatar') {
         const circle = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
         this.renderer.setAttribute(circle, 'data-type', 'avatar');
@@ -308,7 +343,6 @@ export class CanvasEditorComponent {
         const onMouseDown = (event: MouseEvent) => {
           this.selectedElement = element;
           isDragging = true;
-          console.log(event);
           const svgPoint = this.IMG.getMousePosition(event, svgElement);
           const clickedX = svgPoint.x;
           const clickedY = svgPoint.y;
@@ -449,27 +483,24 @@ export class CanvasEditorComponent {
     }
   }
   selectColor(color: string, control: FormControl) {
-    control.setValue(color);
+    control?.setValue(color);
   }
 
   updateColor(event: any, control: AbstractControl<any, any>) {
     const value = (event.target as HTMLInputElement).value;
-    control.setValue(value);
+    control?.setValue(value);
+  }
+  processPostEdit(postEdit: Post): void {
+    const updatedData = this.updateTextAndImageUrl(postEdit);
+    const e = this.IMG.makeDataForImage(updatedData);
+    this.drawSVG(e);
   }
   ngOnInit() {
-    this.routeData = this.route.snapshot.data;
     this.types = [
       { id: 'post', name: 'Post' }
     ];
-    this.initForm();
-    this.route.queryParams.subscribe(params => {
-      const imgParam = params['img'];
-      if (imgParam) {
-        this.getPostById(imgParam);
-      } else {
-        this.initForm();
-      }
-    });
-
+  }
+  ngAfterViewInit() {
+    this.imgParam && this.getPostById(this.imgParam);
   }
 }

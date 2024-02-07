@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ImageGenerateRoutingModule } from './image-generate-routing.module';
 import { ImageGenerateComponent } from './image-generate.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SharedModule } from 'src/app/common/shared/shared.module';
 
 
 @NgModule({
@@ -14,7 +15,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     CommonModule,
     ImageGenerateRoutingModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    SharedModule
   ]
 })
 export class ImageGenerateModule { }

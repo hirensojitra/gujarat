@@ -74,6 +74,7 @@ export class ImageViewComponent {
   }
   getPostById(postId: any): void {
     this.PS.getPostById(postId).subscribe((value: Post) => {
+      console.log(value)
       this.ele = this.IMG.makeDataForImage(value);
       this.drawSVG(this.ele);
     })
