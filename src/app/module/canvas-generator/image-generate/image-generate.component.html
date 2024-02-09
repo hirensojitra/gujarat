@@ -1,7 +1,12 @@
 <div class="container-fluid h-100">
     <div class="row d-flex h-100">
-        <div class="col-md-6 py-3"></div>
-        <div class="col-md-6 py-3 h-100 d-flex flex-column">
+        <div class="col-md-6 col-lg-7 py-3 position-relative min-h-500-px">
+            <div class="position-absolute w-100 h-100 overflow-hidden start-0 top-0 bg-light p-3">
+                <svg svgProcessor *ngIf="postDetailsForm"
+                    class="max-w-100-p max-h-100-p" (dataChanges)="updateValue($event)" [postDataSet]="postDetailsForm.value"></svg>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-5 py-3 h-100 d-flex flex-column">
             <div class="mb-3">
                 <div class="row g-2">
                     <div class="col-auto"><button (click)="addData('rect');" class="btn btn-success rounded-0 w-100"><i
@@ -21,7 +26,7 @@
                 </div>
             </div>
             <div class="flex-grow-1 position-relative">
-                <div class="position-absolute h-100 w-100 py-3">
+                <div class="position-absolute h-100 w-100 p-3 overflow-auto">
                     <form [formGroup]="postDetailsForm">
                         <div class="row g-3">
                             <input type="hidden" id="id" class="form-control" formControlName="id">
@@ -62,11 +67,13 @@
                                                     <ng-container formGroupName="rect" *ngIf="item.get('rect')">
                                                         <div class="form-group col-6">
                                                             <label for="x" class="form-label">X</label>
-                                                            <input type="text" id="x" class="form-control" formControlName="x">
+                                                            <input type="text" id="x" class="form-control"
+                                                                formControlName="x">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="y" class="form-label">Y</label>
-                                                            <input type="text" id="y" class="form-control" formControlName="y">
+                                                            <input type="text" id="y" class="form-control"
+                                                                formControlName="y">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="width" class="form-label">Width</label>
@@ -107,15 +114,17 @@
                                                     <ng-container formGroupName="circle" *ngIf="item.get('circle')">
                                                         <div class="form-group col-6">
                                                             <label for="cx" class="form-label">CX</label>
-                                                            <input type="text" id="cx" class="form-control" formControlName="cx">
+                                                            <input type="text" id="cx" class="form-control"
+                                                                formControlName="cx">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="cy" class="form-label">CY</label>
-                                                            <input type="text" id="cy" class="form-control" formControlName="cy">
+                                                            <input type="text" id="cy" class="form-control"
+                                                                formControlName="cy">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="r" class="form-label">R</label>
-                                                            <input type="text" id="r" class="form-control" formControlName="r">
+                                                            <input type="range" class="form-range" min="0" max="1024" step="0.5" formControlName="r">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="fill" class="form-label">Fill</label>
@@ -141,19 +150,23 @@
                                                     <ng-container formGroupName="ellipse" *ngIf="item.get('ellipse')">
                                                         <div class="form-group col-6">
                                                             <label for="cx" class="form-label">CX</label>
-                                                            <input type="text" id="cx" class="form-control" formControlName="cx">
+                                                            <input type="text" id="cx" class="form-control"
+                                                                formControlName="cx">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="cy" class="form-label">CY</label>
-                                                            <input type="text" id="cy" class="form-control" formControlName="cy">
+                                                            <input type="text" id="cy" class="form-control"
+                                                                formControlName="cy">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="rx" class="form-label">RX</label>
-                                                            <input type="text" id="rx" class="form-control" formControlName="rx">
+                                                            <input type="text" id="rx" class="form-control"
+                                                                formControlName="rx">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="ry" class="form-label">RY</label>
-                                                            <input type="text" id="ry" class="form-control" formControlName="ry">
+                                                            <input type="text" id="ry" class="form-control"
+                                                                formControlName="ry">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="fill" class="form-label">Fill</label>
@@ -184,19 +197,23 @@
                                                     <ng-container formGroupName="line" *ngIf="item.get('line')">
                                                         <div class="form-group col-6">
                                                             <label for="x1" class="form-label">X1</label>
-                                                            <input type="text" id="x1" class="form-control" formControlName="x1">
+                                                            <input type="text" id="x1" class="form-control"
+                                                                formControlName="x1">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="y1" class="form-label">Y1</label>
-                                                            <input type="text" id="y1" class="form-control" formControlName="y1">
+                                                            <input type="text" id="y1" class="form-control"
+                                                                formControlName="y1">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="x2" class="form-label">X2</label>
-                                                            <input type="text" id="x2" class="form-control" formControlName="x2">
+                                                            <input type="text" id="x2" class="form-control"
+                                                                formControlName="x2">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="y2" class="form-label">Y2</label>
-                                                            <input type="text" id="y2" class="form-control" formControlName="y2">
+                                                            <input type="text" id="y2" class="form-control"
+                                                                formControlName="y2">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="stroke" class="form-label">Stroke</label>
@@ -204,7 +221,8 @@
                                                                 formControlName="stroke">
                                                         </div>
                                                         <div class="form-group col-6">
-                                                            <label for="strokeWidth" class="form-label">Stroke Width</label>
+                                                            <label for="strokeWidth" class="form-label">Stroke
+                                                                Width</label>
                                                             <input type="text" id="strokeWidth" class="form-control"
                                                                 formControlName="strokeWidth">
                                                         </div>
@@ -232,19 +250,23 @@
                                                     <ng-container formGroupName="text" *ngIf="item.get('text')">
                                                         <div class="form-group col-6">
                                                             <label for="x" class="form-label">X</label>
-                                                            <input type="number" id="x" class="form-control" formControlName="x">
+                                                            <input type="number" id="x" class="form-control"
+                                                                formControlName="x">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="y" class="form-label">Y</label>
-                                                            <input type="number" id="y" class="form-control" formControlName="y">
+                                                            <input type="number" id="y" class="form-control"
+                                                                formControlName="y">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="fs" class="form-label">Font Size</label>
-                                                            <input type="number" id="fs" class="form-control" formControlName="fs">
+                                                            <input type="number" id="fs" class="form-control"
+                                                                formControlName="fs">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="fw" class="form-label">Font Weight</label>
-                                                            <input type="text" id="fw" class="form-control" formControlName="fw">
+                                                            <input type="text" id="fw" class="form-control"
+                                                                formControlName="fw">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="text" class="form-label">Text</label>
@@ -258,14 +280,17 @@
                                                         </div>
                                                         <ng-container formGroupName="fontStyle">
                                                             <div class="mb-3 form-check">
-                                                                <input type="checkbox" id="italic" class="form-check-input"
-                                                                    formControlName="italic">
-                                                                <label for="italic" class="form-check-label">Italic</label>
+                                                                <input type="checkbox" id="italic"
+                                                                    class="form-check-input" formControlName="italic">
+                                                                <label for="italic"
+                                                                    class="form-check-label">Italic</label>
                                                             </div>
                                                             <div class="mb-3 form-check">
-                                                                <input type="checkbox" id="underline" class="form-check-input"
+                                                                <input type="checkbox" id="underline"
+                                                                    class="form-check-input"
                                                                     formControlName="underline">
-                                                                <label for="underline" class="form-check-label">Underline</label>
+                                                                <label for="underline"
+                                                                    class="form-check-label">Underline</label>
                                                             </div>
                                                         </ng-container>
                                                         <div class="form-group col-6">
@@ -279,58 +304,69 @@
                                                                 formControlName="rotate">
                                                         </div>
                                                         <div class="form-group col-6">
-                                                            <label for="fontFamily" class="form-label">Font Family</label>
+                                                            <label for="fontFamily" class="form-label">Font
+                                                                Family</label>
                                                             <input type="text" id="fontFamily" class="form-control"
                                                                 formControlName="fontFamily">
                                                         </div>
                                                         <ng-container formGroupName="textShadow">
                                                             <div class="form-group col-6">
-                                                                <label for="shadowColor" class="form-label">Shadow Color</label>
+                                                                <label for="shadowColor" class="form-label">Shadow
+                                                                    Color</label>
                                                                 <input type="text" id="shadowColor" class="form-control"
                                                                     formControlName="color">
                                                             </div>
                                                             <div class="form-group col-6">
-                                                                <label for="shadowBlur" class="form-label">Shadow Blur</label>
-                                                                <input type="number" id="shadowBlur" class="form-control"
-                                                                    formControlName="blur">
+                                                                <label for="shadowBlur" class="form-label">Shadow
+                                                                    Blur</label>
+                                                                <input type="number" id="shadowBlur"
+                                                                    class="form-control" formControlName="blur">
                                                             </div>
                                                             <div class="form-group col-6">
-                                                                <label for="shadowOffsetX" class="form-label">Shadow Offset
+                                                                <label for="shadowOffsetX" class="form-label">Shadow
+                                                                    Offset
                                                                     X</label>
-                                                                <input type="number" id="shadowOffsetX" class="form-control"
-                                                                    formControlName="offsetX">
+                                                                <input type="number" id="shadowOffsetX"
+                                                                    class="form-control" formControlName="offsetX">
                                                             </div>
                                                             <div class="form-group col-6">
-                                                                <label for="shadowOffsetY" class="form-label">Shadow Offset
+                                                                <label for="shadowOffsetY" class="form-label">Shadow
+                                                                    Offset
                                                                     Y</label>
-                                                                <input type="number" id="shadowOffsetY" class="form-control"
-                                                                    formControlName="offsetY">
+                                                                <input type="number" id="shadowOffsetY"
+                                                                    class="form-control" formControlName="offsetY">
                                                             </div>
                                                         </ng-container>
                                                         <div class="form-group col-6">
-                                                            <label for="backgroundColor" class="form-label">Background Color</label>
+                                                            <label for="backgroundColor" class="form-label">Background
+                                                                Color</label>
                                                             <input type="text" id="backgroundColor" class="form-control"
                                                                 formControlName="backgroundColor">
                                                         </div>
                                                         <ng-container formGroupName="textEffects">
                                                             <ng-container formGroupName="gradient">
                                                                 <div class="form-group col-6">
-                                                                    <label for="gradientStartColor" class="form-label">Gradient
+                                                                    <label for="gradientStartColor"
+                                                                        class="form-label">Gradient
                                                                         Start
                                                                         Color</label>
-                                                                    <input type="text" id="gradientStartColor" class="form-control"
+                                                                    <input type="text" id="gradientStartColor"
+                                                                        class="form-control"
                                                                         formControlName="startColor">
                                                                 </div>
                                                                 <div class="form-group col-6">
-                                                                    <label for="gradientEndColor" class="form-label">Gradient End
+                                                                    <label for="gradientEndColor"
+                                                                        class="form-label">Gradient End
                                                                         Color</label>
-                                                                    <input type="text" id="gradientEndColor" class="form-control"
-                                                                        formControlName="endColor">
+                                                                    <input type="text" id="gradientEndColor"
+                                                                        class="form-control" formControlName="endColor">
                                                                 </div>
                                                                 <div class="form-group col-6">
-                                                                    <label for="gradientDirection" class="form-label">Gradient
+                                                                    <label for="gradientDirection"
+                                                                        class="form-label">Gradient
                                                                         Direction</label>
-                                                                    <input type="text" id="gradientDirection" class="form-control"
+                                                                    <input type="text" id="gradientDirection"
+                                                                        class="form-control"
                                                                         formControlName="direction">
                                                                 </div>
                                                             </ng-container>
@@ -338,63 +374,72 @@
                                                                 <div class="form-group col-6">
                                                                     <label for="outlineColor" class="form-label">Outline
                                                                         Color</label>
-                                                                    <input type="text" id="outlineColor" class="form-control"
-                                                                        formControlName="color">
+                                                                    <input type="text" id="outlineColor"
+                                                                        class="form-control" formControlName="color">
                                                                 </div>
                                                                 <div class="form-group col-6">
                                                                     <label for="outlineWidth" class="form-label">Outline
                                                                         Width</label>
-                                                                    <input type="text" id="outlineWidth" class="form-control"
-                                                                        formControlName="width">
+                                                                    <input type="text" id="outlineWidth"
+                                                                        class="form-control" formControlName="width">
                                                                 </div>
                                                             </ng-container>
                                                             <ng-container formGroupName="glow">
                                                                 <div class="form-group col-6">
-                                                                    <label for="glowColor" class="form-label">Glow Color</label>
-                                                                    <input type="text" id="glowColor" class="form-control"
-                                                                        formControlName="color">
+                                                                    <label for="glowColor" class="form-label">Glow
+                                                                        Color</label>
+                                                                    <input type="text" id="glowColor"
+                                                                        class="form-control" formControlName="color">
                                                                 </div>
                                                                 <div class="form-group col-6">
-                                                                    <label for="glowBlur" class="form-label">Glow Blur</label>
-                                                                    <input type="number" id="glowBlur" class="form-control"
-                                                                        formControlName="blur">
+                                                                    <label for="glowBlur" class="form-label">Glow
+                                                                        Blur</label>
+                                                                    <input type="number" id="glowBlur"
+                                                                        class="form-control" formControlName="blur">
                                                                 </div>
                                                             </ng-container>
                                                         </ng-container>
                                                         <div class="form-group col-6">
-                                                            <label for="textAlignment" class="form-label">Text Alignment</label>
+                                                            <label for="textAlignment" class="form-label">Text
+                                                                Alignment</label>
                                                             <input type="text" id="textAlignment" class="form-control"
                                                                 formControlName="textAlignment">
                                                         </div>
                                                         <div class="form-group col-6">
-                                                            <label for="letterSpacing" class="form-label">Letter Spacing</label>
+                                                            <label for="letterSpacing" class="form-label">Letter
+                                                                Spacing</label>
                                                             <input type="number" id="letterSpacing" class="form-control"
                                                                 formControlName="letterSpacing">
                                                         </div>
                                                         <div class="form-group col-6">
-                                                            <label for="lineHeight" class="form-label">Line Height</label>
+                                                            <label for="lineHeight" class="form-label">Line
+                                                                Height</label>
                                                             <input type="number" id="lineHeight" class="form-control"
                                                                 formControlName="lineHeight">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="textTransformation" class="form-label">Text
                                                                 Transformation</label>
-                                                            <input type="text" id="textTransformation" class="form-control"
+                                                            <input type="text" id="textTransformation"
+                                                                class="form-control"
                                                                 formControlName="textTransformation">
                                                         </div>
                                                     </ng-container>
                                                     <ng-container formGroupName="image" *ngIf="item.get('image')">
                                                         <div class="form-group col-6">
                                                             <label for="r" class="form-label">Radius (r)</label>
-                                                            <input type="number" id="r" class="form-control" formControlName="r">
+                                                            <input type="number" id="r" class="form-control"
+                                                                formControlName="r">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="x" class="form-label">X Position</label>
-                                                            <input type="number" id="x" class="form-control" formControlName="x">
+                                                            <input type="number" id="x" class="form-control"
+                                                                formControlName="x">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="y" class="form-label">Y Position</label>
-                                                            <input type="number" id="y" class="form-control" formControlName="y">
+                                                            <input type="number" id="y" class="form-control"
+                                                                formControlName="y">
                                                         </div>
                                                         <div class="form-group col-6">
                                                             <label for="imageUrl" class="form-label">Image URL</label>
@@ -402,12 +447,14 @@
                                                                 formControlName="imageUrl">
                                                         </div>
                                                         <div class="form-group col-6">
-                                                            <label for="borderColor" class="form-label">Border Color</label>
+                                                            <label for="borderColor" class="form-label">Border
+                                                                Color</label>
                                                             <input type="text" id="borderColor" class="form-control"
                                                                 formControlName="borderColor">
                                                         </div>
                                                         <div class="form-group col-6">
-                                                            <label for="borderWidth" class="form-label">Border Width</label>
+                                                            <label for="borderWidth" class="form-label">Border
+                                                                Width</label>
                                                             <input type="number" id="borderWidth" class="form-control"
                                                                 formControlName="borderWidth">
                                                         </div>
@@ -422,7 +469,8 @@
                                                                 formControlName="origin">
                                                         </div>
                                                         <div class="form-group col-6">
-                                                            <label for="placeholder" class="form-label">Placeholder</label>
+                                                            <label for="placeholder"
+                                                                class="form-label">Placeholder</label>
                                                             <input type="text" id="placeholder" class="form-control"
                                                                 formControlName="placeholder">
                                                         </div>
@@ -433,14 +481,16 @@
                                                                     formControlName="fill">
                                                             </div>
                                                             <div class="form-group col-6">
-                                                                <label for="stroke" class="form-label">Stroke Color</label>
+                                                                <label for="stroke" class="form-label">Stroke
+                                                                    Color</label>
                                                                 <input type="text" id="stroke" class="form-control"
                                                                     formControlName="stroke">
                                                             </div>
                                                             <div class="form-group col-6">
-                                                                <label for="strokeWidth" class="form-label">Stroke Width</label>
-                                                                <input type="number" id="strokeWidth" class="form-control"
-                                                                    formControlName="strokeWidth">
+                                                                <label for="strokeWidth" class="form-label">Stroke
+                                                                    Width</label>
+                                                                <input type="number" id="strokeWidth"
+                                                                    class="form-control" formControlName="strokeWidth">
                                                             </div>
                                                         </ng-container>
                                                     </ng-container>
