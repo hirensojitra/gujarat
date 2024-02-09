@@ -2,17 +2,39 @@ import { Component, HostListener } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, SvgProperties, TextElement } from 'src/app/common/interfaces/image-element';
 
-
+interface Data {
+  title: string,
+  rect?: RectProperties,
+  circle?: CircleProperties,
+  ellipse?: EllipseProperties,
+  line?: LineProperties,
+  text?: TextElement,
+  image?: ImageElement
+}
 @Component({
   selector: 'app-image-generate',
   templateUrl: './image-generate.component.html',
   styleUrls: ['./image-generate.component.scss']
 })
 export class ImageGenerateComponent {
+  updateValue(d: { data: Data, index: number }) {
+    console.log(d)
+    const value = this.postDetailsForm.get('data') as FormArray | null;
+    if (value) {
+      const t = value.at(d.index) as FormControl | null;
+      if (t) {
+        t.patchValue(d.data, { emitEvent: true});
+      } else {
+        console.error(`Form control at index ${d.index} not found.`);
+      }
+    } else {
+      console.error(`Form array 'data' not found.`);
+    }
+  }
+
   getTitle(item: AbstractControl<any>): string | null {
     const title = ['rect', 'circle', 'ellipse', 'line', 'text', 'image'];
     let firstTitle: string | null = null;
-
     title.some(key => {
       if (item.get(key) !== null) {
         firstTitle = key;
@@ -20,7 +42,6 @@ export class ImageGenerateComponent {
       }
       return false;
     });
-    console.log(firstTitle)
     return firstTitle;
   }
 
@@ -36,7 +57,7 @@ export class ImageGenerateComponent {
       h: 150,
       w: 150,
       title: "image",
-      backgroundUrl: "",
+      backgroundUrl: "https://images.unsplash.com/photo-1706211306706-8f36d91c8379?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       data: []
     }
     // Initialize the form
@@ -79,9 +100,11 @@ export class ImageGenerateComponent {
         break;
     }
     d && this.dataArray.push(d);
+    this.postDetails = this.postDetailsForm.value;
   }
   removeData(index: number) {
     this.dataArray.removeAt(index);
+    this.postDetails = this.postDetailsForm.value;
   }
   rectData = {
     title: "",
@@ -208,10 +231,10 @@ export class ImageGenerateComponent {
     text: {
       x: 100,
       y: 100,
-      fs: 16,
+      fs: 150,
       fw: "normal",
       text: "Sample Text",
-      color: "#000000",
+      color: "#FFFFFF",
       fontStyle: {
         italic: false,
         underline: false
@@ -220,7 +243,7 @@ export class ImageGenerateComponent {
       rotate: 0,
       fontFamily: "Arial",
       textShadow: {
-        color: "#000000",
+        color: "#FFFFFF",
         blur: 0,
         offsetX: 0,
         offsetY: 0
@@ -233,7 +256,7 @@ export class ImageGenerateComponent {
           direction: "horizontal"
         },
         outline: {
-          color: "#000000",
+          color: "#FFFFFF",
           width: 2
         },
         glow: {

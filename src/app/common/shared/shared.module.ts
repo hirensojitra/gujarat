@@ -10,6 +10,7 @@ import { DecimalDirective } from 'src/app/common/directives/decimal.directive';
 import { LocalitySelectorComponent } from '../controllers/locality-selector/locality-selector.component';
 import { DraggableDirective } from '../directives/draggable.directive';  // Add this line
 import { KeysPipe } from '../pipes/keys.pipe';
+import { SvgProcessorDirective } from '../directives/svg-processor.directive';
 
 @NgModule({
   imports: [
@@ -25,7 +26,8 @@ import { KeysPipe } from '../pipes/keys.pipe';
     DecimalDirective,
     LocalitySelectorComponent,
     DraggableDirective,
-    KeysPipe
+    KeysPipe,
+    SvgProcessorDirective
   ],
   exports: [
     CaptchaDirective,
@@ -36,7 +38,8 @@ import { KeysPipe } from '../pipes/keys.pipe';
     DecimalDirective,
     LocalitySelectorComponent,
     DraggableDirective,
-    KeysPipe
+    KeysPipe,
+    SvgProcessorDirective
   ],
   providers: [KeysPipe]
 })
