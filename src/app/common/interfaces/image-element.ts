@@ -93,6 +93,7 @@ export interface TextElement {
     letterSpacing: number;
     lineHeight: number;
     textTransformation: string;
+    staticValue: boolean;
 }
 
 export interface SvgProperties {

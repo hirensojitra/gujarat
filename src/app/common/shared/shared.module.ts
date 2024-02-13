@@ -11,6 +11,7 @@ import { LocalitySelectorComponent } from '../controllers/locality-selector/loca
 import { DraggableDirective } from '../directives/draggable.directive';  // Add this line
 import { KeysPipe } from '../pipes/keys.pipe';
 import { SvgProcessorDirective } from '../directives/svg-processor.directive';
+import { ColorService } from '../services/color.service';
 
 @NgModule({
   imports: [
@@ -41,6 +42,6 @@ import { SvgProcessorDirective } from '../directives/svg-processor.directive';
     KeysPipe,
     SvgProcessorDirective
   ],
-  providers: [KeysPipe]
+  providers: [KeysPipe, ColorService]
 })
 export class SharedModule { }
