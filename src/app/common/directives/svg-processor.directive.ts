@@ -1,5 +1,5 @@
 import { Directive, Input, ElementRef, OnInit, Renderer2, Output, EventEmitter } from '@angular/core';
-import { debounceTime, Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import {
   PostDetails,
   RectProperties,
@@ -9,6 +9,8 @@ import {
   TextElement,
   ImageElement
 } from '../interfaces/image-element';
+import ColorThief from 'colorthief';
+
 interface Data {
   title: string,
   rect?: RectProperties,
@@ -18,12 +20,15 @@ interface Data {
   text?: TextElement,
   image?: ImageElement
 }
+
 @Directive({
   selector: '[svgProcessor]'
 })
 export class SvgProcessorDirective implements OnInit {
   offsetX: number = 0;
   offsetY: number = 0;
+  width: number = 0;
+  height: number = 0;
   private postDataSetSubject = new Subject<PostDetails>();
 
   private destroy$ = new Subject<void>();
@@ -45,7 +50,6 @@ export class SvgProcessorDirective implements OnInit {
   }
   createSVG(data: any) {
 
-
   }
   updateSvg(d: Data[]) { }
   async updateBackGround(backgroundUrl: string) {
@@ -61,15 +65,37 @@ export class SvgProcessorDirective implements OnInit {
       this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
       this.renderer.setAttribute(b, 'href', background);
       this.renderer.appendChild(svg, b);
+      await this.getColors(backgroundUrl);
     }
+  }
+  colorSet: string[] = [];
+  async getColors(image: string): Promise<void> {
+    try {
+      const colorThief = new ColorThief();
+      const img = new Image();
+      img.src = image;
+      img.crossOrigin = "Anonymous";
+      let colorCounts = 10;
+      img.onload = () => {
+        const dominantColors = colorThief.getPalette(img, colorCounts);
+        this.colorSet = dominantColors.map((rgb: number[]) => this.rgbToHex(rgb[0], rgb[1], rgb[2]));
+        this.colorSet.unshift('#000000', '#FFFFFF');
+      };
+      // img.onerror = (error) => {
+      //     console.error("Error loading image:", error);
+      // };
+    } catch (error) {
+      console.error("Error getting colors:", error);
+    }
+  }
+  rgbToHex(r: number, g: number, b: number): string {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
   updateViewBox(x: number, y: number) {
     if (this.el.nativeElement) {
       const svg = this.el.nativeElement;
       const viewBoxValue = `0 0 ${x} ${y}`;
       svg.setAttribute('viewBox', viewBoxValue);
-      svg.setAttribute('width', x.toString());
-      svg.setAttribute('height', y.toString());
     }
   }
   createRect(d: Data, i: number) {
@@ -113,64 +139,61 @@ export class SvgProcessorDirective implements OnInit {
         'y': d.text.y.toString(),
         'font-size': d.text.fs.toString(),
         'fill': d.text.color || '#000000', // Set default fill color to black if not provided
-        'text-anchor': d.text.textAlignment || 'start',
+        'text-anchor': this.textPosition(d.text.textAlignment) || 'start',
         'dominant-baseline': 'reset-size',
         'font-family': d.text.fontFamily || "'Hind Vadodara', sans-serif",
         'font-weight': d.text.fw || 'normal',
         'text-decoration': d.text.fontStyle.underline ? 'underline' : 'none',
         'font-style': d.text.fontStyle.italic ? 'italic' : 'normal',
       };
-  
+
       // Apply text shadow if available
-      if (d.text.textShadow) {
-        const textShadow = `${d.text.textShadow.offsetX}px ${d.text.textShadow.offsetY}px ${d.text.textShadow.blur}px ${d.text.textShadow.color}`;
-        textAttributes['text-shadow'] = textShadow;
-      }
-  
+
+
       // Apply background color if available
       if (d.text.backgroundColor) {
         textAttributes['background-color'] = d.text.backgroundColor;
       }
-  
+
       // Apply text effects if available
       if (d.text.textEffects) {
         // Apply gradient if available
-        if (d.text.textEffects.gradient) {
-          const gradient = `linear-gradient(to right, ${d.text.textEffects.gradient.startColor}, ${d.text.textEffects.gradient.endColor})`;
-          textAttributes['fill'] = gradient; // Change fill to apply gradient
-        }
-  
+        // if (d.text.textEffects.gradient) {
+        //   const gradient = `linear-gradient(to right, ${d.text.textEffects.gradient.startColor}, ${d.text.textEffects.gradient.endColor})`;
+        //   textAttributes['fill'] = gradient; // Change fill to apply gradient
+        // }
+
         // Apply outline if available
-        if (d.text.textEffects.outline) {
-          const strokeColor = d.text.textEffects.outline.color || '#000000'; // Default stroke color to black if not provided
-          const strokeWidth = `${d.text.textEffects.outline.width}px`; // Convert width to string with 'px' unit
-          this.renderer.setStyle(text, 'stroke', strokeColor); // Apply stroke color
-          this.renderer.setStyle(text, 'stroke-width', strokeWidth); // Apply stroke width
-        }
-  
+        // if (d.text.textEffects.outline) {
+        //   const strokeColor = d.text.textEffects.outline.color || '#000000'; // Default stroke color to black if not provided
+        //   const strokeWidth = `${d.text.textEffects.outline.width}px`; // Convert width to string with 'px' unit
+        //   this.renderer.setStyle(text, 'stroke', strokeColor); // Apply stroke color
+        //   this.renderer.setStyle(text, 'stroke-width', strokeWidth); // Apply stroke width
+        // }
+
         // Apply glow if available
-        if (d.text.textEffects.glow) {
-          const glowColor = d.text.textEffects.glow.color || '#FFFFFF'; // Default glow color to white if not provided
-          const glowBlur = `${d.text.textEffects.glow.blur}px`; // Convert blur to string with 'px' unit
-          const glowShadow = `${glowColor} ${glowBlur}`; // Create glow shadow string
-          let existingTextShadow = textAttributes['text-shadow'] || ''; // Get existing text shadow
-          textAttributes['text-shadow'] = existingTextShadow ? `${existingTextShadow}, ${glowShadow}` : glowShadow; // Append or set glow shadow
-        }
+        // if (d.text.textEffects.glow) {
+        //   const glowColor = d.text.textEffects.glow.color || '#FFFFFF'; // Default glow color to white if not provided
+        //   const glowBlur = `${d.text.textEffects.glow.blur}px`; // Convert blur to string with 'px' unit
+        //   const glowShadow = `${glowColor} ${glowBlur}`; // Create glow shadow string
+        //   let existingTextShadow = textAttributes['text-shadow'] || ''; // Get existing text shadow
+        //   textAttributes['text-shadow'] = existingTextShadow ? `${existingTextShadow}, ${glowShadow}` : glowShadow; // Append or set glow shadow
+        // }
       }
-  
+
       // Apply other text styles
       const textStyles = {
         '-webkit-user-select': 'none',
         'letter-spacing': d.text.letterSpacing ? `${d.text.letterSpacing}px` : 'normal',
         'line-height': d.text.lineHeight ? `${d.text.lineHeight}` : 'normal',
         'text-transform': d.text.textTransformation || 'none',
+        'text-shadow': `${d.text.textShadow.offsetX}px ${d.text.textShadow.offsetY}px ${d.text.textShadow.blur}px ${d.text.textShadow.color}` || 'none'
       };
-  
       // Set text attributes using setAttribute
       Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(text, key, value));
       // Set text styles using setStyle
       Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(text, key, value));
-  
+
       // Add text content if available
       if (d.text.text) {
         this.renderer.appendChild(text, this.renderer.createText(d.text.text));
@@ -178,14 +201,25 @@ export class SvgProcessorDirective implements OnInit {
           console.log(i);
         });
       }
-  
+
       // Append the text element to the SVG
       this.renderer.appendChild(svg, text);
       return text;
     }
     return null;
   }
-  
+  textPosition(t: string): string {
+    switch (t) {
+      case 'center':
+        return 'middle';
+      case 'left':
+        return 'start';
+      case 'right':
+        return 'end';
+      default:
+        return 'middle';
+    }
+  }
   updateElements(data: Data[]) {
     const svg = this.el.nativeElement;
     const children = svg.childNodes;
@@ -262,6 +296,7 @@ export class SvgProcessorDirective implements OnInit {
                 x = parseFloat(element.getAttribute('x') || '0');
                 y = parseFloat(element.getAttribute('y') || '0');
               }
+              console.log(this.width, this.height);
               if (x && y) {
                 const oX = svgPoint.x - x + this.offsetX;
                 const oY = svgPoint.y - y + this.offsetY;
@@ -269,8 +304,8 @@ export class SvgProcessorDirective implements OnInit {
                 const newY = y + oY;
                 let minX = 30 + r;
                 let minY = 30 + r;
-                let maxX = svg.clientWidth - (element.getBBox().width + minX) + 2 * r;
-                let maxY = svg.clientHeight - (element.getBBox().height + minY) + 2 * r;
+                let maxX = this.width - (element.getBBox().width + minX) + 2 * r;
+                let maxY = this.height - (element.getBBox().height + minY) + 2 * r;
                 const textAnchor = element.getAttribute('text-anchor');
                 if (textAnchor) {
                   minY += element.getBBox().height / 2;
@@ -301,7 +336,7 @@ export class SvgProcessorDirective implements OnInit {
                       eleData.circle.cy = adjustedY;
                     }
                     break;
-                  case !!eleData.rect||!!eleData.text:
+                  case !!eleData.rect || !!eleData.text:
                     if (eleData.rect) {
                       eleData.rect.x = adjustedX;
                       eleData.rect.y = adjustedY;
@@ -369,6 +404,8 @@ export class SvgProcessorDirective implements OnInit {
   }
   initSVG(d: PostDetails) {
     const { id, deleted, h, w, title, backgroundUrl, data } = d;
+    this.height = h;
+    this.width = w;
     if (!this.postData || backgroundUrl !== this.postData.backgroundUrl) {
       this.updateBackGround(backgroundUrl);
     }

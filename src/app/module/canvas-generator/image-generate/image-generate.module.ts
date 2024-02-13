@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 import { ImageGenerateRoutingModule } from './image-generate-routing.module';
 import { ImageGenerateComponent } from './image-generate.component';
@@ -16,7 +17,8 @@ import { SharedModule } from 'src/app/common/shared/shared.module';
     ImageGenerateRoutingModule,
     FormsModule,
     ReactiveFormsModule,
-    SharedModule
+    SharedModule,
+    DragDropModule
   ]
 })
 export class ImageGenerateModule { }

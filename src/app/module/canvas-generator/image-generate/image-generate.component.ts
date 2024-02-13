@@ -1,6 +1,9 @@
 import { Component, HostListener } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, SvgProperties, TextElement } from 'src/app/common/interfaces/image-element';
+import ColorThief from 'colorthief';
+import { ColorService } from 'src/app/common/services/color.service';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 interface Data {
   title: string,
@@ -17,13 +20,82 @@ interface Data {
   styleUrls: ['./image-generate.component.scss']
 })
 export class ImageGenerateComponent {
+  colorSet: string[] = [];
+  fontFamilies = [
+    {
+      "family": "Anek Gujarati",
+      "variables": ["100", "200", "300", "400", "500", "600", "700", "800"]
+    },
+    {
+      "family": "Baloo Bhai 2",
+      "variables": ["400", "500", "600", "700", "800"]
+    },
+    {
+      "family": "Farsan",
+      "variables": []
+    },
+    {
+      "family": "Hind Vadodara",
+      "variables": ["300", "400", "500", "600", "700"]
+    },
+    {
+      "family": "Kumar One",
+      "variables": []
+    },
+    {
+      "family": "Kumar One Outline",
+      "variables": []
+    },
+    {
+      "family": "Mogra",
+      "variables": []
+    },
+    {
+      "family": "Mukta Vaani",
+      "variables": ["200", "300", "400", "500", "600", "700", "800"]
+    },
+    {
+      "family": "Noto Sans Gujarati",
+      "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"]
+    },
+    {
+      "family": "Noto Serif Gujarati",
+      "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"]
+    },
+    {
+      "family": "Rasa",
+      "variables": ["0", "300", "400", "500", "600", "700", "1"]
+    },
+    {
+      "family": "Shrikhand",
+      "variables": []
+    }
+  ]
+  async getColors(image: string, colorCounts: number) {
+    try {
+      this.colorSet = await this.colorService.getColors(image, colorCounts);
+    } catch (error) {
+      console.error("Error updating colors:", error);
+    }
+  }
+  getColorClass(isActive: boolean): string {
+    if (isActive) {
+      return '';
+    } else {
+      return 'shadow border border-light border-3';
+    }
+  }
+  updateColor(event: any, control: any) {
+    const value = (event.target as HTMLInputElement).value;
+    control?.setValue(value);
+  }
   updateValue(d: { data: Data, index: number }) {
     console.log(d)
     const value = this.postDetailsForm.get('data') as FormArray | null;
     if (value) {
       const t = value.at(d.index) as FormControl | null;
       if (t) {
-        t.patchValue(d.data, { emitEvent: true});
+        t.patchValue(d.data, { emitEvent: true });
       } else {
         console.error(`Form control at index ${d.index} not found.`);
       }
@@ -32,23 +104,11 @@ export class ImageGenerateComponent {
     }
   }
 
-  getTitle(item: AbstractControl<any>): string | null {
-    const title = ['rect', 'circle', 'ellipse', 'line', 'text', 'image'];
-    let firstTitle: string | null = null;
-    title.some(key => {
-      if (item.get(key) !== null) {
-        firstTitle = key;
-        return true; // Exit the loop once the first existing key is found
-      }
-      return false;
-    });
-    return firstTitle;
-  }
 
   postDetailsForm!: FormGroup;
   postDetails!: PostDetails;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder, private colorService: ColorService) { }
 
   ngOnInit(): void {
     this.postDetails = {
@@ -70,6 +130,7 @@ export class ImageGenerateComponent {
       backgroundUrl: [this.postDetails.backgroundUrl, Validators.required],
       data: this.fb.array([])
     });
+    this.getColors(this.postDetails.backgroundUrl, 10)
   }
   get dataArray() {
     return this.postDetailsForm.get('data') as FormArray;
@@ -239,6 +300,7 @@ export class ImageGenerateComponent {
         italic: false,
         underline: false
       },
+      staticValue: false,
       textAlign: "left",
       rotate: 0,
       fontFamily: "Arial",
@@ -316,6 +378,32 @@ export class ImageGenerateComponent {
       })
     });
   }
+  updateFontWeights(c: AbstractControl<any, any>) {
+    let selectedFontFamily = c.value;
+    const parentFormGroup = c.parent;
+    const f = this.fontFamilies.find(family => family.family === selectedFontFamily);
+    if (!f) {
+      selectedFontFamily = ('Hind Vadodara')
+    }
+    if (selectedFontFamily && parentFormGroup) {
+      const font = this.fontFamilies.find(f => f.family === selectedFontFamily);
+      const fontWeights = font ? font.variables : [];
+      const currentValue = parentFormGroup.get('fw')?.value;
+      if (!fontWeights.includes(currentValue)) {
+        parentFormGroup.get('fw')?.patchValue(fontWeights[0]||'400');
+      }
+    }
+  }
+  getWeight(c: AbstractControl<any, any>) {
+    const selectedFontFamily = c.value;
+    const f = this.fontFamilies.find(family => family.family === selectedFontFamily);
+    if (f) {
+      return f.variables;
+    } else {
+      console.log('Mogra family not found.');
+    }
+    return [];
+  }
   createSvgPropertiesFormGroup(svg: SvgProperties): FormGroup {
     return this.fb.group({
       fill: [svg.fill, Validators.required],
@@ -358,5 +446,9 @@ export class ImageGenerateComponent {
         svgProperties: this.createSvgPropertiesFormGroup(i.image.svgProperties)
       })
     });
+  }
+  drop(event: CdkDragDrop<string[]>) {
+    moveItemInArray(this.postDetailsForm.get('data')?.value, event.previousIndex, event.currentIndex);
+    this.postDetailsForm.setValue(this.postDetailsForm.value)
   }
 }
