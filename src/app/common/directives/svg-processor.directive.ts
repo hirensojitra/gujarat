@@ -131,6 +131,7 @@ export class SvgProcessorDirective implements OnInit {
   }
   createText(d: Data, i: number) {
     if (this.el.nativeElement && d.text) {
+      console.log(d.text)
       const svg = this.el.nativeElement;
       const text = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
       let textAttributes: Record<string, string> = {
@@ -139,9 +140,10 @@ export class SvgProcessorDirective implements OnInit {
         'y': d.text.y.toString(),
         'font-size': d.text.fs.toString(),
         'fill': d.text.color || '#000000', // Set default fill color to black if not provided
-        'text-anchor': this.textPosition(d.text.textAlignment) || 'start',
+        'text-anchor': d.text.textAnchor || 'start',
+        'alignment-baseline': d.text.alignmentBaseline || 'middle',
         'dominant-baseline': 'reset-size',
-        'font-family': d.text.fontFamily || "'Hind Vadodara', sans-serif",
+        'font-family': d.text.fontFamily ? "'" + d.text.fontFamily + "', sans-serif" : "'Hind Vadodara', sans-serif",
         'font-weight': d.text.fw || 'normal',
         'text-decoration': d.text.fontStyle.underline ? 'underline' : 'none',
         'font-style': d.text.fontStyle.italic ? 'italic' : 'normal',
@@ -182,16 +184,16 @@ export class SvgProcessorDirective implements OnInit {
       }
 
       // Apply other text styles
-      const textStyles = {
+      let textStyles: Record<string, string> = {
         '-webkit-user-select': 'none',
         'letter-spacing': d.text.letterSpacing ? `${d.text.letterSpacing}px` : 'normal',
         'line-height': d.text.lineHeight ? `${d.text.lineHeight}` : 'normal',
-        'text-transform': d.text.textTransformation || 'none',
-        'text-shadow': `${d.text.textShadow.offsetX}px ${d.text.textShadow.offsetY}px ${d.text.textShadow.blur}px ${d.text.textShadow.color}` || 'none'
+        'text-transform': d.text.textTransformation || 'none'
       };
-      // Set text attributes using setAttribute
+      if (d.text.textShadow.enable) {
+        textStyles['text-shadow'] = `${d.text.textShadow.offsetX}px ${d.text.textShadow.offsetY}px ${d.text.textShadow.blur}px ${d.text.textShadow.color}` || 'none'
+      }
       Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(text, key, value));
-      // Set text styles using setStyle
       Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(text, key, value));
 
       // Add text content if available
@@ -208,7 +210,7 @@ export class SvgProcessorDirective implements OnInit {
     }
     return null;
   }
-  textPosition(t: string): string {
+  textAnchor(t: string): string {
     switch (t) {
       case 'center':
         return 'middle';

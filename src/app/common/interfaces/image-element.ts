@@ -51,12 +51,14 @@ export interface FontStyle {
 }
 
 export interface Gradient {
+    enable: false;
     startColor: string;
     endColor: string;
     direction: string;
 }
 
 export interface TextShadow {
+    enable: boolean;
     color: string;
     blur: number;
     offsetX: number;
@@ -64,12 +66,15 @@ export interface TextShadow {
 }
 
 export interface TextEffects {
+    enable: boolean,
     gradient: Gradient;
     outline: {
+        enable: false;
         color: string;
         width: number;
     };
     glow: {
+        enable: false;
         color: string;
         blur: number;
     };
@@ -89,7 +94,8 @@ export interface TextElement {
     textShadow: TextShadow;
     backgroundColor: string;
     textEffects: TextEffects;
-    textAlignment: string;
+    textAnchor: string;
+    alignmentBaseline: string;
     letterSpacing: number;
     lineHeight: number;
     textTransformation: string;
@@ -122,7 +128,7 @@ export interface PostDetails {
     w: number;
     title: string;
     backgroundUrl: string;
-    data: ({
+    data: {
         title: string;
         rect?: RectProperties;
         circle?: CircleProperties;
@@ -130,5 +136,5 @@ export interface PostDetails {
         line?: LineProperties;
         text?: TextElement;
         image?: ImageElement;
-    })[];
+    }[];
 }

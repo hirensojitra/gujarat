@@ -1,13 +1,31 @@
 <div class="h-100 d-flex flex-column p-3">
-    <!-- <h5>Canvas</h5> -->
-    <div class="flex-grow-1 position-relative overflow-hidden">
-        <div class="position-absolute h-100 w-100 text-center">
-            <canvas #canvas class="img-responsive max-h-100 max-w-100"></canvas>
+    <div class="container">
+        <div class="container mt-5">
+            <ng-container *ngFor="let property of textProperties; let j = index">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    [attr.data-bs-target]="'#collapse'+j" aria-expanded="true"
+                    [attr.aria-controls]="'collapse'+j">
+                    {{property.text}}
+                </button>
+            </ng-container>
+            <div class="accordion" id="textPropertiesAccordion">
+                <ng-container *ngFor="let property of textProperties; let j = index">
+                    <div class="accordion-item border-0">
+                        <div [id]="'collapse'+j" class="accordion-collapse collapse" [attr.aria-labelledby]="'heading'+j" [attr.data-bs-parent]="'#textPropertiesAccordion'">
+                            <div class="accordion-body">
+                                <ul class="list-group">
+                                    <li *ngFor="let child of getPropertyChildArray(property.child)">
+                                        <button type="button" class="list-group-item list-group-item-action">
+                                            {{child[0]}}
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+            </div>
         </div>
-    </div>
-    <div class="mt-3 d-flex">
-        <button class="btn btn-primary mx-auto">
-            <i class="fa fa-download me-2"></i>Download
-        </button>
+
     </div>
 </div>
