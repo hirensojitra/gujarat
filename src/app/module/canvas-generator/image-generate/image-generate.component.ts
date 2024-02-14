@@ -428,7 +428,7 @@ export class ImageGenerateComponent {
       r: 50,
       x: 100,
       y: 100,
-      imageUrl: "https://example.com/image.jpg",
+      imageUrl: "assets/images/jpeg/profile-1.jpeg",
       borderColor: "#000000",
       borderWidth: 2,
       shape: "circle",
@@ -467,7 +467,11 @@ export class ImageGenerateComponent {
     for (let i = 0; i < dataArray.length; i++) {
       const item = dataArray[i];
       (item.rect) && this.dataArray.push(this.createRectFormGroup(item));
+      (item.circle) && this.dataArray.push(this.createCircleFormGroup(item));
+      (item.ellipse) && this.dataArray.push(this.createEllipseFormGroup(item));
+      (item.line) && this.dataArray.push(this.createLineFormGroup(item));
       (item.text) && this.dataArray.push(this.createTextFormGroup(item));
+      (item.image) && this.dataArray.push(this.createImageFormGroup(item))
     }
     this.postDetails.data = dataArray;
   }

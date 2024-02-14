@@ -7,7 +7,8 @@ import {
   EllipseProperties,
   LineProperties,
   TextElement,
-  ImageElement
+  ImageElement,
+  SvgProperties
 } from '../interfaces/image-element';
 import ColorThief from 'colorthief';
 
@@ -101,19 +102,32 @@ export class SvgProcessorDirective implements OnInit {
   createRect(d: Data, i: number) {
     if (this.el.nativeElement && d.rect) {
       const svg = this.el.nativeElement;
-      const r = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
-      const { x, y, width, height, fill } = d.rect;
-      this.renderer.setAttribute(r, 'x', String(x));
-      this.renderer.setAttribute(r, 'y', String(y));
-      this.renderer.setAttribute(r, 'data-type', 'rect');
-      this.renderer.setAttribute(r, 'width', String(width));
-      this.renderer.setAttribute(r, 'height', String(height));
-      this.renderer.setAttribute(r, 'fill', fill);
-      this.renderer.appendChild(svg, r);
-      return r;
+      const rect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
+      const { x, y, width, height, fill, opacity, originX, originY, rotation } = d.rect;
+  
+      // Set attributes using an object
+      this.renderer.setAttribute(rect, 'x', String(x));
+      this.renderer.setAttribute(rect, 'y', String(y));
+      this.renderer.setAttribute(rect, 'width', String(width));
+      this.renderer.setAttribute(rect, 'height', String(height));
+      this.renderer.setAttribute(rect, 'fill', fill);
+      this.renderer.setAttribute(rect, 'opacity', String(opacity));
+  
+      // Apply rotation and origin if specified
+      if (rotation || (originX !== undefined && originY !== undefined)) {
+        // const transformValue = `translate(${originX || 0} ${originY || 0}) rotate(${rotation || 0} ${x} ${y})`;
+        // this.renderer.setAttribute(rect, 'transform', transformValue);
+      }
+  
+      // Set additional attributes if needed
+  
+      this.renderer.setAttribute(rect, 'data-type', 'rect');
+      this.renderer.appendChild(svg, rect);
+      return rect;
     }
     return null;
   }
+  
   createCircle(d: Data, i: number) {
     if (this.el.nativeElement && d.circle) {
       const svg = this.el.nativeElement;
@@ -129,6 +143,87 @@ export class SvgProcessorDirective implements OnInit {
     }
     return null;
   }
+  createEllipse(d: Data, i: number) {
+    if (this.el.nativeElement && d.ellipse) {
+      const svg = this.el.nativeElement;
+      const e = this.renderer.createElement('ellipse', 'http://www.w3.org/2000/svg');
+      const { cx, cy, rx, ry, fill, opacity, rotation } = d.ellipse; // Assuming cx, cy, rx, ry, fill, opacity, and rotation are properties of the ellipse
+      this.renderer.setAttribute(e, 'cx', String(cx));
+      this.renderer.setAttribute(e, 'cy', String(cy));
+      this.renderer.setAttribute(e, 'rx', String(rx));
+      this.renderer.setAttribute(e, 'ry', String(ry));
+      this.renderer.setAttribute(e, 'fill', fill);
+      this.renderer.setAttribute(e, 'opacity', String(opacity));
+      this.renderer.setAttribute(e, 'transform', `rotate(${rotation} ${cx} ${cy})`); // Apply rotation
+      this.renderer.setAttribute(e, 'data-type', 'ellipse');
+      this.renderer.appendChild(svg, e);
+      return e;
+    }
+    return null;
+  }
+  createLine(d: Data, i: number) {
+    if (this.el.nativeElement && d.line) {
+      const svg = this.el.nativeElement;
+      const line = this.renderer.createElement('line', 'http://www.w3.org/2000/svg');
+      const { x1, y1, x2, y2, stroke, strokeWidth, opacity, rotation } = d.line; // Extract line properties
+      this.renderer.setAttribute(line, 'x1', String(x1));
+      this.renderer.setAttribute(line, 'y1', String(y1));
+      this.renderer.setAttribute(line, 'x2', String(x2));
+      this.renderer.setAttribute(line, 'y2', String(y2));
+      this.renderer.setAttribute(line, 'stroke', stroke);
+      this.renderer.setAttribute(line, 'stroke-width', String(strokeWidth));
+      this.renderer.setAttribute(line, 'opacity', String(opacity));
+      this.renderer.setAttribute(line, 'transform', `rotate(${rotation} ${x1} ${y1})`); // Apply rotation
+      this.renderer.setAttribute(line, 'data-type', 'line');
+      this.renderer.appendChild(svg, line);
+      return line;
+    }
+    return null;
+  }
+  createImage(d: Data, i: number) {
+    if (this.el.nativeElement && d.image) {
+      const svg = this.el.nativeElement;
+      const image = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
+      const { x, y, r, imageUrl, borderColor, borderWidth, shape, origin, placeholder, svgProperties } = d.image; // Extract image properties
+      this.renderer.setAttribute(image, 'x', String(x));
+      this.renderer.setAttribute(image, 'y', String(y));
+      this.renderer.setAttribute(image, 'width', String(r * 2)); // Assuming r is the radius, set width as diameter
+      this.renderer.setAttribute(image, 'height', String(r * 2));
+      this.renderer.setAttribute(image, 'href', imageUrl);
+      this.renderer.setAttribute(image, 'data-type', 'image');
+
+      // Apply border if needed
+      if (borderWidth && borderColor) {
+        this.renderer.setAttribute(image, 'stroke', borderColor);
+        this.renderer.setAttribute(image, 'stroke-width', String(borderWidth));
+      }
+
+      // Apply SVG properties if provided
+      if (svgProperties) {
+        Object.keys(svgProperties).forEach(key => {
+          const propertyKey = key as keyof SvgProperties;
+          const attributeValue = svgProperties[propertyKey]; // Access the property value directly using propertyKey
+          this.renderer.setAttribute(image, propertyKey, String(attributeValue));
+        });
+      }
+
+      // Apply transformation based on origin
+      if (origin === 'center') {
+        // this.renderer.setAttribute(image, 'transform', `translate(${x - r}, ${y - r})`);
+      }
+
+      // Add placeholder if provided
+      if (placeholder) {
+        // Add placeholder logic here
+      }
+
+      // Append the image element to the SVG
+      this.renderer.appendChild(svg, image);
+      return image;
+    }
+    return null;
+  }
+
   createText(d: Data, i: number) {
     if (this.el.nativeElement && d.text) {
       console.log(d.text)
@@ -236,6 +331,9 @@ export class SvgProcessorDirective implements OnInit {
     data.forEach((d, i) => {
       (d.rect) && elements.push(this.createRect(d, i));
       (d.circle) && elements.push(this.createCircle(d, i));
+      (d.ellipse) && elements.push(this.createEllipse(d, i));
+      (d.line) && elements.push(this.createLine(d, i));
+      (d.image) && elements.push(this.createImage(d, i));
       (d.text) && elements.push(this.createText(d, i))
     })
     this.removeEventListeners();
@@ -273,7 +371,7 @@ export class SvgProcessorDirective implements OnInit {
           const clickedY = svgPoint.y;
           let elementX;
           let elementY;
-          if (['circle', 'image'].includes(elementType)) {
+          if (['circle'].includes(elementType)) {
             elementX = parseFloat(element.getAttribute('cx') || '0');
             elementY = parseFloat(element.getAttribute('cy') || '0');
           } else {
@@ -290,7 +388,7 @@ export class SvgProcessorDirective implements OnInit {
             if (element) {
               let x, y;
               let r = 0;
-              if (['circle', 'image'].includes(elementType)) {
+              if (['circle'].includes(elementType)) {
                 x = parseFloat(element.getAttribute('cx') || '0');
                 y = parseFloat(element.getAttribute('cy') || '0');
                 r = parseFloat(element.getAttribute('r') || '0');
@@ -338,7 +436,7 @@ export class SvgProcessorDirective implements OnInit {
                       eleData.circle.cy = adjustedY;
                     }
                     break;
-                  case !!eleData.rect || !!eleData.text:
+                  case !!eleData.rect || !!eleData.text || !!eleData.image:
                     if (eleData.rect) {
                       eleData.rect.x = adjustedX;
                       eleData.rect.y = adjustedY;
@@ -347,12 +445,16 @@ export class SvgProcessorDirective implements OnInit {
                       eleData.text.x = adjustedX;
                       eleData.text.y = adjustedY;
                     }
+                    if (eleData.image) {
+                      eleData.image.x = adjustedX;
+                      eleData.image.y = adjustedY;
+                    }
                     break;
                   default:
                     console.log('Element data not found');
                     break;
                 }
-                if (['circle', 'image'].includes(elementType)) {
+                if (['circle'].includes(elementType)) {
                   this.renderer.setAttribute(element, 'cx', adjustedX.toString());
                   this.renderer.setAttribute(element, 'cy', adjustedY.toString());
                 } else {
