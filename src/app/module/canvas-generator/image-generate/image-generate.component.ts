@@ -114,8 +114,8 @@ export class ImageGenerateComponent {
     this.postDetails = {
       id: 1,
       deleted: false,
-      h: 150,
-      w: 150,
+      h: 1024,
+      w: 1024,
       title: "image",
       backgroundUrl: "https://images.unsplash.com/photo-1706211306706-8f36d91c8379?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       data: []
@@ -287,12 +287,12 @@ export class ImageGenerateComponent {
       })
     });
   }
-  textData = {
+  textData: { title: string, text: TextElement } = {
     title: "Text 1",
     text: {
       x: 100,
       y: 100,
-      fs: 150,
+      fs: 40,
       fw: "normal",
       text: "Sample Text",
       color: "#FFFFFF",
@@ -305,6 +305,7 @@ export class ImageGenerateComponent {
       rotate: 0,
       fontFamily: "Arial",
       textShadow: {
+        enable: false,
         color: "#FFFFFF",
         blur: 0,
         offsetX: 0,
@@ -312,21 +313,26 @@ export class ImageGenerateComponent {
       },
       backgroundColor: "#ffffff",
       textEffects: {
+        enable: false,
         gradient: {
+          enable: false,
           startColor: "#ffffff",
           endColor: "#000000",
           direction: "horizontal"
         },
         outline: {
+          enable: false,
           color: "#FFFFFF",
           width: 2
         },
         glow: {
+          enable: false,
           color: "#ffffff",
           blur: 0
         }
       },
-      textAlignment: "left",
+      textAnchor: "start",
+      alignmentBaseline: 'middle',
       letterSpacing: 1,
       lineHeight: 1,
       textTransformation: "none"
@@ -350,28 +356,34 @@ export class ImageGenerateComponent {
         rotate: [t.text.rotate, Validators.required],
         fontFamily: [t.text.fontFamily, Validators.required],
         textShadow: this.fb.group({
-          color: [t.text.textShadow.color, Validators.required],
-          blur: [t.text.textShadow.blur, Validators.required],
-          offsetX: [t.text.textShadow.offsetX, Validators.required],
-          offsetY: [t.text.textShadow.offsetY, Validators.required]
+          enable: [false],
+          color: [t.text.textShadow.color],
+          blur: [t.text.textShadow.blur],
+          offsetX: [t.text.textShadow.offsetX],
+          offsetY: [t.text.textShadow.offsetY]
         }),
         backgroundColor: [t.text.backgroundColor, Validators.required],
         textEffects: this.fb.group({
+          enable: [false],
           gradient: this.fb.group({
+            enable: [false],
             startColor: [t.text.textEffects.gradient.startColor, Validators.required],
             endColor: [t.text.textEffects.gradient.endColor, Validators.required],
             direction: [t.text.textEffects.gradient.direction, Validators.required]
           }),
           outline: this.fb.group({
+            enable: [false],
             color: [t.text.textEffects.outline.color, Validators.required],
             width: [t.text.textEffects.outline.width, Validators.required]
           }),
           glow: this.fb.group({
+            enable: [false],
             color: [t.text.textEffects.glow.color, Validators.required],
             blur: [t.text.textEffects.glow.blur, Validators.required]
           })
         }),
-        textAlignment: [t.text.textAlignment, Validators.required],
+        textAnchor: [t.text.textAnchor],
+        alignmentBaseline: [t.text.textAnchor],
         letterSpacing: [t.text.letterSpacing, Validators.required],
         lineHeight: [t.text.lineHeight, Validators.required],
         textTransformation: [t.text.textTransformation, Validators.required]
@@ -390,7 +402,7 @@ export class ImageGenerateComponent {
       const fontWeights = font ? font.variables : [];
       const currentValue = parentFormGroup.get('fw')?.value;
       if (!fontWeights.includes(currentValue)) {
-        parentFormGroup.get('fw')?.patchValue(fontWeights[0]||'400');
+        parentFormGroup.get('fw')?.patchValue(fontWeights[0] || '400');
       }
     }
   }
@@ -400,9 +412,8 @@ export class ImageGenerateComponent {
     if (f) {
       return f.variables;
     } else {
-      console.log('Mogra family not found.');
+      return []
     }
-    return [];
   }
   createSvgPropertiesFormGroup(svg: SvgProperties): FormGroup {
     return this.fb.group({
@@ -448,7 +459,16 @@ export class ImageGenerateComponent {
     });
   }
   drop(event: CdkDragDrop<string[]>) {
-    moveItemInArray(this.postDetailsForm.get('data')?.value, event.previousIndex, event.currentIndex);
-    this.postDetailsForm.setValue(this.postDetailsForm.value)
+    const dataArray = this.postDetailsForm.get('data')?.value; // Retrieve the array of data
+    if (dataArray) {
+      moveItemInArray(dataArray, event.previousIndex, event.currentIndex);
+    }
+    this.dataArray.clear();
+    for (let i = 0; i < dataArray.length; i++) {
+      const item = dataArray[i];
+      (item.rect) && this.dataArray.push(this.createRectFormGroup(item));
+      (item.text) && this.dataArray.push(this.createTextFormGroup(item));
+    }
+    this.postDetails.data = dataArray;
   }
 }
