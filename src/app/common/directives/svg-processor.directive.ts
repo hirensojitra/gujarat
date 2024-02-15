@@ -1,4 +1,4 @@
-import { Directive, Input, ElementRef, OnInit, Renderer2, Output, EventEmitter } from '@angular/core';
+import { Directive, Input, ElementRef, OnInit, Renderer2, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import {
   PostDetails,
@@ -25,7 +25,7 @@ interface Data {
 @Directive({
   selector: '[svgProcessor]'
 })
-export class SvgProcessorDirective implements OnInit {
+export class SvgProcessorDirective implements OnInit, AfterViewInit {
   offsetX: number = 0;
   offsetY: number = 0;
   width: number = 0;
@@ -39,6 +39,7 @@ export class SvgProcessorDirective implements OnInit {
   postDataSet$ = this.postDataSetSubject.asObservable();
 
   @Output() dataChanges = new EventEmitter<{ data: Data, index: number }>();
+  @Output() getSelected = new EventEmitter<{ index: number }>();
   postData!: PostDetails;
   data: Data[] = [];
   dataLoaded: boolean = false;
@@ -65,7 +66,12 @@ export class SvgProcessorDirective implements OnInit {
       this.renderer.setAttribute(b, 'height', '100%'); // Set height to 100%
       this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
       this.renderer.setAttribute(b, 'href', background);
-      this.renderer.appendChild(svg, b);
+      const firstChild = svg.firstChild;
+      if (firstChild) {
+        svg.insertBefore(b, firstChild);
+      } else {
+        svg.appendChild(b);
+      }
       await this.getColors(backgroundUrl);
     }
   }
@@ -104,7 +110,7 @@ export class SvgProcessorDirective implements OnInit {
       const svg = this.el.nativeElement;
       const rect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
       const { x, y, width, height, fill, opacity, originX, originY, rotation } = d.rect;
-  
+
       // Set attributes using an object
       this.renderer.setAttribute(rect, 'x', String(x));
       this.renderer.setAttribute(rect, 'y', String(y));
@@ -112,22 +118,22 @@ export class SvgProcessorDirective implements OnInit {
       this.renderer.setAttribute(rect, 'height', String(height));
       this.renderer.setAttribute(rect, 'fill', fill);
       this.renderer.setAttribute(rect, 'opacity', String(opacity));
-  
+
       // Apply rotation and origin if specified
       if (rotation || (originX !== undefined && originY !== undefined)) {
         // const transformValue = `translate(${originX || 0} ${originY || 0}) rotate(${rotation || 0} ${x} ${y})`;
         // this.renderer.setAttribute(rect, 'transform', transformValue);
       }
-  
+
       // Set additional attributes if needed
-  
+
       this.renderer.setAttribute(rect, 'data-type', 'rect');
       this.renderer.appendChild(svg, rect);
       return rect;
     }
     return null;
   }
-  
+
   createCircle(d: Data, i: number) {
     if (this.el.nativeElement && d.circle) {
       const svg = this.el.nativeElement;
@@ -182,47 +188,87 @@ export class SvgProcessorDirective implements OnInit {
   }
   createImage(d: Data, i: number) {
     if (this.el.nativeElement && d.image) {
-      const svg = this.el.nativeElement;
-      const image = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
-      const { x, y, r, imageUrl, borderColor, borderWidth, shape, origin, placeholder, svgProperties } = d.image; // Extract image properties
-      this.renderer.setAttribute(image, 'x', String(x));
-      this.renderer.setAttribute(image, 'y', String(y));
-      this.renderer.setAttribute(image, 'width', String(r * 2)); // Assuming r is the radius, set width as diameter
-      this.renderer.setAttribute(image, 'height', String(r * 2));
-      this.renderer.setAttribute(image, 'href', imageUrl);
-      this.renderer.setAttribute(image, 'data-type', 'image');
+      const svg = this.el.nativeElement as SVGSVGElement | null;
 
-      // Apply border if needed
-      if (borderWidth && borderColor) {
-        this.renderer.setAttribute(image, 'stroke', borderColor);
-        this.renderer.setAttribute(image, 'stroke-width', String(borderWidth));
+      const { x, y, r, imageUrl, borderColor, borderWidth, shape, origin, placeholder, svgProperties } = d.image;
+
+      let element: any; // Initialize as null
+
+      switch (shape) {
+        case 'circle':
+          element = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
+          this.renderer.setAttribute(element, 'cx', String(x));
+          this.renderer.setAttribute(element, 'cy', String(y));
+          this.renderer.setAttribute(element, 'r', String(r));
+          this.renderer.setAttribute(element, 'data-type', 'circle');
+          break;
+        case 'ellipse':
+          element = this.renderer.createElement('ellipse', 'http://www.w3.org/2000/svg');
+          this.renderer.setAttribute(element, 'cx', String(x));
+          this.renderer.setAttribute(element, 'cy', String(y));
+          this.renderer.setAttribute(element, 'rx', String(r));
+          this.renderer.setAttribute(element, 'ry', String(r));
+          this.renderer.setAttribute(element, 'data-type', 'ellipse');
+          break;
+        case 'rect':
+          element = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
+          this.renderer.setAttribute(element, 'x', String(x)); // X coordinate
+          this.renderer.setAttribute(element, 'y', String(y)); // Y coordinate
+          this.renderer.setAttribute(element, 'width', String(r * 2)); // Width
+          this.renderer.setAttribute(element, 'height', String(r * 2)); // Height
+          this.renderer.setAttribute(element, 'data-type', 'rect');
+          break;
+        default:
+          console.error('Invalid shape');
+          return null;
       }
 
-      // Apply SVG properties if provided
-      if (svgProperties) {
-        Object.keys(svgProperties).forEach(key => {
-          const propertyKey = key as keyof SvgProperties;
-          const attributeValue = svgProperties[propertyKey]; // Access the property value directly using propertyKey
-          this.renderer.setAttribute(image, propertyKey, String(attributeValue));
-        });
-      }
+      if (element !== null) {
+        // Set common attributes for all shapes
+        const id = 'image-pattern-' + i;
+        this.renderer.setAttribute(element, 'fill', 'url(#' + id + ')');
+        this.renderer.setStyle(element, 'cursor', 'grab');
+        this.renderer.setStyle(element, 'filter', 'url(#shadow)');
+        const imagePattern = this.renderer.createElement('pattern', 'http://www.w3.org/2000/svg');
+        this.renderer.setAttribute(imagePattern, 'id', id);
+        this.renderer.setAttribute(imagePattern, 'x', '0');
+        this.renderer.setAttribute(imagePattern, 'y', '0');
+        this.renderer.setAttribute(imagePattern, 'height', '100%');
+        this.renderer.setAttribute(imagePattern, 'width', '100%');
+        this.renderer.setAttribute(imagePattern, 'viewBox', '0 0 ' + String(r * 2) + ' ' + String(r * 2));
 
-      // Apply transformation based on origin
-      if (origin === 'center') {
-        // this.renderer.setAttribute(image, 'transform', `translate(${x - r}, ${y - r})`);
-      }
 
-      // Add placeholder if provided
-      if (placeholder) {
-        // Add placeholder logic here
-      }
+        const image = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
+        this.renderer.setAttribute(image, 'x', '0');
+        this.renderer.setAttribute(image, 'y', '0');
+        this.renderer.setAttribute(image, 'width', String(r * 2));
+        this.renderer.setAttribute(image, 'height', String(r * 2));
+        this.renderer.setAttribute(image, 'href', imageUrl);
 
-      // Append the image element to the SVG
-      this.renderer.appendChild(svg, image);
-      return image;
+        this.renderer.appendChild(imagePattern, image);
+        this.renderer.appendChild(svg, imagePattern);
+
+        // Apply border if needed
+        if (borderWidth && borderColor) {
+          this.renderer.setAttribute(element, 'stroke', borderColor);
+          this.renderer.setAttribute(element, 'stroke-width', String(borderWidth));
+        }
+
+        // Apply SVG properties if provided
+        // if (svgProperties) {
+        //   Object.keys(svgProperties).forEach(key => {
+        //     const propertyKey = key as keyof SvgProperties;
+        //     const attributeValue = svgProperties[propertyKey];
+        //     this.renderer.setAttribute(element!, propertyKey, String(attributeValue));
+        //   });
+        // }
+        this.renderer.appendChild(svg, element);
+        return element as any;
+      }
     }
     return null;
   }
+
 
   createText(d: Data, i: number) {
     if (this.el.nativeElement && d.text) {
@@ -294,9 +340,6 @@ export class SvgProcessorDirective implements OnInit {
       // Add text content if available
       if (d.text.text) {
         this.renderer.appendChild(text, this.renderer.createText(d.text.text));
-        this.renderer.listen(text, 'click', () => {
-          console.log(i);
-        });
       }
 
       // Append the text element to the SVG
@@ -358,14 +401,47 @@ export class SvgProcessorDirective implements OnInit {
   }
   addDraggableBehavior(elements: any): void {
     const svg = this.el.nativeElement as SVGSVGElement;
+    const showControls = elements.map(() => {
+      return false;
+    })
+    let handleResize: any = [];
     elements.forEach((element: any, index: number) => {
       const eleData = this.postData.data[index]
       if (element) {
         let isDragging = false;
+        let isDragged = false;
+        const bbox = element.getBBox();
+        const x = bbox.x;
+        const y = bbox.y;
+        const width = bbox.width;
+        const height = bbox.height;
+        // const resizeHandles = [
+        //   { x: x - 5, y: y - 5, cursor: 'nw-resize' }, // Top-left corner
+        //   { x: x + width / 2 - 5, y: y - 5, cursor: 'n-resize' }, // Top-center
+        //   { x: x + width - 5, y: y - 5, cursor: 'ne-resize' }, // Top-right corner
+        //   { x: x - 5, y: y + height / 2 - 5, cursor: 'w-resize' }, // Middle-left
+        //   { x: x + width - 5, y: y + height / 2 - 5, cursor: 'e-resize' }, // Middle-right
+        //   { x: x - 5, y: y + height - 5, cursor: 'sw-resize' }, // Bottom-left corner
+        //   { x: x + width / 2 - 5, y: y + height - 5, cursor: 's-resize' }, // Bottom-center
+        //   { x: x + width - 5, y: y + height - 5, cursor: 'se-resize' } // Bottom-right corner
+        // ].map((position, idx) => {
+        //   const handle = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        //   handle.setAttribute('x', position.x.toString());
+        //   handle.setAttribute('y', position.y.toString());
+        //   handle.setAttribute('width', '10');
+        //   handle.setAttribute('height', '10');
+        //   handle.setAttribute('fill', 'blue');
+        //   handle.setAttribute('cursor', position.cursor); // Set the cursor style based on position
+        //   svg.appendChild(handle);
+        //   return handle;
+        // });
         this.renderer.setAttribute(element, 'cursor', 'grab');
         const elementType = element.getAttribute('data-type');
         const onMouseDown = (event: MouseEvent) => {
           isDragging = true;
+          isDragged = false;
+          showControls.fill(false);
+          showControls[index] = true;
           const svgPoint = this.getMousePosition(event, svg);
           const clickedX = svgPoint.x;
           const clickedY = svgPoint.y;
@@ -381,9 +457,76 @@ export class SvgProcessorDirective implements OnInit {
           this.offsetX = elementX - clickedX;
           this.offsetY = elementY - clickedY;
           this.renderer.setAttribute(element, 'cursor', 'grabbing');
+          while (handleResize.length > 0) {
+            const handle = handleResize.pop(); // Remove the last element from the array
+            if (handle && handle.parentNode) {
+              handle.parentNode.removeChild(handle); // Remove handle from SVG DOM
+            }
+          }
+          switch (elementType) {
+            case 'circle':
+              if (showControls[index]) {
+                const linePositions = [
+                  { x1: x, y1: y, x2: x + width, y2: y }, // Top boundary
+                  { x1: x + width, y1: y, x2: x + width, y2: y + height }, // Right boundary
+                  { x1: x + width, y1: y + height, x2: x, y2: y + height }, // Bottom boundary
+                  { x1: x, y1: y + height, x2: x, y2: y } // Left boundary
+                ];
+                linePositions.forEach((position, i) => {
+                  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                  line.setAttribute('x1', position.x1.toString());
+                  line.setAttribute('y1', position.y1.toString());
+                  line.setAttribute('x2', position.x2.toString());
+                  line.setAttribute('y2', position.y2.toString());
+                  line.setAttribute('stroke', 'white');
+                  line.setAttribute('stroke-width', '3');
+                  line.setAttribute('stroke-linecap', 'round');
+                  svg.appendChild(line);
+                });
+                const radius = element.getAttribute('r');
+                const centerX = x + parseFloat(radius);
+                const centerY = y + parseFloat(radius);
+                [
+                  { x: centerX, y: y, cursor: 'n-resize' }, // Top-center
+                  { x: x, y: centerY, cursor: 'w-resize' }, // Middle-left
+                  { x: x + parseFloat(width), y: centerY, cursor: 'e-resize' }, // Middle-right
+                  { x: centerX, y: y + parseFloat(height), cursor: 's-resize' } // Bottom-center
+                ].map((position) => {
+                  const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                  handle.setAttribute('cx', position.x.toString());
+                  handle.setAttribute('cy', position.y.toString());
+                  handle.setAttribute('r', '5');
+                  handle.setAttribute('fill', 'blue');
+                  handle.setAttribute('cursor', position.cursor);
+                  svg.appendChild(handle);
+                  handleResize.push(handle)
+                });
+              }
+              break;
+            case 'rectangle':
+              // Logic for handling rectangle elements
+              break;
+            case 'text':
+              // Logic for handling text elements
+              break;
+            case 'image':
+              // Logic for handling image elements
+              break;
+            default:
+              // Default case
+              break;
+          }
+          this.getSelected.emit({ index: index })
         };
         const onMouseMove = (event: MouseEvent) => {
           if (isDragging) {
+            isDragged = true;
+            while (handleResize.length > 0) {
+              const handle = handleResize.pop(); // Remove the last element from the array
+              if (handle && handle.parentNode) {
+                handle.parentNode.removeChild(handle); // Remove handle from SVG DOM
+              }
+            }
             const svgPoint = this.getMousePosition(event, svg);
             if (element) {
               let x, y;
@@ -397,7 +540,7 @@ export class SvgProcessorDirective implements OnInit {
                 y = parseFloat(element.getAttribute('y') || '0');
               }
               console.log(this.width, this.height);
-              if (x && y) {
+              if (x!==undefined && y!==undefined) {
                 const oX = svgPoint.x - x + this.offsetX;
                 const oY = svgPoint.y - y + this.offsetY;
                 const newX = x + oX;
@@ -427,8 +570,9 @@ export class SvgProcessorDirective implements OnInit {
                       break;
                   }
                 }
-                const adjustedX = Math.floor(Math.min(Math.max(newX, minX), maxX));
-                const adjustedY = Math.floor(Math.min(Math.max(newY, minY), maxY));
+                const adjustedX = eleData.boxed ? Math.floor(Math.min(Math.max(newX, minX), maxX)) : Math.floor(newX);
+                const adjustedY = eleData.boxed ? Math.floor(Math.min(Math.max(newY, minY), maxY)) : Math.floor(newY);
+
                 switch (true) {
                   case !!eleData.circle:
                     if (eleData.circle) {
@@ -467,7 +611,7 @@ export class SvgProcessorDirective implements OnInit {
           }
         };
         const onMouseUp = () => {
-          isDragging && this.dataChanges.emit({ data: eleData, index: index });
+          isDragging && isDragged && this.dataChanges.emit({ data: eleData, index: index });
           isDragging = false;
           this.renderer.setAttribute(element, 'cursor', 'grab');
         };
@@ -499,12 +643,22 @@ export class SvgProcessorDirective implements OnInit {
     this.eventListeners = [];
   }
   ngOnInit() {
-    const post = this.postDataSet$;
-    post.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value: PostDetails) => {
-      this.initSVG(value)
-    });
+    // const post = this.postDataSet$;
+    // post.pipe(
+    //   takeUntil(this.destroy$)
+    // ).subscribe((value: PostDetails) => {
+    //   this.initSVG(value)
+    // });
+  }
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      const post = this.postDataSet$;
+      post.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((value: PostDetails) => {
+        this.initSVG(value)
+      });
+    }, 1500);
   }
   initSVG(d: PostDetails) {
     const { id, deleted, h, w, title, backgroundUrl, data } = d;
@@ -517,9 +671,7 @@ export class SvgProcessorDirective implements OnInit {
       this.updateViewBox(Math.min(Math.max(w, 1024), 1920), Math.min(Math.max(h, 1024), 1920));
     }
     if (data && this.postData) {
-
       if (data != this.postData.data) {
-
         if (data.length !== this.postData.data.length) {
           let added = data.filter(item => !this.postData.data.includes(item));
           let removed = this.postData.data.filter(item => !data.includes(item));
@@ -530,11 +682,9 @@ export class SvgProcessorDirective implements OnInit {
           if (removed) {
             this.postData.data = data
             this.updateElements(this.postData.data)
-            console.log("Removed : ", removed)
           }
         } else {
           let updateRequire = this.postData.data.map((item, index) => data[index] !== this.postData.data[index]);
-          console.log(updateRequire)
           if (updateRequire) {
             let updated = this.postData.data.filter((item, index) => {
               if (data[index] !== item) {
@@ -542,7 +692,6 @@ export class SvgProcessorDirective implements OnInit {
               } return data[index] !== item
             });
             if (updated.length > 0) {
-              console.log("Updated : ", updated);
               this.updateElements(this.postData.data)
             }
           }
@@ -553,7 +702,6 @@ export class SvgProcessorDirective implements OnInit {
       this.dataLoaded = true;
       this.postData = d;
     }
-
   }
   ngOnDestroy() {
     this.removeEventListeners();

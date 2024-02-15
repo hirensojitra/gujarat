@@ -1,7 +1,6 @@
-import { Component, HostListener } from '@angular/core';
+import { Component } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, SvgProperties, TextElement } from 'src/app/common/interfaces/image-element';
-import ColorThief from 'colorthief';
 import { ColorService } from 'src/app/common/services/color.service';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
@@ -20,6 +19,7 @@ interface Data {
   styleUrls: ['./image-generate.component.scss']
 })
 export class ImageGenerateComponent {
+  selectedElement: number | null = null;
   colorSet: string[] = [];
   fontFamilies = [
     {
@@ -103,6 +103,9 @@ export class ImageGenerateComponent {
       console.error(`Form array 'data' not found.`);
     }
   }
+  getSelected(d: { index: number }) {
+    this.selectedElement = d.index;
+  }
 
 
   postDetailsForm!: FormGroup;
@@ -117,7 +120,7 @@ export class ImageGenerateComponent {
       h: 1024,
       w: 1024,
       title: "image",
-      backgroundUrl: "https://images.unsplash.com/photo-1706211306706-8f36d91c8379?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      backgroundUrl: "https://images.unsplash.com/photo-1538291323976-37dcaafccb12?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       data: []
     }
     // Initialize the form
@@ -168,22 +171,26 @@ export class ImageGenerateComponent {
     this.postDetails = this.postDetailsForm.value;
   }
   rectData = {
-    title: "",
+    title: "Rect",
+    editable: false,
+    boxed: true,
     rect: {
       x: 10,
       y: 20,
       width: 100,
       height: 50,
-      fill: "blue",
+      fill: "#FFFFFF",
       opacity: 0.8,
       originX: 5,
       originY: 5,
-      rotation: 45
+      rotation: 45,
     }
   };
-  createRectFormGroup(r: { title: string, rect: RectProperties }): FormGroup {
+  createRectFormGroup(r: { title: string, editable: boolean, boxed: boolean, rect: RectProperties }): FormGroup {
     return this.fb.group({
-      title: r.title,
+      title: [r.title, Validators.required],
+      editable: [r.editable],
+      boxed: [r.boxed],
       rect: this.fb.group({
         x: [r.rect.x, Validators.required],
         y: [r.rect.y, Validators.required],
@@ -199,20 +206,24 @@ export class ImageGenerateComponent {
   }
   circleData = {
     title: "Circle 1",
+    editable: false,
+    boxed: true,
     circle: {
       cx: 50,
       cy: 50,
       r: 30,
-      fill: "blue",
+      fill: "#FFFFFF",
       opacity: 1,
       originX: 0,
       originY: 0
     }
   };
 
-  createCircleFormGroup(c: { title: string, circle: CircleProperties }): FormGroup {
+  createCircleFormGroup(c: { title: string, editable: boolean, boxed: boolean, circle: CircleProperties }): FormGroup {
     return this.fb.group({
-      title: c.title,
+      title: [c.title, Validators.required],
+      editable: [c.editable],
+      boxed: [c.boxed],
       circle: this.fb.group({
         cx: [c.circle.cx, Validators.required],
         cy: [c.circle.cy, Validators.required],
@@ -226,6 +237,8 @@ export class ImageGenerateComponent {
   }
   ellipseData = {
     title: "Ellipse 1",
+    editable: false,
+    boxed: true,
     ellipse: {
       cx: 100,
       cy: 100,
@@ -238,9 +251,11 @@ export class ImageGenerateComponent {
       rotation: 45
     }
   };
-  createEllipseFormGroup(e: { title: string, ellipse: EllipseProperties }): FormGroup {
+  createEllipseFormGroup(e: { title: string, editable: boolean, boxed: boolean, ellipse: EllipseProperties }): FormGroup {
     return this.fb.group({
-      title: e.title,
+      title: [e.title, Validators.required],
+      editable: [e.editable],
+      boxed: [e.boxed],
       ellipse: this.fb.group({
         cx: [e.ellipse.cx, Validators.required],
         cy: [e.ellipse.cy, Validators.required],
@@ -256,6 +271,8 @@ export class ImageGenerateComponent {
   }
   lineData = {
     title: "Line 1",
+    editable: false,
+    boxed: true,
     line: {
       x1: 50,
       y1: 50,
@@ -270,9 +287,11 @@ export class ImageGenerateComponent {
     }
   };
 
-  createLineFormGroup(l: { title: string, line: LineProperties }): FormGroup {
+  createLineFormGroup(l: { title: string, editable: boolean, boxed: boolean, line: LineProperties }): FormGroup {
     return this.fb.group({
-      title: l.title,
+      title: [l.title, Validators.required],
+      editable: [l.editable],
+      boxed: [l.boxed],
       line: this.fb.group({
         x1: [l.line.x1, Validators.required],
         y1: [l.line.y1, Validators.required],
@@ -287,8 +306,10 @@ export class ImageGenerateComponent {
       })
     });
   }
-  textData: { title: string, text: TextElement } = {
+  textData: { title: string, editable: boolean, boxed: boolean, text: TextElement } = {
     title: "Text 1",
+    editable: true,
+    boxed: true,
     text: {
       x: 100,
       y: 100,
@@ -338,9 +359,11 @@ export class ImageGenerateComponent {
       textTransformation: "none"
     }
   };
-  createTextFormGroup(t: { title: string, text: TextElement }): FormGroup {
+  createTextFormGroup(t: { title: string, editable: boolean, boxed: boolean, text: TextElement }): FormGroup {
     return this.fb.group({
-      title: t.title,
+      title: [t.title, Validators.required],
+      editable: [t.editable],
+      boxed: [t.boxed],
       text: this.fb.group({
         x: [t.text.x, Validators.required],
         y: [t.text.y, Validators.required],
@@ -424,6 +447,8 @@ export class ImageGenerateComponent {
   }
   imageData = {
     title: "Image 1",
+    editable: true,
+    boxed: true,
     image: {
       r: 50,
       x: 100,
@@ -441,9 +466,11 @@ export class ImageGenerateComponent {
       }
     }
   };
-  createImageFormGroup(i: { title: string, image: ImageElement }): FormGroup {
+  createImageFormGroup(i: { title: string, editable: boolean, boxed: boolean, image: ImageElement }): FormGroup {
     return this.fb.group({
-      title: '',
+      title: [i.title, Validators.required],
+      editable: [i.editable],
+      boxed: [i.boxed],
       image: this.fb.group({
         r: [i.image.r, Validators.required],
         x: [i.image.x, Validators.required],
