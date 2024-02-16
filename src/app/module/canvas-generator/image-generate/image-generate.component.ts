@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, SvgProperties, TextElement } from 'src/app/common/interfaces/image-element';
 import { ColorService } from 'src/app/common/services/color.service';
@@ -13,6 +13,19 @@ interface Data {
   text?: TextElement,
   image?: ImageElement
 }
+interface ShapeControl {
+  title: string;
+  active: boolean;
+}
+
+interface ShapeControls {
+  rect: ShapeControl[];
+  circle: ShapeControl[];
+  ellipse: ShapeControl[];
+  line: ShapeControl[];
+  text: ShapeControl[];
+  image: ShapeControl[];
+}
 @Component({
   selector: 'app-image-generate',
   templateUrl: './image-generate.component.html',
@@ -21,6 +34,53 @@ interface Data {
 export class ImageGenerateComponent {
   selectedElement: number | null = null;
   colorSet: string[] = [];
+  controlSet: ShapeControl[][] = [];
+  controlValues: ShapeControls = {
+    rect: [
+      { title: 'Fill', active: false },
+      { title: 'Dimension', active: false },
+      { title: 'Opacity', active: false },
+      { title: 'Rotation', active: false },
+      { title: 'Origin', active: false },
+      { title: 'Position', active: false },
+      { title: 'Control', active: false }
+    ],
+    circle: [
+      { title: 'Fill', active: false },
+      { title: 'Dimension', active: false },
+      { title: 'Opacity', active: false },
+      { title: 'Origin', active: false },
+      { title: 'Position', active: false },
+      { title: 'Control', active: false }],
+    ellipse: [{ title: 'Position', active: true },
+    { title: 'Dimension', active: false },
+    { title: 'Fill', active: false },
+    { title: 'opacity', active: false },
+    { title: 'originX', active: false },
+    { title: 'originY', active: false },
+    { title: 'rotation', active: false }],
+    line: [{ title: 'Position', active: true },
+    { title: 'Dimension', active: false },
+    { title: 'Fill', active: false },
+    { title: 'opacity', active: false },
+    { title: 'originX', active: false },
+    { title: 'originY', active: false },
+    { title: 'rotation', active: false }],
+    text: [{ title: 'Position', active: true },
+    { title: 'Dimension', active: false },
+    { title: 'Fill', active: false },
+    { title: 'opacity', active: false },
+    { title: 'originX', active: false },
+    { title: 'originY', active: false },
+    { title: 'rotation', active: false }],
+    image: [{ title: 'Position', active: true },
+    { title: 'Dimension', active: false },
+    { title: 'Fill', active: false },
+    { title: 'opacity', active: false },
+    { title: 'originX', active: false },
+    { title: 'originY', active: false },
+    { title: 'rotation', active: false }]
+  }
   fontFamilies = [
     {
       "family": "Anek Gujarati",
@@ -142,22 +202,28 @@ export class ImageGenerateComponent {
     let d: FormGroup = this.fb.group({})
     switch (t) {
       case 'rect':
-        d = this.createRectFormGroup(this.rectData)
+        d = this.createRectFormGroup(this.rectData);
+        this.controlSet.push(this.controlValues.rect);
         break;
       case 'circle':
-        d = this.createCircleFormGroup(this.circleData)
+        d = this.createCircleFormGroup(this.circleData);
+        this.controlSet.push(this.controlValues.circle);
         break;
       case 'ellipse':
-        d = this.createEllipseFormGroup(this.ellipseData)
+        d = this.createEllipseFormGroup(this.ellipseData);
+        this.controlSet.push(this.controlValues.ellipse);
         break;
       case 'line':
-        d = this.createLineFormGroup(this.lineData)
+        d = this.createLineFormGroup(this.lineData);
+        this.controlSet.push(this.controlValues.line);
         break;
       case 'text':
-        d = this.createTextFormGroup(this.textData)
+        d = this.createTextFormGroup(this.textData);
+        this.controlSet.push(this.controlValues.text);
         break;
       case 'image':
-        d = this.createImageFormGroup(this.imageData)
+        d = this.createImageFormGroup(this.imageData);
+        this.controlSet.push(this.controlValues.image);
         break;
       default:
         console.error('Invalid type');
@@ -491,9 +557,11 @@ export class ImageGenerateComponent {
       moveItemInArray(dataArray, event.previousIndex, event.currentIndex);
     }
     this.dataArray.clear();
+    this.controlSet = [];
     for (let i = 0; i < dataArray.length; i++) {
       const item = dataArray[i];
       (item.rect) && this.dataArray.push(this.createRectFormGroup(item));
+      (item.rect) && this.controlSet.push(this.controlValues.rect);
       (item.circle) && this.dataArray.push(this.createCircleFormGroup(item));
       (item.ellipse) && this.dataArray.push(this.createEllipseFormGroup(item));
       (item.line) && this.dataArray.push(this.createLineFormGroup(item));
@@ -502,4 +570,57 @@ export class ImageGenerateComponent {
     }
     this.postDetails.data = dataArray;
   }
+  setActiveControl(rectIndex: number, controlIndex: number) {
+    this.controlSet[rectIndex].forEach((control, index) => {
+      control.active = index === controlIndex;
+    });
+  }
+  getActiveControl(rectIndex: number, controlTitle: string): boolean {
+    const controls = this.controlSet[rectIndex];
+    const activeControl = controls.find(control => control.title === controlTitle && control.active);
+    return activeControl ? true : false;
+  }
+
+  scaleFactor = 1;
+  // offsetX = 0;
+  // offsetY = 0;
+
+  // @HostListener('wheel', ['$event'])
+  // onWheel(event: WheelEvent) {
+  //   event.preventDefault();
+  //   const delta = Math.sign(event.deltaY);
+  //   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  //   const mouseX = event.clientX - rect.left;
+  //   const mouseY = event.clientY - rect.top;
+  //   const scaleFactorChange = delta * 0.1;
+  //   this.zoomAt(mouseX, mouseY, scaleFactorChange);
+  // }
+
+  onTouch(event: TouchEvent) {
+    //   event.preventDefault();
+    //   if (event.touches.length === 2) {
+    //     const touch1 = event.touches[0];
+    //     const touch2 = event.touches[1];
+    //     const distance = Math.sqrt(
+    //       Math.pow(touch2.clientX - touch1.clientX, 2) +
+    //       Math.pow(touch2.clientY - touch1.clientY, 2)
+    //     );
+    //     if (distance > 10) {
+    //       const centerX = (touch1.clientX + touch2.clientX) / 2;
+    //       const centerY = (touch1.clientY + touch2.clientY) / 2;
+    //       const scaleFactorChange = distance / 100;
+    //       this.zoomAt(centerX, centerY, scaleFactorChange);
+    //     }
+    //   }
+  }
+
+  // zoomAt(x: number, y: number, scaleFactorChange: number) {
+  //   const prevScaleFactor = this.scaleFactor;
+  //   this.scaleFactor += scaleFactorChange;
+  //   const deltaX = (x - this.offsetX) * (1 - this.scaleFactor / prevScaleFactor);
+  //   const deltaY = (y - this.offsetY) * (1 - this.scaleFactor / prevScaleFactor);
+  //   this.offsetX -= deltaX;
+  //   this.offsetY -= deltaY;
+  // }
+
 }

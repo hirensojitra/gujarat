@@ -1,31 +1,7 @@
-<div class="h-100 d-flex flex-column p-3">
-    <div class="container">
-        <div class="container mt-5">
-            <ng-container *ngFor="let property of textProperties; let j = index">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                    [attr.data-bs-target]="'#collapse'+j" aria-expanded="true"
-                    [attr.aria-controls]="'collapse'+j">
-                    {{property.text}}
-                </button>
-            </ng-container>
-            <div class="accordion" id="textPropertiesAccordion">
-                <ng-container *ngFor="let property of textProperties; let j = index">
-                    <div class="accordion-item border-0">
-                        <div [id]="'collapse'+j" class="accordion-collapse collapse" [attr.aria-labelledby]="'heading'+j" [attr.data-bs-parent]="'#textPropertiesAccordion'">
-                            <div class="accordion-body">
-                                <ul class="list-group">
-                                    <li *ngFor="let child of getPropertyChildArray(property.child)">
-                                        <button type="button" class="list-group-item list-group-item-action">
-                                            {{child[0]}}
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </ng-container>
-            </div>
-        </div>
-
-    </div>
-</div>
+<!-- app.component.html -->
+<svg width="400" height="200" xmlns="http://www.w3.org/2000/svg" class="position-relative">
+    <text x="50" y="50" id="editableText" font-family="Arial" font-size="20" fill="black" (click)="makeEditable($event)">
+      Click to edit me!
+    </text>
+  </svg>
+  

@@ -58,7 +58,14 @@ input::-webkit-inner-spin-button {
 input[type=number] {
     -moz-appearance: textfield;
 }
-
+.overflow-y-auto{
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+.overflow-x-auto{
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
 @for $i from 5 through 100 {
     .min-vh-#{$i} {
         min-height: #{$i}vh !important;
@@ -119,6 +126,7 @@ input[type=number] {
     .min-h-#{$i}-p {
         min-height: calc(#{$i} * 1%) !important;
     }
+
     .max-w-#{$i}-p {
         max-width: calc(#{$i} * 1%) !important;
     }
@@ -134,28 +142,145 @@ input[type=number] {
     .w-#{$i}-p {
         width: calc(#{$i} * 1%) !important;
     }
+
     .max-h-#{$i} {
         max-height: calc(#{$i} * 1%) !important;
     }
+
     .max-w-#{$i} {
         max-width: calc(#{$i} * 1%) !important;
     }
 }
-.form-floating{
+
+.form-floating {
     position: relative;
-    .error{
+
+    .error {
         position: absolute;
         top: 100%;
     }
 }
-.sticky-top{
+
+.sticky-top {
     z-index: 1;
 }
-.cropper-container{
+
+.cropper-container {
     margin: 0 auto;
 }
-.form-label{
+
+.form-label {
     margin-bottom: 0.15rem;
     font-weight: 600;
     text-transform: capitalize;
+}
+
+$fab-color: white;
+$fab-background-color-1: #4ba2ff;
+$fab-background-color-2: inherit;
+
+.fab-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    user-select: none;
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    z-index: 5;
+
+    &:hover {
+        height: 100%;
+
+        .fab {
+            background-color: $fab-background-color-1;
+        }
+
+        @for $i from 2 through 8 {
+            .sub-button:nth-child(#{$i}) {
+                transform: translateY(-(60px * ($i - 1)) - 60px);
+            }
+        }
+
+        .sub-button {
+            a {
+                &:hover {
+                    background: #408253;
+                }
+
+                span {
+                    display: flex;
+                    right: calc(100% + 10px);
+                    top: 7.5px;
+                    color: #000;
+                    align-items: center;
+                    pointer-events: none;
+                    padding: 0px 10px;
+                    background: #FFF;
+                }
+            }
+        }
+    }
+
+    .fab {
+        position: relative;
+        height: 50px;
+        width: 50px;
+        background-color: #000;
+        color: $fab-color;
+        border-radius: 50%;
+        z-index: 2;
+
+        .fab-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            border-radius: 50%;
+
+            .material-icons {
+                color: $fab-color;
+                font-size: 48px;
+            }
+        }
+    }
+
+    .sub-button {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        height: 60px;
+        width: 60px;
+
+        a {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #000;
+            color: $fab-color;
+            border-radius: 50%;
+            position: relative;
+            text-decoration: none;
+
+            span {
+                position: absolute;
+                height: calc(100% - 15px);
+                display: none;
+            }
+
+            &:hover {
+                cursor: pointer;
+            }
+
+            color: $fab-color;
+        }
+
+        transition: all 0.3s ease;
+    }
 }

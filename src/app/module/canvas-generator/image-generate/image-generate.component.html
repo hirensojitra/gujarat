@@ -1,940 +1,957 @@
-<div class="container-fluid h-100">
-    <div class="row d-flex h-100">
-        <div class="col-md-6 col-lg-7 py-3 position-relative min-h-500-px">
-            <div class="position-absolute w-100 h-100 overflow-hidden start-0 top-0 bg-light p-3">
-                <svg svgProcessor *ngIf="postDetailsForm" class="max-w-100-p max-h-100-p img-fluid mx-auto d-block"
-                    (dataChanges)="updateValue($event)" (getSelected)="getSelected($event)"
-                    [postDataSet]="postDetailsForm.value"></svg>
-            </div>
+<form class="container-fluid p-0 h-100 d-flex flex-column" [formGroup]="postDetailsForm">
+    <div class="d-flex align-items-center w-100 p-3 shadow border-bottom">
+        <div class="form-group">
+            <div class="form-label d-none">Name</div>
+            <label for="title" class="me-2 h4 m-0"><i class="fa fa-edit"></i></label>
+            <input type="text" id="title" class="h4 m-0 border-0 border-secondary" formControlName="title"
+                placeholder="Enter Image Name">
         </div>
-        <div class="col-md-6 col-lg-5 py-3 h-100 d-flex flex-column">
-            <div class="mb-3">
-                <div class="row g-2">
-                    <div class="col-auto"><button (click)="addData('rect');" class="btn btn-success rounded-0 w-100"><i
-                                class="fa fa-square me-2"></i> Rectangle</button></div>
-                    <div class="col-auto"><button (click)="addData('circle');"
-                            class="btn btn-success rounded-0 w-100"><i class="fa fa-circle me-2"></i> Circle</button>
+    </div>
+    <div class="d-flex align-items-center w-100 flex-grow-1 flex-column position-relative">
+        <div class="w-100 h-100 posistion-absolute overflow-y-auto">
+            <div class="row d-flex h-100 g-3">
+                <div class="col-md-6 col-lg-7 py-3 position-relative min-h-200-px">
+                    <div class="position-absolute w-100 overflow-hidden start-0 top-0 bg-light p-3 svg-container"
+                        (touchmove)="onTouch($event)">
+                        <svg svgProcessor *ngIf="postDetailsForm"
+                            class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block"
+                            preserveAspectRatio="xMidYMid meet" [style.transform]="'scale(' + scaleFactor + ')'"
+                            (dataChanges)="updateValue($event)" (getSelected)="getSelected($event)"
+                            [postDataSet]="postDetailsForm.value"></svg>
                     </div>
-                    <div class="col-auto"><button (click)="addData('ellipse');"
-                            class="btn btn-success rounded-0 w-100"><i class="fa fa-circle me-2"></i>
-                            Ellipse</button></div>
-                    <div class="col-auto"><button (click)="addData('line');" class="btn btn-success rounded-0 w-100"><i
-                                class="fa fa-minus me-2"></i> Line</button></div>
-                    <div class="col-auto"><button (click)="addData('text');" class="btn btn-success rounded-0 w-100"><i
-                                class="fa fa-font me-2"></i> Text</button></div>
-                    <div class="col-auto"><button (click)="addData('image');" class="btn btn-success rounded-0 w-100"><i
-                                class="fa fa-image me-2"></i> Image</button></div>
                 </div>
-            </div>
-            <div class="flex-grow-1 position-relative">
-                <div class="position-absolute h-100 w-100 p-3 overflow-auto">
-                    <!-- <pre>{{this.postDetailsForm.get('data')?.value|json}}</pre> -->
-                    <ul class="list-group border-0" cdkDropList (cdkDropListDropped)="drop($event)">
-                        <li class="list-group-item" *ngFor="let item of postDetailsForm.get('data')?.value" cdkDrag>
-                            {{ item.title }}
-                        </li>
-                    </ul>
+                <div class="col-md-6 col-lg-5 py-3 d-flex flex-column">
+                    <div class="flex-grow-1 position-relative">
+                        <div class="position-absolute w-100 p-3 overflow-auto">
+                            <!-- <pre>{{this.postDetailsForm.get('data')?.value|json}}</pre> -->
+                            <!-- <ul class="list-group border-0" cdkDropList (cdkDropListDropped)="drop($event)">
+                                <li class="list-group-item" *ngFor="let item of postDetailsForm.get('data')?.value"
+                                    cdkDrag>
+                                    {{ item.title }}
+                                </li>
+                            </ul> -->
 
-                    <!-- <pre>{{this.postDetails|json}}</pre> -->
-                    <form [formGroup]="postDetailsForm">
-                        <div class="row g-3">
-                            <input type="hidden" id="id" class="form-control" formControlName="id">
-                            <input type="hidden" id="deleted" class="form-control" formControlName="deleted">
-                            <div class="form-group col-6">
-                                <label for="h" class="form-label">Height</label>
-                                <input type="text" id="h" class="form-control" formControlName="h">
-                            </div>
-                            <div class="form-group col-6">
-                                <label for="w" class="form-label">Width</label>
-                                <input type="text" id="w" class="form-control" formControlName="w">
-                            </div>
-                            <div class="form-group col-6">
-                                <label for="title" class="form-label">Title</label>
-                                <input type="text" id="title" class="form-control" formControlName="title">
-                            </div>
-                            <div class="form-group col-12">
-                                <label for="backgroundUrl" class="form-label">Background URL</label>
-                                <input type="text" id="backgroundUrl" class="form-control"
-                                    formControlName="backgroundUrl">
-                            </div>
-                            <div formArrayName="data" class="col-12">
-                                <!-- Use ngFor to iterate over each element in the data form array -->
-                                <div *ngFor="let item of dataArray.controls; let i = index" class="row g-3"
-                                    [class.d-none]="selectedElement!==i">
-                                    <ng-container [formGroupName]="i">
-                                        <div class="col-12">
-                                            <div class="card p-3 mb-3">
-                                                <div class="d-flex align-items-center">
-                                                    <h5 class="m-0 me-4 w-auto">Title</h5>
-                                                    <div class="form-check form-switch ms-auto">
-                                                        <input class="form-check-input" type="checkbox"
-                                                            [id]="'boxed-'+i" formControlName="boxed">
-                                                        <label class="form-check-label" [for]="'boxed-'+i">Boxed</label>
-                                                    </div>
-                                                    <div class="form-check form-switch ms-4">
-                                                        <input class="form-check-input" type="checkbox"
-                                                            [id]="'can-edit-'+i" formControlName="editable">
-                                                        <label class="form-check-label" [for]="'can-edit-'+i">Can
-                                                            Edit</label>
-                                                    </div>
-                                                    <button class="btn btn-sm btn-danger ms-2"
-                                                        (click)="removeData(i)"><i class="fa fa-trash"></i></button>
+                            <div class="row g-3">
+                                <input type="hidden" id="id" class="form-control" formControlName="id">
+                                <input type="hidden" id="deleted" class="form-control" formControlName="deleted">
+                                <div class="form-group col-6">
+                                    <label for="h" class="form-label">Height</label>
+                                    <input type="text" id="h" class="form-control" formControlName="h">
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="w" class="form-label">Width</label>
+                                    <input type="text" id="w" class="form-control" formControlName="w">
+                                </div>
+                                <div class="form-group col-12">
+                                    <label for="backgroundUrl" class="form-label">Background URL</label>
+                                    <input type="text" id="backgroundUrl" class="form-control"
+                                        formControlName="backgroundUrl">
+                                </div>
+                                <div formArrayName="data" class="col-12">
+                                    <!-- Use ngFor to iterate over each element in the data form array -->
+                                    <div *ngFor="let item of dataArray.controls; let i = index" class="row g-3"
+                                        [class.d-none]="selectedElement!==i">
+                                        <ng-container [formGroupName]="i">
+                                            <div class="col-12">
+                                                <div class="btn-group btn-group-toggle w-auto rounded-0">
+                                                    <ng-container *ngFor="let control of controlSet[i]; let j = index">
+                                                        <input type="radio" class="btn-check"
+                                                            [id]="'control-' + i + '-' + j" [value]="control.title"
+                                                            [checked]="control.active"
+                                                            (change)="setActiveControl(i, j)">
+                                                        <label
+                                                            class="btn btn-lg btn-outline-dark border-0 rounded-0 d-flex align-items-center justify-content-center p-3"
+                                                            [class.active]="control.active"
+                                                            [for]="'control-' + i + '-' + j"><i
+                                                                [ngClass]="'fa fa-x-'+control.title.toLowerCase()"></i></label>
+                                                    </ng-container>
                                                 </div>
-                                                <div class="row g-3">
-                                                    <div class="form-group col-6">
-                                                        <label class="form-label">Title</label>
-                                                        <input type="text" class="form-control" formControlName="title">
+                                            </div>
+                                            <div class="form-group col-12"
+                                                [class.d-none]="!getActiveControl(i,'Control')">
+                                                <label class="form-label">Title</label>
+                                                <input type="text" class="form-control" formControlName="title">
+                                            </div>
+                                            <div class="col-auto d-flex" [class.d-none]="!getActiveControl(i,'Control')">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" [id]="'boxed-'+i"
+                                                        formControlName="boxed">
+                                                    <label class="form-check-label" [for]="'boxed-'+i">Boxed</label>
+                                                </div>
+                                                <div class="form-check form-switch  ms-4">
+                                                    <input class="form-check-input" type="checkbox" [id]="'can-edit-'+i"
+                                                        formControlName="editable">
+                                                    <label class="form-check-label" [for]="'can-edit-'+i">Can
+                                                        Edit</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto d-flex" [class.d-none]="!getActiveControl(i,'Control')">
+                                                <button class="btn btn-sm btn-danger ms-auto" (click)="removeData(i)"><i
+                                                        class="fa fa-trash"></i></button>
+                                            </div>
+                                            <ng-container formGroupName="rect" *ngIf="item.get('rect')">
+                                                <div class="form-group col-6"
+                                                    [class.d-none]="!getActiveControl(i,'Position')">
+                                                    <label for="x" class="form-label">X</label>
+                                                    <input type="text" id="x" class="form-control" formControlName="x">
+                                                </div>
+                                                <div class="form-group col-6"
+                                                    [class.d-none]="!getActiveControl(i,'Position')">
+                                                    <label for="y" class="form-label">Y</label>
+                                                    <input type="text" id="y" class="form-control" formControlName="y">
+                                                </div>
+                                                <div class="form-group col-6"
+                                                    [class.d-none]="!getActiveControl(i,'Dimension')">
+                                                    <label for="width" class="form-label">Width</label>
+                                                    <input type="text" id="width" class="form-control"
+                                                        formControlName="width">
+                                                </div>
+                                                <div class="form-group col-6"
+                                                    [class.d-none]="!getActiveControl(i,'Dimension')">
+                                                    <label for="height" class="form-label">Height</label>
+                                                    <input type="text" id="height" class="form-control"
+                                                        formControlName="height">
+                                                </div>
+                                                <div class="col-12" [class.d-none]="!getActiveControl(i,'Fill')">
+                                                    <div class="form-group">
+                                                        <label class="form-label d-block">Fill</label>
+                                                        <div class="btn-group rounded-0 d-block" role="group"
+                                                            data-toggle="buttons">
+                                                            <input type="radio" class="btn-check"
+                                                                [id]="'fill-group-none' + i" formControlName="fill"
+                                                                [value]="'none'" autocomplete="off">
+                                                            <label
+                                                                class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
+                                                                [for]="'fill-group-none'  + i"
+                                                                [class.border-secondary]="item.get('rect')?.get('fill')?.value == 'none'">
+                                                                <!-- Display a color sample or gradient -->
+                                                                <span
+                                                                    class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle d-flex align-items-center justify-content-center"
+                                                                    [class]="getColorClass(item.get('rect')?.get('fill')?.value == 'none')"><i
+                                                                        class="fa fa-ban"></i></span>
+                                                            </label>
+                                                            <ng-container *ngFor="let fillOption of colorSet">
+                                                                <input type="radio" class="btn-check"
+                                                                    [id]="'fill-group-' + fillOption + i"
+                                                                    formControlName="fill" [value]="fillOption"
+                                                                    autocomplete="off">
+                                                                <label
+                                                                    class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
+                                                                    [for]="'fill-group-' + fillOption + i"
+                                                                    [class.border-secondary]="item.get('rect')?.get('fill')?.value == fillOption">
+                                                                    <!-- Display a color sample or gradient -->
+                                                                    <span
+                                                                        [style]="'background-color: '+fillOption+'; display: block;'"
+                                                                        class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                                        [class]="getColorClass(item.get('rect')?.get('fill')?.value == fillOption)"></span>
+                                                                </label>
+                                                            </ng-container>
+                                                            <div class="spinner-border" role="status"
+                                                                *ngIf="!colorSet.length">
+                                                                <span class="sr-only">Loading...</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <ng-container formGroupName="rect" *ngIf="item.get('rect')">
-                                                        <div class="form-group col-6">
-                                                            <label for="x" class="form-label">X</label>
-                                                            <input type="text" id="x" class="form-control"
-                                                                formControlName="x">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="y" class="form-label">Y</label>
-                                                            <input type="text" id="y" class="form-control"
-                                                                formControlName="y">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="width" class="form-label">Width</label>
-                                                            <input type="text" id="width" class="form-control"
-                                                                formControlName="width">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="height" class="form-label">Height</label>
-                                                            <input type="text" id="height" class="form-control"
-                                                                formControlName="height">
-                                                        </div>
+                                                </div>
+                                                <div class="col-12 d-flex align-items-end"
+                                                    [class.d-none]="!getActiveControl(i,'Fill')">
+                                                    <input type="text" class="form-control"
+                                                        [value]="item.get('rect')?.get('fill')?.value"
+                                                        (input)="updateColor($event, item.get('rect')?.get('fill'))">
+                                                </div>
+                                                <div class="form-group col-6"
+                                                    [class.d-none]="!getActiveControl(i,'Opacity')">
+                                                    <label [for]="'opacity'+i" class="form-label">Opacity</label>
+                                                    <input type="range" [id]="'opacity'+i" class="form-range" min="0"
+                                                        max="1" step="0.01" formControlName="opacity">
+                                                </div>
+                                                <div class="form-group col-6"
+                                                    [class.d-none]="!getActiveControl(i,'Origin')">
+                                                    <label for="originX" class="form-label">Origin X</label>
+                                                    <input type="text" id="originX" class="form-control"
+                                                        formControlName="originX">
+                                                </div>
+                                                <div class="form-group col-6"
+                                                    [class.d-none]="!getActiveControl(i,'Origin')">
+                                                    <label for="originY" class="form-label">Origin Y</label>
+                                                    <input type="text" id="originY" class="form-control"
+                                                        formControlName="originY">
+                                                </div>
+                                                <div class="form-group col-12"
+                                                    [class.d-none]="!getActiveControl(i,'Rotation')">
+                                                    <label for="rotation" class="form-label">Rotation</label>
+                                                    <input type="text" id="rotation" class="form-control"
+                                                        formControlName="rotation">
+                                                </div>
+                                            </ng-container>
+                                            <ng-container formGroupName="circle" *ngIf="item.get('circle')">
+                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'Position')">
+                                                    <label for="cx" class="form-label">CX</label>
+                                                    <input type="text" id="cx" class="form-control"
+                                                        formControlName="cx">
+                                                </div>
+                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'Position')">
+                                                    <label for="cy" class="form-label">CY</label>
+                                                    <input type="text" id="cy" class="form-control"
+                                                        formControlName="cy">
+                                                </div>
+                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'Dimension')">
+                                                    <label for="r" class="form-label">R</label>
+                                                    <input type="range" class="form-range" min="0" max="1024" step="0.5"
+                                                        formControlName="r">
+                                                </div>
 
-                                                        <div class="col-6">
-                                                            <div class="form-group">
-                                                                <label class="form-label d-block">Fill</label>
-                                                                <div class="btn-group rounded-0 d-block" role="group"
-                                                                    data-toggle="buttons">
+                                                <div class="col-12" [class.d-none]="!getActiveControl(i,'Fill')">
+                                                    <div class="form-group">
+                                                        <label class="form-label d-block">Fill</label>
+                                                        <div class="btn-group rounded-0 d-block" role="group"
+                                                            data-toggle="buttons">
+                                                            <ng-container *ngFor="let fillOption of colorSet">
+                                                                <input type="radio" class="btn-check"
+                                                                    [id]="'fill-group-' + fillOption + i"
+                                                                    formControlName="fill" [value]="fillOption"
+                                                                    autocomplete="off">
+                                                                <label
+                                                                    class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
+                                                                    [for]="'fill-group-' + fillOption + i"
+                                                                    [class.border-secondary]="item.get('circle')?.get('fill')?.value == fillOption">
+                                                                    <span
+                                                                        [style]="'background-color: '+fillOption+'; display: block;'"
+                                                                        class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                                        [class]="getColorClass(item.get('circle')?.get('fill')?.value == fillOption)"></span>
+                                                                </label>
+                                                            </ng-container>
+                                                            <div class="spinner-border" role="status"
+                                                                *ngIf="!colorSet.length">
+                                                                <span class="sr-only">Loading...</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 d-flex align-items-end"[class.d-none]="!getActiveControl(i,'Fill')">
+                                                    <input type="text" class="form-control"
+                                                        [value]="item.get('circle')?.get('fill')?.value"
+                                                        (input)="updateColor($event, item.get('circle')?.get('fill'))">
+                                                </div>
+
+                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'Opacity')">
+                                                    <label [for]="'opacity'+i" class="form-label">Opacity</label>
+                                                    <input type="range" [id]="'opacity'+i" class="form-range" min="0"
+                                                        max="1" step="0.01" formControlName="opacity">
+                                                </div>
+                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'Origin')">
+                                                    <label for="originX" class="form-label">Origin X</label>
+                                                    <input type="text" id="originX" class="form-control"
+                                                        formControlName="originX">
+                                                </div>
+                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'Origin')">
+                                                    <label for="originY" class="form-label">Origin Y</label>
+                                                    <input type="text" id="originY" class="form-control"
+                                                        formControlName="originY">
+                                                </div>
+                                            </ng-container>
+                                            <ng-container formGroupName="ellipse" *ngIf="item.get('ellipse')">
+                                                <div class="form-group col-6">
+                                                    <label for="cx" class="form-label">CX</label>
+                                                    <input type="text" id="cx" class="form-control"
+                                                        formControlName="cx">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="cy" class="form-label">CY</label>
+                                                    <input type="text" id="cy" class="form-control"
+                                                        formControlName="cy">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="rx" class="form-label">RX</label>
+                                                    <input type="text" id="rx" class="form-control"
+                                                        formControlName="rx">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="ry" class="form-label">RY</label>
+                                                    <input type="text" id="ry" class="form-control"
+                                                        formControlName="ry">
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label d-block">Fill</label>
+                                                        <div class="btn-group rounded-0 d-block" role="group"
+                                                            data-toggle="buttons">
+                                                            <ng-container *ngFor="let fillOption of colorSet">
+                                                                <input type="radio" class="btn-check"
+                                                                    [id]="'fill-group-' + fillOption + i"
+                                                                    formControlName="fill" [value]="fillOption"
+                                                                    autocomplete="off">
+                                                                <label
+                                                                    class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
+                                                                    [for]="'fill-group-' + fillOption + i"
+                                                                    [class.border-secondary]="item.get('ellipse')?.get('fill')?.value == fillOption">
+                                                                    <!-- Display a color sample or gradient -->
+                                                                    <span
+                                                                        [style]="'background-color: '+fillOption+'; display: block;'"
+                                                                        class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                                        [class]="getColorClass(item.get('ellipse')?.get('fill')?.value == fillOption)"></span>
+                                                                </label>
+                                                            </ng-container>
+                                                            <div class="spinner-border" role="status"
+                                                                *ngIf="!colorSet.length">
+                                                                <span class="sr-only">Loading...</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 d-flex align-items-end">
+                                                    <input type="text" class="form-control"
+                                                        [value]="item.get('ellipse')?.get('fill')?.value"
+                                                        (input)="updateColor($event, item.get('ellipse')?.get('fill'))">
+                                                </div>
+
+                                                <div class="form-group col-6">
+                                                    <label [for]="'opacity'+i" class="form-label">Opacity</label>
+                                                    <input type="range" [id]="'opacity'+i" class="form-range" min="0"
+                                                        max="1" step="0.01" formControlName="opacity">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="originX" class="form-label">Origin X</label>
+                                                    <input type="text" id="originX" class="form-control"
+                                                        formControlName="originX">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="originY" class="form-label">Origin Y</label>
+                                                    <input type="text" id="originY" class="form-control"
+                                                        formControlName="originY">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="rotation" class="form-label">Rotation</label>
+                                                    <input type="text" id="rotation" class="form-control"
+                                                        formControlName="rotation">
+                                                </div>
+                                            </ng-container>
+                                            <ng-container formGroupName="line" *ngIf="item.get('line')">
+                                                <div class="form-group col-6">
+                                                    <label for="x1" class="form-label">X1</label>
+                                                    <input type="text" id="x1" class="form-control"
+                                                        formControlName="x1">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="y1" class="form-label">Y1</label>
+                                                    <input type="text" id="y1" class="form-control"
+                                                        formControlName="y1">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="x2" class="form-label">X2</label>
+                                                    <input type="text" id="x2" class="form-control"
+                                                        formControlName="x2">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="y2" class="form-label">Y2</label>
+                                                    <input type="text" id="y2" class="form-control"
+                                                        formControlName="y2">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="stroke" class="form-label">Stroke</label>
+                                                    <input type="text" id="stroke" class="form-control"
+                                                        formControlName="stroke">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="strokeWidth" class="form-label">Stroke
+                                                        Width</label>
+                                                    <input type="text" id="strokeWidth" class="form-control"
+                                                        formControlName="strokeWidth">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label [for]="'opacity'+i" class="form-label">Opacity</label>
+                                                    <input type="range" [id]="'opacity'+i" class="form-range" min="0"
+                                                        max="1" step="0.01" formControlName="opacity">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="originX" class="form-label">Origin X</label>
+                                                    <input type="text" id="originX" class="form-control"
+                                                        formControlName="originX">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="originY" class="form-label">Origin Y</label>
+                                                    <input type="text" id="originY" class="form-control"
+                                                        formControlName="originY">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="rotation" class="form-label">Rotation</label>
+                                                    <input type="text" id="rotation" class="form-control"
+                                                        formControlName="rotation">
+                                                </div>
+                                            </ng-container>
+                                            <ng-container formGroupName="text" *ngIf="item.get('text')">
+                                                <div class="form-group col-12">
+                                                    <label for="text" class="form-label">Input Text</label>
+                                                    <input type="text" id="text" class="form-control"
+                                                        formControlName="text">
+                                                </div>
+                                                <input type="hidden" formControlName="x">
+                                                <input type="hidden" formControlName="y">
+                                                <div class="form-group col-12">
+                                                    <div class="input-group d-flex align-items-center">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text b">Font
+                                                                Size</span>
+                                                        </div>
+                                                        <input type="range"
+                                                            class="form-control border-0 mx-4 form-range"
+                                                            [attr.min]="postDetailsForm.get('w')?.value/80"
+                                                            [attr.max]="postDetailsForm.get('w')?.value/15" step="0.1"
+                                                            formControlName="fs">
+                                                        <div class="input-group-append w-60-px">
+                                                            <span class="input-group-text text-end d-block">{{
+                                                                item.get('text')?.get('fs')?.value | number:
+                                                                '1.2-2' }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <ng-container>
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label d-block">Color</label>
+                                                            <div class="btn-group rounded-0 d-block" role="group"
+                                                                data-toggle="buttons">
+                                                                <ng-container *ngFor="let color of colorSet">
                                                                     <input type="radio" class="btn-check"
-                                                                        [id]="'fill-group-none' + i"
-                                                                        formControlName="fill" [value]="'none'"
+                                                                        [id]="'color-group-' + color+i"
+                                                                        formControlName="color" [value]="color"
                                                                         autocomplete="off">
                                                                     <label
-                                                                        class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
-                                                                        [for]="'fill-group-none'  + i"
-                                                                        [class.border-secondary]="item.get('rect')?.get('fill')?.value == 'none'">
-                                                                        <!-- Display a color sample or gradient -->
+                                                                        class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
+                                                                        [for]="'color-group-' + color+i"
+                                                                        [class.border-secondary]="item.get('color')?.value == color">
+                                                                        <!-- Display a color sample -->
                                                                         <span
-                                                                            class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle d-flex align-items-center justify-content-center"
-                                                                            [class]="getColorClass(item.get('rect')?.get('fill')?.value == 'none')"><i
-                                                                                class="fa fa-ban"></i></span>
+                                                                            [style]="'background-color: '+color+'; display: block;'"
+                                                                            class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                                            [class]="getColorClass(item.get('color')?.value == color)"></span>
                                                                     </label>
-                                                                    <ng-container *ngFor="let fillOption of colorSet">
-                                                                        <input type="radio" class="btn-check"
-                                                                            [id]="'fill-group-' + fillOption + i"
-                                                                            formControlName="fill" [value]="fillOption"
-                                                                            autocomplete="off">
-                                                                        <label
-                                                                            class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
-                                                                            [for]="'fill-group-' + fillOption + i"
-                                                                            [class.border-secondary]="item.get('rect')?.get('fill')?.value == fillOption">
-                                                                            <!-- Display a color sample or gradient -->
-                                                                            <span
-                                                                                [style]="'background-color: '+fillOption+'; display: block;'"
-                                                                                class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
-                                                                                [class]="getColorClass(item.get('rect')?.get('fill')?.value == fillOption)"></span>
-                                                                        </label>
-                                                                    </ng-container>
-                                                                    <div class="spinner-border" role="status"
-                                                                        *ngIf="!colorSet.length">
-                                                                        <span class="sr-only">Loading...</span>
-                                                                    </div>
+                                                                </ng-container>
+                                                                <div class="spinner-border" role="status"
+                                                                    *ngIf="!colorSet.length">
+                                                                    <span class="sr-only">Loading...</span>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div class="col-6 d-flex align-items-end">
-                                                            <input type="text" class="form-control"
-                                                                [value]="item.get('rect')?.get('fill')?.value"
-                                                                (input)="updateColor($event, item.get('rect')?.get('fill'))">
+                                                    </div>
+                                                    <div class="col-6 d-flex align-items-end">
+                                                        <input type="text" class="form-control"
+                                                            [value]="item.get('text')?.get('color')?.value"
+                                                            (input)="updateColor($event, item.get('text')?.get('color'))">
+                                                    </div>
+                                                </ng-container>
+                                                <div formGroupName="fontStyle" class="col-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Font Style</label>
+                                                        <div class="btn-group btn-group-toggle w-100"
+                                                            data-toggle="buttons">
+                                                            <label class="btn btn-outline-dark"
+                                                                [class.active]="item.get('fontStyle')?.get('italic')?.value">
+                                                                <input type="checkbox" autocomplete="off"
+                                                                    formControlName="italic" class="d-none"><i
+                                                                    class="fa fa-italic"></i>
+                                                            </label>
+                                                            <label class="btn btn-outline-dark"
+                                                                [class.active]="item.get('fontStyle')?.get('underline')?.value">
+                                                                <input type="checkbox" autocomplete="off"
+                                                                    formControlName="underline" class="d-none"><i
+                                                                    class="fa fa-underline"></i>
+                                                            </label>
                                                         </div>
-
-                                                        <div class="form-group col-6">
-                                                            <label [for]="'opacity'+i"
-                                                                class="form-label">Opacity</label>
-                                                            <input type="range" [id]="'opacity'+i" class="form-range"
-                                                                min="0" max="1" step="0.01" formControlName="opacity">
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Text Align</label>
+                                                        <div class="btn-group w-100" role="group" data-toggle="buttons">
+                                                            <input type="radio" class="btn-check" [id]="'radioLeft'+i"
+                                                                formControlName="textAnchor" [value]="'start'"
+                                                                autocomplete="off">
+                                                            <label class="btn btn-outline-dark" [for]="'radioLeft'+i">
+                                                                <i class="fa fa-align-left"></i>
+                                                            </label>
+                                                            <input type="radio" class="btn-check" [id]="'radioCenter'+i"
+                                                                formControlName="textAnchor" [value]="'middle'"
+                                                                autocomplete="off">
+                                                            <label class="btn btn-outline-dark" [for]="'radioCenter'+i">
+                                                                <i class="fa fa-align-center"></i>
+                                                            </label>
+                                                            <input type="radio" class="btn-check" [id]="'radioRight'+i"
+                                                                formControlName="textAnchor" [value]="'end'"
+                                                                autocomplete="off">
+                                                            <label class="btn btn-outline-dark" [for]="'radioRight'+i">
+                                                                <i class="fa fa-align-right"></i>
+                                                            </label>
                                                         </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="originX" class="form-label">Origin X</label>
-                                                            <input type="text" id="originX" class="form-control"
-                                                                formControlName="originX">
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Verticle Align</label>
+                                                        <div class="btn-group w-100" role="group" data-toggle="buttons">
+                                                            <input type="radio" class="btn-check"
+                                                                [id]="'alignmentBaselineSrart'+i"
+                                                                formControlName="alignmentBaseline" [value]="'hanging'"
+                                                                autocomplete="off">
+                                                            <label class="btn btn-outline-dark"
+                                                                [for]="'alignmentBaselineSrart'+i">
+                                                                <i class="fa fa-arrow-up"></i>
+                                                            </label>
+                                                            <input type="radio" class="btn-check"
+                                                                [id]="'alignmentBaselineMiddle'+i"
+                                                                formControlName="alignmentBaseline" [value]="'middle'"
+                                                                autocomplete="off">
+                                                            <label class="btn btn-outline-dark"
+                                                                [for]="'alignmentBaselineMiddle'+i">
+                                                                <i class="fa fa-arrows-v"></i>
+                                                            </label>
+                                                            <input type="radio" class="btn-check"
+                                                                [id]="'alignmentBaselineEnd'+i"
+                                                                formControlName="alignmentBaseline" [value]="'baseline'"
+                                                                autocomplete="off">
+                                                            <label class="btn btn-outline-dark"
+                                                                [for]="'alignmentBaselineEnd'+i">
+                                                                <i class="fa fa-arrow-down"></i>
+                                                            </label>
                                                         </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="originY" class="form-label">Origin Y</label>
-                                                            <input type="text" id="originY" class="form-control"
-                                                                formControlName="originY">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="rotation" class="form-label">Rotation</label>
-                                                            <input type="text" id="rotation" class="form-control"
-                                                                formControlName="rotation">
-                                                        </div>
-                                                    </ng-container>
-                                                    <ng-container formGroupName="circle" *ngIf="item.get('circle')">
-                                                        <div class="form-group col-6">
-                                                            <label for="cx" class="form-label">CX</label>
-                                                            <input type="text" id="cx" class="form-control"
-                                                                formControlName="cx">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="cy" class="form-label">CY</label>
-                                                            <input type="text" id="cy" class="form-control"
-                                                                formControlName="cy">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="r" class="form-label">R</label>
-                                                            <input type="range" class="form-range" min="0" max="1024"
-                                                                step="0.5" formControlName="r">
-                                                        </div>
-
-                                                        <div class="col-6">
-                                                            <div class="form-group">
-                                                                <label class="form-label d-block">Fill</label>
-                                                                <div class="btn-group rounded-0 d-block" role="group"
-                                                                    data-toggle="buttons">
-                                                                    <ng-container *ngFor="let fillOption of colorSet">
-                                                                        <input type="radio" class="btn-check"
-                                                                            [id]="'fill-group-' + fillOption + i"
-                                                                            formControlName="fill" [value]="fillOption"
-                                                                            autocomplete="off">
-                                                                        <label
-                                                                            class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
-                                                                            [for]="'fill-group-' + fillOption + i"
-                                                                            [class.border-secondary]="item.get('circle')?.get('fill')?.value == fillOption">
-                                                                            <span
-                                                                                [style]="'background-color: '+fillOption+'; display: block;'"
-                                                                                class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
-                                                                                [class]="getColorClass(item.get('circle')?.get('fill')?.value == fillOption)"></span>
-                                                                        </label>
-                                                                    </ng-container>
-                                                                    <div class="spinner-border" role="status"
-                                                                        *ngIf="!colorSet.length">
-                                                                        <span class="sr-only">Loading...</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-6 d-flex align-items-end">
-                                                            <input type="text" class="form-control"
-                                                                [value]="item.get('circle')?.get('fill')?.value"
-                                                                (input)="updateColor($event, item.get('circle')?.get('fill'))">
-                                                        </div>
-
-                                                        <div class="form-group col-6">
-                                                            <label [for]="'opacity'+i"
-                                                                class="form-label">Opacity</label>
-                                                            <input type="range" [id]="'opacity'+i" class="form-range"
-                                                                min="0" max="1" step="0.01" formControlName="opacity">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="originX" class="form-label">Origin X</label>
-                                                            <input type="text" id="originX" class="form-control"
-                                                                formControlName="originX">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="originY" class="form-label">Origin Y</label>
-                                                            <input type="text" id="originY" class="form-control"
-                                                                formControlName="originY">
-                                                        </div>
-                                                    </ng-container>
-                                                    <ng-container formGroupName="ellipse" *ngIf="item.get('ellipse')">
-                                                        <div class="form-group col-6">
-                                                            <label for="cx" class="form-label">CX</label>
-                                                            <input type="text" id="cx" class="form-control"
-                                                                formControlName="cx">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="cy" class="form-label">CY</label>
-                                                            <input type="text" id="cy" class="form-control"
-                                                                formControlName="cy">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="rx" class="form-label">RX</label>
-                                                            <input type="text" id="rx" class="form-control"
-                                                                formControlName="rx">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="ry" class="form-label">RY</label>
-                                                            <input type="text" id="ry" class="form-control"
-                                                                formControlName="ry">
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <div class="form-group">
-                                                                <label class="form-label d-block">Fill</label>
-                                                                <div class="btn-group rounded-0 d-block" role="group"
-                                                                    data-toggle="buttons">
-                                                                    <ng-container *ngFor="let fillOption of colorSet">
-                                                                        <input type="radio" class="btn-check"
-                                                                            [id]="'fill-group-' + fillOption + i"
-                                                                            formControlName="fill" [value]="fillOption"
-                                                                            autocomplete="off">
-                                                                        <label
-                                                                            class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
-                                                                            [for]="'fill-group-' + fillOption + i"
-                                                                            [class.border-secondary]="item.get('ellipse')?.get('fill')?.value == fillOption">
-                                                                            <!-- Display a color sample or gradient -->
-                                                                            <span
-                                                                                [style]="'background-color: '+fillOption+'; display: block;'"
-                                                                                class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
-                                                                                [class]="getColorClass(item.get('ellipse')?.get('fill')?.value == fillOption)"></span>
-                                                                        </label>
-                                                                    </ng-container>
-                                                                    <div class="spinner-border" role="status"
-                                                                        *ngIf="!colorSet.length">
-                                                                        <span class="sr-only">Loading...</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-6 d-flex align-items-end">
-                                                            <input type="text" class="form-control"
-                                                                [value]="item.get('ellipse')?.get('fill')?.value"
-                                                                (input)="updateColor($event, item.get('ellipse')?.get('fill'))">
-                                                        </div>
-
-                                                        <div class="form-group col-6">
-                                                            <label [for]="'opacity'+i"
-                                                                class="form-label">Opacity</label>
-                                                            <input type="range" [id]="'opacity'+i" class="form-range"
-                                                                min="0" max="1" step="0.01" formControlName="opacity">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="originX" class="form-label">Origin X</label>
-                                                            <input type="text" id="originX" class="form-control"
-                                                                formControlName="originX">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="originY" class="form-label">Origin Y</label>
-                                                            <input type="text" id="originY" class="form-control"
-                                                                formControlName="originY">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="rotation" class="form-label">Rotation</label>
-                                                            <input type="text" id="rotation" class="form-control"
-                                                                formControlName="rotation">
-                                                        </div>
-                                                    </ng-container>
-                                                    <ng-container formGroupName="line" *ngIf="item.get('line')">
-                                                        <div class="form-group col-6">
-                                                            <label for="x1" class="form-label">X1</label>
-                                                            <input type="text" id="x1" class="form-control"
-                                                                formControlName="x1">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="y1" class="form-label">Y1</label>
-                                                            <input type="text" id="y1" class="form-control"
-                                                                formControlName="y1">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="x2" class="form-label">X2</label>
-                                                            <input type="text" id="x2" class="form-control"
-                                                                formControlName="x2">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="y2" class="form-label">Y2</label>
-                                                            <input type="text" id="y2" class="form-control"
-                                                                formControlName="y2">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="stroke" class="form-label">Stroke</label>
-                                                            <input type="text" id="stroke" class="form-control"
-                                                                formControlName="stroke">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="strokeWidth" class="form-label">Stroke
-                                                                Width</label>
-                                                            <input type="text" id="strokeWidth" class="form-control"
-                                                                formControlName="strokeWidth">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label [for]="'opacity'+i"
-                                                                class="form-label">Opacity</label>
-                                                            <input type="range" [id]="'opacity'+i" class="form-range"
-                                                                min="0" max="1" step="0.01" formControlName="opacity">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="originX" class="form-label">Origin X</label>
-                                                            <input type="text" id="originX" class="form-control"
-                                                                formControlName="originX">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="originY" class="form-label">Origin Y</label>
-                                                            <input type="text" id="originY" class="form-control"
-                                                                formControlName="originY">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="rotation" class="form-label">Rotation</label>
-                                                            <input type="text" id="rotation" class="form-control"
-                                                                formControlName="rotation">
-                                                        </div>
-                                                    </ng-container>
-                                                    <ng-container formGroupName="text" *ngIf="item.get('text')">
-                                                        <div class="form-group col-12">
-                                                            <label for="text" class="form-label">Input Text</label>
-                                                            <input type="text" id="text" class="form-control"
-                                                                formControlName="text">
-                                                        </div>
-                                                        <input type="hidden" formControlName="x">
-                                                        <input type="hidden" formControlName="y">
-                                                        <div class="form-group col-12">
-                                                            <div class="input-group d-flex align-items-center">
-                                                                <div class="input-group-prepend">
-                                                                    <span class="input-group-text b">Font Size</span>
-                                                                </div>
-                                                                <input type="range"
-                                                                    class="form-control border-0 mx-4 form-range"
-                                                                    [attr.min]="postDetailsForm.get('w')?.value/80"
-                                                                    [attr.max]="postDetailsForm.get('w')?.value/15"
-                                                                    step="0.1" formControlName="fs">
-                                                                <div class="input-group-append w-60-px">
-                                                                    <span class="input-group-text text-end d-block">{{
-                                                                        item.get('text')?.get('fs')?.value | number:
-                                                                        '1.2-2' }}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <ng-container>
-                                                            <div class="col-6">
-                                                                <div class="form-group">
-                                                                    <label class="form-label d-block">Color</label>
-                                                                    <div class="btn-group rounded-0 d-block"
-                                                                        role="group" data-toggle="buttons">
-                                                                        <ng-container *ngFor="let color of colorSet">
-                                                                            <input type="radio" class="btn-check"
-                                                                                [id]="'color-group-' + color+i"
-                                                                                formControlName="color" [value]="color"
-                                                                                autocomplete="off">
-                                                                            <label
-                                                                                class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
-                                                                                [for]="'color-group-' + color+i"
-                                                                                [class.border-secondary]="item.get('color')?.value == color">
-                                                                                <!-- Display a color sample -->
-                                                                                <span
-                                                                                    [style]="'background-color: '+color+'; display: block;'"
-                                                                                    class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
-                                                                                    [class]="getColorClass(item.get('color')?.value == color)"></span>
-                                                                            </label>
-                                                                        </ng-container>
-                                                                        <div class="spinner-border" role="status"
-                                                                            *ngIf="!colorSet.length">
-                                                                            <span class="sr-only">Loading...</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-6 d-flex align-items-end">
-                                                                <input type="text" class="form-control"
-                                                                    [value]="item.get('text')?.get('color')?.value"
-                                                                    (input)="updateColor($event, item.get('text')?.get('color'))">
-                                                            </div>
-                                                        </ng-container>
-                                                        <div formGroupName="fontStyle" class="col-6">
-                                                            <div class="form-group">
-                                                                <label class="form-label">Font Style</label>
-                                                                <div class="btn-group btn-group-toggle w-100"
-                                                                    data-toggle="buttons">
-                                                                    <label class="btn btn-outline-dark"
-                                                                        [class.active]="item.get('fontStyle')?.get('italic')?.value">
-                                                                        <input type="checkbox" autocomplete="off"
-                                                                            formControlName="italic" class="d-none"><i
-                                                                            class="fa fa-italic"></i>
-                                                                    </label>
-                                                                    <label class="btn btn-outline-dark"
-                                                                        [class.active]="item.get('fontStyle')?.get('underline')?.value">
-                                                                        <input type="checkbox" autocomplete="off"
-                                                                            formControlName="underline"
-                                                                            class="d-none"><i
-                                                                            class="fa fa-underline"></i>
-                                                                    </label>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <div class="form-group">
-                                                                <label class="form-label">Text Align</label>
-                                                                <div class="btn-group w-100" role="group"
-                                                                    data-toggle="buttons">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="rotate" class="form-label">Rotate</label>
+                                                    <input type="text" id="rotate" class="form-control"
+                                                        formControlName="rotate">
+                                                </div>
+                                                <ng-container *ngIf="item.get('text')?.get('fontFamily') as FF">
+                                                    <div class="form-group col-6">
+                                                        <label for="fontFamilySelect">Font Family</label>
+                                                        <select class="form-select" id="fontFamilySelect"
+                                                            [value]="item.get('text')?.get('fontFamily')?.value"
+                                                            (change)="updateFontWeights(FF)"
+                                                            formControlName="fontFamily">
+                                                            <option value="">Select a font family</option>
+                                                            <option *ngFor="let font of fontFamilies"
+                                                                [value]="font.family">{{ font.family }}
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label">Font Weight</label>
+                                                            <div class="btn-group w-100" role="group"
+                                                                data-toggle="buttons" *ngIf="getWeight(FF).length">
+                                                                <ng-container *ngFor="let weight of getWeight(FF)">
                                                                     <input type="radio" class="btn-check"
-                                                                        [id]="'radioLeft'+i"
-                                                                        formControlName="textAnchor" [value]="'start'"
-                                                                        autocomplete="off">
+                                                                        [id]="'fw-' + weight + i" formControlName="fw"
+                                                                        [value]="weight" autocomplete="off">
                                                                     <label class="btn btn-outline-dark"
-                                                                        [for]="'radioLeft'+i">
-                                                                        <i class="fa fa-align-left"></i>
+                                                                        [for]="'fw-' + weight + i">
+                                                                        <span [style]="'font-weight:'+weight">A</span>
                                                                     </label>
-                                                                    <input type="radio" class="btn-check"
-                                                                        [id]="'radioCenter'+i"
-                                                                        formControlName="textAnchor" [value]="'middle'"
-                                                                        autocomplete="off">
-                                                                    <label class="btn btn-outline-dark"
-                                                                        [for]="'radioCenter'+i">
-                                                                        <i class="fa fa-align-center"></i>
-                                                                    </label>
-                                                                    <input type="radio" class="btn-check"
-                                                                        [id]="'radioRight'+i"
-                                                                        formControlName="textAnchor" [value]="'end'"
-                                                                        autocomplete="off">
-                                                                    <label class="btn btn-outline-dark"
-                                                                        [for]="'radioRight'+i">
-                                                                        <i class="fa fa-align-right"></i>
-                                                                    </label>
-                                                                </div>
+                                                                </ng-container>
                                                             </div>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <div class="form-group">
-                                                                <label class="form-label">Verticle Align</label>
-                                                                <div class="btn-group w-100" role="group"
-                                                                    data-toggle="buttons">
-                                                                    <input type="radio" class="btn-check"
-                                                                        [id]="'alignmentBaselineSrart'+i"
-                                                                        formControlName="alignmentBaseline"
-                                                                        [value]="'hanging'" autocomplete="off">
-                                                                    <label class="btn btn-outline-dark"
-                                                                        [for]="'alignmentBaselineSrart'+i">
-                                                                        <i class="fa fa-arrow-up"></i>
-                                                                    </label>
-                                                                    <input type="radio" class="btn-check"
-                                                                        [id]="'alignmentBaselineMiddle'+i"
-                                                                        formControlName="alignmentBaseline"
-                                                                        [value]="'middle'" autocomplete="off">
-                                                                    <label class="btn btn-outline-dark"
-                                                                        [for]="'alignmentBaselineMiddle'+i">
-                                                                        <i class="fa fa-arrows-v"></i>
-                                                                    </label>
-                                                                    <input type="radio" class="btn-check"
-                                                                        [id]="'alignmentBaselineEnd'+i"
-                                                                        formControlName="alignmentBaseline"
-                                                                        [value]="'baseline'" autocomplete="off">
-                                                                    <label class="btn btn-outline-dark"
-                                                                        [for]="'alignmentBaselineEnd'+i">
-                                                                        <i class="fa fa-arrow-down"></i>
-                                                                    </label>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="rotate" class="form-label">Rotate</label>
                                                             <input type="text" id="rotate" class="form-control"
-                                                                formControlName="rotate">
+                                                                *ngIf="!getWeight(FF).length" formControlName="fw">
                                                         </div>
-                                                        <ng-container *ngIf="item.get('text')?.get('fontFamily') as FF">
-                                                            <div class="form-group col-6">
-                                                                <label for="fontFamilySelect">Font Family</label>
-                                                                <select class="form-select" id="fontFamilySelect"
-                                                                    [value]="item.get('text')?.get('fontFamily')?.value"
-                                                                    (change)="updateFontWeights(FF)"
-                                                                    formControlName="fontFamily">
-                                                                    <option value="">Select a font family</option>
-                                                                    <option *ngFor="let font of fontFamilies"
-                                                                        [value]="font.family">{{ font.family }}</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <div class="form-group">
-                                                                    <label class="form-label">Font Weight</label>
-                                                                    <div class="btn-group w-100" role="group"
-                                                                        data-toggle="buttons"
-                                                                        *ngIf="getWeight(FF).length">
-                                                                        <ng-container
-                                                                            *ngFor="let weight of getWeight(FF)">
-                                                                            <input type="radio" class="btn-check"
-                                                                                [id]="'fw-' + weight + i"
-                                                                                formControlName="fw" [value]="weight"
-                                                                                autocomplete="off">
-                                                                            <label class="btn btn-outline-dark"
-                                                                                [for]="'fw-' + weight + i">
-                                                                                <span
-                                                                                    [style]="'font-weight:'+weight">A</span>
-                                                                            </label>
-                                                                        </ng-container>
-                                                                    </div>
-                                                                    <input type="text" id="rotate" class="form-control"
-                                                                        *ngIf="!getWeight(FF).length"
-                                                                        formControlName="fw">
+                                                    </div>
+                                                </ng-container>
+                                                <ng-container formGroupName="textShadow">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value=""
+                                                            formControlName="enable" [id]="'text-shadow-'+i">
+                                                        <label class="form-check-label h5 m-0"
+                                                            [for]="'text-shadow-'+i">Text Shadow</label>
+                                                    </div>
+                                                    <ng-container
+                                                        *ngIf="item.get('text')?.get('textShadow')?.get('enable')?.value">
+                                                        <div class="form-group col-6">
+                                                            <label for="shadowColor" class="form-label">Shadow
+                                                                Color</label>
+                                                            <div class="btn-group rounded-0 d-block" role="group"
+                                                                data-toggle="buttons">
+                                                                <ng-container *ngFor="let color of colorSet">
+                                                                    <input type="radio" class="btn-check"
+                                                                        [id]="'shadow-color-' + color+i"
+                                                                        formControlName="color" [value]="color"
+                                                                        autocomplete="off">
+                                                                    <label
+                                                                        class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
+                                                                        [for]="'shadow-color-' + color+i"
+                                                                        [class.border-secondary]="item.get('text')?.get('textShadow')?.get('color')?.value == color">
+                                                                        <!-- Display a color sample -->
+                                                                        <span
+                                                                            [style]="'background-color: '+color+'; display: block;'"
+                                                                            class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                                            [class]="getColorClass(item.get('text')?.get('textShadow')?.get('color')?.value == color)"></span>
+                                                                    </label>
+                                                                </ng-container>
+                                                                <div class="spinner-border" role="status"
+                                                                    *ngIf="!colorSet.length">
+                                                                    <span class="sr-only">Loading...</span>
                                                                 </div>
                                                             </div>
-                                                        </ng-container>
-                                                        <ng-container formGroupName="textShadow">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox" value=""
-                                                                    formControlName="enable" [id]="'text-shadow-'+i">
-                                                                <label class="form-check-label h5 m-0"
-                                                                    [for]="'text-shadow-'+i">Text Shadow</label>
-                                                            </div>
-                                                            <ng-container
-                                                                *ngIf="item.get('text')?.get('textShadow')?.get('enable')?.value">
-                                                                <div class="form-group col-6">
-                                                                    <label for="shadowColor" class="form-label">Shadow
-                                                                        Color</label>
-                                                                    <div class="btn-group rounded-0 d-block"
-                                                                        role="group" data-toggle="buttons">
-                                                                        <ng-container *ngFor="let color of colorSet">
-                                                                            <input type="radio" class="btn-check"
-                                                                                [id]="'shadow-color-' + color+i"
-                                                                                formControlName="color" [value]="color"
-                                                                                autocomplete="off">
-                                                                            <label
-                                                                                class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
-                                                                                [for]="'shadow-color-' + color+i"
-                                                                                [class.border-secondary]="item.get('text')?.get('textShadow')?.get('color')?.value == color">
-                                                                                <!-- Display a color sample -->
-                                                                                <span
-                                                                                    [style]="'background-color: '+color+'; display: block;'"
-                                                                                    class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
-                                                                                    [class]="getColorClass(item.get('text')?.get('textShadow')?.get('color')?.value == color)"></span>
-                                                                            </label>
-                                                                        </ng-container>
-                                                                        <div class="spinner-border" role="status"
-                                                                            *ngIf="!colorSet.length">
-                                                                            <span class="sr-only">Loading...</span>
+                                                        </div>
+                                                        <div class="col-6 d-flex align-items-end">
+                                                            <input type="text" class="form-control"
+                                                                [value]="item.get('text')?.get('textShadow')?.get('color')?.value"
+                                                                (input)="updateColor($event, item.get('text')?.get('textShadow')?.get('color'))">
+                                                        </div>
+                                                        <div class="form-group col-12">
+                                                            <label for="shadowBlur" class="form-label">Shadow
+                                                                Blur</label>
+                                                            <input type="range" class="form-range" [attr.min]="0"
+                                                                [attr.max]="item.get('text')?.get('fs')?.value"
+                                                                step="0.1" formControlName="blur">
+
+                                                        </div>
+                                                        <div class="form-group col-12">
+                                                            <label for="shadowOffsetX" class="form-label">Shadow
+                                                                Offset
+                                                                X</label>
+                                                            <input type="range" class="form-range"
+                                                                [attr.min]="-item.get('text')?.get('fs')?.value"
+                                                                [attr.max]="item.get('text')?.get('fs')?.value"
+                                                                step="0.1" formControlName="offsetX">
+                                                        </div>
+                                                        <div class="form-group col-12">
+                                                            <label for="shadowOffsetY" class="form-label">Shadow
+                                                                Offset
+                                                                Y</label>
+                                                            <input type="range" class="form-range"
+                                                                [attr.min]="-item.get('text')?.get('fs')?.value"
+                                                                [attr.max]="item.get('text')?.get('fs')?.value"
+                                                                step="0.1" formControlName="offsetY">
+                                                        </div>
+                                                    </ng-container>
+                                                </ng-container>
+                                                <div class="form-group col-6">
+                                                    <label for="backgroundColor" class="form-label">Background
+                                                        Color</label>
+                                                    <input type="text" id="backgroundColor" class="form-control"
+                                                        formControlName="backgroundColor">
+                                                </div>
+                                                <ng-container formGroupName="textEffects">
+                                                    <div class="col-12">
+
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" value=""
+                                                                formControlName="enable" [id]="'text-effect-'+i">
+                                                            <label class="form-check-label h5 m-0"
+                                                                [for]="'text-effect-'+i">Text
+                                                                Effects</label>
+                                                            {{item.get('text')?.get('textEffects')?.get('enable')?.value}}
+                                                        </div>
+                                                        <ng-container
+                                                            *ngIf="item.get('text')?.get('textEffects')?.get('enable')?.value">
+                                                            <div class="p-2">
+
+                                                                <ng-container formGroupName="gradient">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox"
+                                                                            value="" formControlName="enable"
+                                                                            [id]="'text-gradient-'+i">
+                                                                        <label class="form-check-label h5 m-0"
+                                                                            [for]="'text-gradient-'+i">Gradient</label>
+                                                                    </div>
+                                                                    <div class="p-2"
+                                                                        *ngIf="item.get('text')?.get('textEffects')?.get('gradient')?.get('enable')?.value">
+
+                                                                        <div class="row">
+                                                                            <div class="form-group col-6">
+                                                                                <label for="gradientStartColor"
+                                                                                    class="form-label">Gradient
+                                                                                    Start
+                                                                                    Color</label>
+                                                                                <input type="text"
+                                                                                    id="gradientStartColor"
+                                                                                    class="form-control"
+                                                                                    formControlName="startColor">
+                                                                            </div>
+                                                                            <div class="form-group col-6">
+                                                                                <label for="gradientEndColor"
+                                                                                    class="form-label">Gradient
+                                                                                    End
+                                                                                    Color</label>
+                                                                                <input type="text" id="gradientEndColor"
+                                                                                    class="form-control"
+                                                                                    formControlName="endColor">
+                                                                            </div>
+                                                                            <div class="form-group col-6">
+                                                                                <label for="gradientDirection"
+                                                                                    class="form-label">Gradient
+                                                                                    Direction</label>
+                                                                                <input type="text"
+                                                                                    id="gradientDirection"
+                                                                                    class="form-control"
+                                                                                    formControlName="direction">
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                                <div class="col-6 d-flex align-items-end">
-                                                                    <input type="text" class="form-control"
-                                                                        [value]="item.get('text')?.get('textShadow')?.get('color')?.value"
-                                                                        (input)="updateColor($event, item.get('text')?.get('textShadow')?.get('color'))">
-                                                                </div>
-                                                                <div class="form-group col-12">
-                                                                    <label for="shadowBlur" class="form-label">Shadow
-                                                                        Blur</label>
-                                                                    <input type="range" class="form-range"
-                                                                        [attr.min]="0"
-                                                                        [attr.max]="item.get('text')?.get('fs')?.value"
-                                                                        step="0.1" formControlName="blur">
-
-                                                                </div>
-                                                                <div class="form-group col-12">
-                                                                    <label for="shadowOffsetX" class="form-label">Shadow
-                                                                        Offset
-                                                                        X</label>
-                                                                    <input type="range" class="form-range"
-                                                                        [attr.min]="-item.get('text')?.get('fs')?.value"
-                                                                        [attr.max]="item.get('text')?.get('fs')?.value"
-                                                                        step="0.1" formControlName="offsetX">
-                                                                </div>
-                                                                <div class="form-group col-12">
-                                                                    <label for="shadowOffsetY" class="form-label">Shadow
-                                                                        Offset
-                                                                        Y</label>
-                                                                    <input type="range" class="form-range"
-                                                                        [attr.min]="-item.get('text')?.get('fs')?.value"
-                                                                        [attr.max]="item.get('text')?.get('fs')?.value"
-                                                                        step="0.1" formControlName="offsetY">
-                                                                </div>
-                                                            </ng-container>
-                                                        </ng-container>
-                                                        <div class="form-group col-6">
-                                                            <label for="backgroundColor" class="form-label">Background
-                                                                Color</label>
-                                                            <input type="text" id="backgroundColor" class="form-control"
-                                                                formControlName="backgroundColor">
-                                                        </div>
-                                                        <ng-container formGroupName="textEffects">
-                                                            <div class="col-12">
-
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="checkbox"
-                                                                        value="" formControlName="enable"
-                                                                        [id]="'text-effect-'+i">
-                                                                    <label class="form-check-label h5 m-0"
-                                                                        [for]="'text-effect-'+i">Text Effects</label>
-                                                                    {{item.get('text')?.get('textEffects')?.get('enable')?.value}}
-                                                                </div>
-                                                                <ng-container
-                                                                    *ngIf="item.get('text')?.get('textEffects')?.get('enable')?.value">
-                                                                    <div class="p-2">
-
-                                                                        <ng-container formGroupName="gradient">
-                                                                            <div class="form-check">
-                                                                                <input class="form-check-input"
-                                                                                    type="checkbox" value=""
-                                                                                    formControlName="enable"
-                                                                                    [id]="'text-gradient-'+i">
-                                                                                <label class="form-check-label h5 m-0"
-                                                                                    [for]="'text-gradient-'+i">Gradient</label>
+                                                                </ng-container>
+                                                                <ng-container formGroupName="outline">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox"
+                                                                            value="" formControlName="enable"
+                                                                            [id]="'text-outline-'+i">
+                                                                        <label class="form-check-label h5 m-0"
+                                                                            [for]="'text-outline-'+i">Outline</label>
+                                                                    </div>
+                                                                    <div class="p-2"
+                                                                        *ngIf="item.get('text')?.get('textEffects')?.get('outline')?.get('enable')?.value">
+                                                                        <div class="row">
+                                                                            <div class="form-group col-6">
+                                                                                <label for="outlineColor"
+                                                                                    class="form-label">Outline
+                                                                                    Color</label>
+                                                                                <input type="text" id="outlineColor"
+                                                                                    class="form-control"
+                                                                                    formControlName="color">
                                                                             </div>
-                                                                            <div class="p-2"
-                                                                                *ngIf="item.get('text')?.get('textEffects')?.get('gradient')?.get('enable')?.value">
-
-                                                                                <div class="row">
-                                                                                    <div class="form-group col-6">
-                                                                                        <label for="gradientStartColor"
-                                                                                            class="form-label">Gradient
-                                                                                            Start
-                                                                                            Color</label>
-                                                                                        <input type="text"
-                                                                                            id="gradientStartColor"
-                                                                                            class="form-control"
-                                                                                            formControlName="startColor">
-                                                                                    </div>
-                                                                                    <div class="form-group col-6">
-                                                                                        <label for="gradientEndColor"
-                                                                                            class="form-label">Gradient
-                                                                                            End
-                                                                                            Color</label>
-                                                                                        <input type="text"
-                                                                                            id="gradientEndColor"
-                                                                                            class="form-control"
-                                                                                            formControlName="endColor">
-                                                                                    </div>
-                                                                                    <div class="form-group col-6">
-                                                                                        <label for="gradientDirection"
-                                                                                            class="form-label">Gradient
-                                                                                            Direction</label>
-                                                                                        <input type="text"
-                                                                                            id="gradientDirection"
-                                                                                            class="form-control"
-                                                                                            formControlName="direction">
-                                                                                    </div>
-                                                                                </div>
+                                                                            <div class="form-group col-6">
+                                                                                <label for="outlineWidth"
+                                                                                    class="form-label">Outline
+                                                                                    Width</label>
+                                                                                <input type="text" id="outlineWidth"
+                                                                                    class="form-control"
+                                                                                    formControlName="width">
                                                                             </div>
-                                                                        </ng-container>
-                                                                        <ng-container formGroupName="outline">
-                                                                            <div class="form-check">
-                                                                                <input class="form-check-input"
-                                                                                    type="checkbox" value=""
-                                                                                    formControlName="enable"
-                                                                                    [id]="'text-outline-'+i">
-                                                                                <label class="form-check-label h5 m-0"
-                                                                                    [for]="'text-outline-'+i">Outline</label>
+                                                                        </div>
+                                                                    </div>
+                                                                </ng-container>
+                                                                <ng-container formGroupName="glow">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox"
+                                                                            value="" formControlName="enable"
+                                                                            [id]="'text-glow-'+i">
+                                                                        <label class="form-check-label h5 m-0"
+                                                                            [for]="'text-glow-'+i">Glow</label>
+                                                                    </div>
+                                                                    <div class="p-2"
+                                                                        *ngIf="item.get('text')?.get('textEffects')?.get('glow')?.get('enable')?.value">
+                                                                        <div class="row">
+                                                                            <div class="form-group col-6">
+                                                                                <label for="glowColor"
+                                                                                    class="form-label">Glow
+                                                                                    Color</label>
+                                                                                <input type="text" id="glowColor"
+                                                                                    class="form-control"
+                                                                                    formControlName="color">
                                                                             </div>
-                                                                            <div class="p-2"
-                                                                                *ngIf="item.get('text')?.get('textEffects')?.get('outline')?.get('enable')?.value">
-                                                                                <div class="row">
-                                                                                    <div class="form-group col-6">
-                                                                                        <label for="outlineColor"
-                                                                                            class="form-label">Outline
-                                                                                            Color</label>
-                                                                                        <input type="text"
-                                                                                            id="outlineColor"
-                                                                                            class="form-control"
-                                                                                            formControlName="color">
-                                                                                    </div>
-                                                                                    <div class="form-group col-6">
-                                                                                        <label for="outlineWidth"
-                                                                                            class="form-label">Outline
-                                                                                            Width</label>
-                                                                                        <input type="text"
-                                                                                            id="outlineWidth"
-                                                                                            class="form-control"
-                                                                                            formControlName="width">
-                                                                                    </div>
-                                                                                </div>
+                                                                            <div class="form-group col-6">
+                                                                                <label for="glowBlur"
+                                                                                    class="form-label">Glow
+                                                                                    Blur</label>
+                                                                                <input type="number" id="glowBlur"
+                                                                                    class="form-control"
+                                                                                    formControlName="blur">
                                                                             </div>
-                                                                        </ng-container>
-                                                                        <ng-container formGroupName="glow">
-                                                                            <div class="form-check">
-                                                                                <input class="form-check-input"
-                                                                                    type="checkbox" value=""
-                                                                                    formControlName="enable"
-                                                                                    [id]="'text-glow-'+i">
-                                                                                <label class="form-check-label h5 m-0"
-                                                                                    [for]="'text-glow-'+i">Glow</label>
-                                                                            </div>
-                                                                            <div class="p-2"
-                                                                                *ngIf="item.get('text')?.get('textEffects')?.get('glow')?.get('enable')?.value">
-                                                                                <div class="row">
-                                                                                    <div class="form-group col-6">
-                                                                                        <label for="glowColor"
-                                                                                            class="form-label">Glow
-                                                                                            Color</label>
-                                                                                        <input type="text"
-                                                                                            id="glowColor"
-                                                                                            class="form-control"
-                                                                                            formControlName="color">
-                                                                                    </div>
-                                                                                    <div class="form-group col-6">
-                                                                                        <label for="glowBlur"
-                                                                                            class="form-label">Glow
-                                                                                            Blur</label>
-                                                                                        <input type="number"
-                                                                                            id="glowBlur"
-                                                                                            class="form-control"
-                                                                                            formControlName="blur">
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </ng-container>
-
+                                                                        </div>
                                                                     </div>
                                                                 </ng-container>
 
                                                             </div>
                                                         </ng-container>
-                                                        <div class="form-group col-6">
-                                                            <label for="letterSpacing" class="form-label">Letter
-                                                                Spacing</label>
-                                                            <input type="number" id="letterSpacing" class="form-control"
-                                                                formControlName="letterSpacing">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="lineHeight" class="form-label">Line
-                                                                Height</label>
-                                                            <input type="number" id="lineHeight" class="form-control"
-                                                                formControlName="lineHeight">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="textTransformation" class="form-label">Text
-                                                                Transformation</label>
-                                                            <input type="text" id="textTransformation"
-                                                                class="form-control"
-                                                                formControlName="textTransformation">
-                                                        </div>
-                                                    </ng-container>
-                                                    <ng-container formGroupName="image" *ngIf="item.get('image')">
-                                                        <div class="form-group col-6">
-                                                            <label for="r" class="form-label">Radius (r)</label>
-                                                            <input type="number" id="r" class="form-control"
-                                                                formControlName="r">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="x" class="form-label">X Position</label>
-                                                            <input type="number" id="x" class="form-control"
-                                                                formControlName="x">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="y" class="form-label">Y Position</label>
-                                                            <input type="number" id="y" class="form-control"
-                                                                formControlName="y">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="imageUrl" class="form-label">Image URL</label>
-                                                            <input type="text" id="imageUrl" class="form-control"
-                                                                formControlName="imageUrl">
-                                                        </div>
 
-                                                        <div class="col-12">
-                                                            <div class="row g-3">
-                                                                <div class="col-6">
-                                                                    <div class="form-group">
-                                                                        <label class="form-label d-block">Color</label>
-                                                                        <div class="btn-group rounded-0 d-block"
-                                                                            role="group" data-toggle="buttons">
-                                                                            <ng-container
-                                                                                *ngFor="let borderColorOption of colorSet">
-                                                                                <input type="radio" class="btn-check"
-                                                                                    [id]="'borderColor-group-' + borderColorOption + i"
-                                                                                    formControlName="borderColor"
-                                                                                    [value]="borderColorOption"
-                                                                                    autocomplete="off">
-                                                                                <label
-                                                                                    class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
-                                                                                    [for]="'borderColor-group-' + borderColorOption + i"
-                                                                                    [class.border-secondary]="item.get('image')?.get('borderColor')?.value == borderColorOption">
-                                                                                    <!-- Display a color sample or gradient -->
-                                                                                    <span
-                                                                                        [style]="'background-color: '+borderColorOption+'; display: block;'"
-                                                                                        class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
-                                                                                        [class]="getColorClass(item.get('image')?.get('borderColor')?.value == borderColorOption)"></span>
-                                                                                </label>
-                                                                            </ng-container>
-                                                                            <div class="spinner-border" role="status"
-                                                                                *ngIf="!colorSet.length">
-                                                                                <span class="sr-only">Loading...</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-6 d-flex align-items-end">
-                                                                    <input type="text" class="form-control"
-                                                                        [value]="item.get('image')?.get('borderColor')?.value"
-                                                                        (input)="updateColor($event, item.get('image')?.get('borderColor'))">
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-
-                                                        <div class="form-group col-6">
-                                                            <label for="borderWidth" class="form-label">Border
-                                                                Width</label>
-                                                            <input type="number" id="borderWidth" class="form-control"
-                                                                formControlName="borderWidth">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="shape" class="form-label">Shape</label>
-                                                            <input type="text" id="shape" class="form-control"
-                                                                formControlName="shape">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="origin" class="form-label">Origin</label>
-                                                            <input type="text" id="origin" class="form-control"
-                                                                formControlName="origin">
-                                                        </div>
-                                                        <div class="form-group col-6">
-                                                            <label for="placeholder"
-                                                                class="form-label">Placeholder</label>
-                                                            <input type="text" id="placeholder" class="form-control"
-                                                                formControlName="placeholder">
-                                                        </div>
-                                                        <ng-container formGroupName="svgProperties">
-                                                            <div class="col-6">
-                                                                <div class="form-group">
-                                                                    <label class="form-label d-block">Fill</label>
-                                                                    <div class="btn-group rounded-0 d-block"
-                                                                        role="group" data-toggle="buttons">
-                                                                        <ng-container
-                                                                            *ngFor="let fillOption of colorSet">
-                                                                            <input type="radio" class="btn-check"
-                                                                                [id]="'fill-group-' + fillOption + i"
-                                                                                formControlName="fill"
-                                                                                [value]="fillOption" autocomplete="off">
-                                                                            <label
-                                                                                class="btn btn-outline-white p-3 rounded-0 w-30-px border-2 rounded-3"
-                                                                                [for]="'fill-group-' + fillOption + i"
-                                                                                [class.border-secondary]="item.get('image')?.get('svgProperties')?.get('fill')?.value == fillOption">
-                                                                                <!-- Display a color sample or gradient -->
-                                                                                <span
-                                                                                    [style]="'background-color: '+fillOption+'; display: block;'"
-                                                                                    class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
-                                                                                    [class]="getColorClass(item.get('image')?.get('svgProperties')?.get('fill')?.value == fillOption)"></span>
-                                                                            </label>
-                                                                        </ng-container>
-                                                                        <div class="spinner-border" role="status"
-                                                                            *ngIf="!colorSet.length">
-                                                                            <span class="sr-only">Loading...</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-6 d-flex align-items-end">
-                                                                <input type="text" class="form-control"
-                                                                    [value]="item.get('image')?.get('svgProperties')?.get('fill')?.value"
-                                                                    (input)="updateColor($event, item.get('image')?.get('svgProperties')?.get('fill'))">
-                                                            </div>
-                                                            <div class="form-group col-6">
-                                                                <label for="stroke" class="form-label">Stroke
-                                                                    Color</label>
-                                                                <input type="text" id="stroke" class="form-control"
-                                                                    formControlName="stroke">
-                                                            </div>
-                                                            <div class="form-group col-6">
-                                                                <label for="strokeWidth" class="form-label">Stroke
-                                                                    Width</label>
-                                                                <input type="number" id="strokeWidth"
-                                                                    class="form-control" formControlName="strokeWidth">
-                                                            </div>
-                                                        </ng-container>
-                                                    </ng-container>
+                                                    </div>
+                                                </ng-container>
+                                                <div class="form-group col-6">
+                                                    <label for="letterSpacing" class="form-label">Letter
+                                                        Spacing</label>
+                                                    <input type="number" id="letterSpacing" class="form-control"
+                                                        formControlName="letterSpacing">
                                                 </div>
-                                            </div>
-                                        </div>
-                                    </ng-container>
+                                                <div class="form-group col-6">
+                                                    <label for="lineHeight" class="form-label">Line
+                                                        Height</label>
+                                                    <input type="number" id="lineHeight" class="form-control"
+                                                        formControlName="lineHeight">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="textTransformation" class="form-label">Text
+                                                        Transformation</label>
+                                                    <input type="text" id="textTransformation" class="form-control"
+                                                        formControlName="textTransformation">
+                                                </div>
+                                            </ng-container>
+                                            <ng-container formGroupName="image" *ngIf="item.get('image')">
+                                                <div class="form-group col-6">
+                                                    <label for="r" class="form-label">Radius (r)</label>
+                                                    <input type="number" id="r" class="form-control"
+                                                        formControlName="r">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="x" class="form-label">X Position</label>
+                                                    <input type="number" id="x" class="form-control"
+                                                        formControlName="x">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="y" class="form-label">Y Position</label>
+                                                    <input type="number" id="y" class="form-control"
+                                                        formControlName="y">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="imageUrl" class="form-label">Image
+                                                        URL</label>
+                                                    <input type="text" id="imageUrl" class="form-control"
+                                                        formControlName="imageUrl">
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="row g-3">
+                                                        <div class="col-6">
+                                                            <div class="form-group">
+                                                                <label class="form-label d-block">Color</label>
+                                                                <div class="btn-group rounded-0 d-block" role="group"
+                                                                    data-toggle="buttons">
+                                                                    <ng-container
+                                                                        *ngFor="let borderColorOption of colorSet">
+                                                                        <input type="radio" class="btn-check"
+                                                                            [id]="'borderColor-group-' + borderColorOption + i"
+                                                                            formControlName="borderColor"
+                                                                            [value]="borderColorOption"
+                                                                            autocomplete="off">
+                                                                        <label
+                                                                            class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
+                                                                            [for]="'borderColor-group-' + borderColorOption + i"
+                                                                            [class.border-secondary]="item.get('image')?.get('borderColor')?.value == borderColorOption">
+                                                                            <!-- Display a color sample or gradient -->
+                                                                            <span
+                                                                                [style]="'background-color: '+borderColorOption+'; display: block;'"
+                                                                                class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                                                [class]="getColorClass(item.get('image')?.get('borderColor')?.value == borderColorOption)"></span>
+                                                                        </label>
+                                                                    </ng-container>
+                                                                    <div class="spinner-border" role="status"
+                                                                        *ngIf="!colorSet.length">
+                                                                        <span class="sr-only">Loading...</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6 d-flex align-items-end">
+                                                            <input type="text" class="form-control"
+                                                                [value]="item.get('image')?.get('borderColor')?.value"
+                                                                (input)="updateColor($event, item.get('image')?.get('borderColor'))">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+
+                                                <div class="form-group col-6">
+                                                    <label for="borderWidth" class="form-label">Border
+                                                        Width</label>
+                                                    <input type="number" id="borderWidth" class="form-control"
+                                                        formControlName="borderWidth">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="shape" class="form-label">Shape</label>
+                                                    <input type="text" id="shape" class="form-control"
+                                                        formControlName="shape">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="origin" class="form-label">Origin</label>
+                                                    <input type="text" id="origin" class="form-control"
+                                                        formControlName="origin">
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label for="placeholder" class="form-label">Placeholder</label>
+                                                    <input type="text" id="placeholder" class="form-control"
+                                                        formControlName="placeholder">
+                                                </div>
+                                                <ng-container formGroupName="svgProperties">
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label d-block">Fill</label>
+                                                            <div class="btn-group rounded-0 d-block" role="group"
+                                                                data-toggle="buttons">
+                                                                <ng-container *ngFor="let fillOption of colorSet">
+                                                                    <input type="radio" class="btn-check"
+                                                                        [id]="'fill-group-' + fillOption + i"
+                                                                        formControlName="fill" [value]="fillOption"
+                                                                        autocomplete="off">
+                                                                    <label
+                                                                        class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
+                                                                        [for]="'fill-group-' + fillOption + i"
+                                                                        [class.border-secondary]="item.get('image')?.get('svgProperties')?.get('fill')?.value == fillOption">
+                                                                        <!-- Display a color sample or gradient -->
+                                                                        <span
+                                                                            [style]="'background-color: '+fillOption+'; display: block;'"
+                                                                            class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                                            [class]="getColorClass(item.get('image')?.get('svgProperties')?.get('fill')?.value == fillOption)"></span>
+                                                                    </label>
+                                                                </ng-container>
+                                                                <div class="spinner-border" role="status"
+                                                                    *ngIf="!colorSet.length">
+                                                                    <span class="sr-only">Loading...</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6 d-flex align-items-end">
+                                                        <input type="text" class="form-control"
+                                                            [value]="item.get('image')?.get('svgProperties')?.get('fill')?.value"
+                                                            (input)="updateColor($event, item.get('image')?.get('svgProperties')?.get('fill'))">
+                                                    </div>
+                                                    <div class="form-group col-6">
+                                                        <label for="stroke" class="form-label">Stroke
+                                                            Color</label>
+                                                        <input type="text" id="stroke" class="form-control"
+                                                            formControlName="stroke">
+                                                    </div>
+                                                    <div class="form-group col-6">
+                                                        <label for="strokeWidth" class="form-label">Stroke
+                                                            Width</label>
+                                                        <input type="number" id="strokeWidth" class="form-control"
+                                                            formControlName="strokeWidth">
+                                                    </div>
+                                                </ng-container>
+                                            </ng-container>
+                                        </ng-container>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
-</div>
+    <div class="fab-container">
+        <div class="fab shadow">
+            <div class="fab-content">
+                <i class="fa fa-plus fa-2x"></i>
+            </div>
+        </div>
+        <div class="sub-button">
+            <a href="#" class="shadow" (click)="addData('rect');false;">
+                <i class="fa fa-square"></i><span class="shadow">Rect</span>
+            </a>
+        </div>
+        <div class="sub-button">
+            <a href="#" class="shadow" (click)="addData('circle');false;">
+                <i class="fa fa-circle"></i><span class="shadow">Circle</span>
+            </a>
+        </div>
+        <div class="sub-button">
+            <a href="#" class="shadow" (click)="addData('ellipse');false;">
+                <i class="fa fa-circle"></i><span class="shadow">Ellipse</span>
+            </a>
+        </div>
+        <div class="sub-button">
+            <a href="#" class="shadow" (click)="addData('line');false;">
+                <i class="fa fa-minus"></i><span class="shadow">Line</span>
+            </a>
+        </div>
+        <div class="sub-button">
+            <a href="#" class="shadow" (click)="addData('text');false;">
+                <i class="fa fa-font"></i><span class="shadow">Text</span>
+            </a>
+        </div>
+        <div class="sub-button">
+            <a href="#" class="shadow" (click)="addData('image');false;">
+                <i class="fa fa-image"></i><span class="shadow">Image</span>
+            </a>
+        </div>
+    </div>
+</form>
