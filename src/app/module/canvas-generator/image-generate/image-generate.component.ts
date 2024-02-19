@@ -5,17 +5,21 @@ import { ColorService } from 'src/app/common/services/color.service';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 interface Data {
-  title: string,
-  rect?: RectProperties,
-  circle?: CircleProperties,
-  ellipse?: EllipseProperties,
-  line?: LineProperties,
-  text?: TextElement,
-  image?: ImageElement
+  title: string;
+  editable: boolean;
+  boxed: boolean;
+  rect?: RectProperties;
+  circle?: CircleProperties;
+  ellipse?: EllipseProperties;
+  line?: LineProperties;
+  text?: TextElement;
+  image?: ImageElement;
 }
 interface ShapeControl {
+  id: string,
   title: string;
   active: boolean;
+  icon: string;
 }
 
 interface ShapeControls {
@@ -32,54 +36,76 @@ interface ShapeControls {
   styleUrls: ['./image-generate.component.scss']
 })
 export class ImageGenerateComponent {
+  isExpanded: boolean = false;
   selectedElement: number | null = null;
   colorSet: string[] = [];
   controlSet: ShapeControl[][] = [];
   controlValues: ShapeControls = {
     rect: [
-      { title: 'Fill', active: false },
-      { title: 'Dimension', active: false },
-      { title: 'Opacity', active: false },
-      { title: 'Rotation', active: false },
-      { title: 'Origin', active: false },
-      { title: 'Position', active: false },
-      { title: 'Control', active: false }
+      { id: 'fill', title: 'Fill', icon: 'fa-x-fill', active: false },
+      { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
+      { id: 'opacity', title: 'Opacity', icon: 'fa-x-opacity', active: false },
+      { id: 'rotation', title: 'Rotation', icon: 'fa-x-rotation', active: false },
+      { id: 'origin', title: 'Origin', icon: 'fa-x-origin', active: false },
+      { id: 'position', title: 'Position', icon: 'fa-x-position', active: false },
+      { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }
     ],
     circle: [
-      { title: 'Fill', active: false },
-      { title: 'Dimension', active: false },
-      { title: 'Opacity', active: false },
-      { title: 'Origin', active: false },
-      { title: 'Position', active: false },
-      { title: 'Control', active: false }],
-    ellipse: [{ title: 'Position', active: true },
-    { title: 'Dimension', active: false },
-    { title: 'Fill', active: false },
-    { title: 'opacity', active: false },
-    { title: 'originX', active: false },
-    { title: 'originY', active: false },
-    { title: 'rotation', active: false }],
-    line: [{ title: 'Position', active: true },
-    { title: 'Dimension', active: false },
-    { title: 'Fill', active: false },
-    { title: 'opacity', active: false },
-    { title: 'originX', active: false },
-    { title: 'originY', active: false },
-    { title: 'rotation', active: false }],
-    text: [{ title: 'Position', active: true },
-    { title: 'Dimension', active: false },
-    { title: 'Fill', active: false },
-    { title: 'opacity', active: false },
-    { title: 'originX', active: false },
-    { title: 'originY', active: false },
-    { title: 'rotation', active: false }],
-    image: [{ title: 'Position', active: true },
-    { title: 'Dimension', active: false },
-    { title: 'Fill', active: false },
-    { title: 'opacity', active: false },
-    { title: 'originX', active: false },
-    { title: 'originY', active: false },
-    { title: 'rotation', active: false }]
+      { id: 'fill', title: 'Fill', icon: 'fa-x-fill', active: false },
+      { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
+      { id: 'opacity', title: 'Opacity', icon: 'fa-x-opacity', active: false },
+      { id: 'origin', title: 'Origin', icon: 'fa-x-origin', active: false },
+      { id: 'position', title: 'Position', icon: 'fa-x-position', active: false },
+      { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }],
+    ellipse: [
+      { id: 'position', title: 'Position', icon: 'fa-x-position', active: false },
+      { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
+      { id: 'fill', title: 'Fill', icon: 'fa-x-fill', active: false },
+      { id: 'opacity', title: 'opacity', icon: 'fa-x-opacity', active: false },
+      { id: 'originX', title: 'originX', icon: 'fa-', active: false },
+      { id: 'originY', title: 'originY', icon: 'fa-', active: false },
+      { id: 'rotation', title: 'rotation', icon: 'fa-', active: false },
+      { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }],
+    line: [
+      { id: 'position', title: 'Position', icon: 'fa-', active: false },
+      { id: 'dimension', title: 'Dimension', icon: 'fa-', active: false },
+      { id: 'fill', title: 'Fill', icon: 'fa-', active: false },
+      { id: 'opacity', title: 'opacity', icon: 'fa-', active: false },
+      { id: 'originX', title: 'originX', icon: 'fa-', active: false },
+      { id: 'originY', title: 'originY', icon: 'fa-', active: false },
+      { id: 'rotation', title: 'rotation', icon: 'fa-', active: false },
+      { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }
+    ],
+    text: [
+      { id: 'edit', title: 'Edit', icon: 'fa-x-edit', active: false },
+      { id: 'fill', title: 'Fill', icon: 'fa-x-fill', active: false },
+      { id: 'fontSize', title: 'Size', icon: 'fa-x-font-size', active: false },
+      { id: 'fontStyle', title: 'Style', icon: 'fa-italic', active: false },
+      { id: 'textAlign', title: 'Alignment', icon: 'fa-align-left', active: false },
+      { id: 'fontFamily', title: 'Font', icon: 'fa-font', active: false },
+      { id: 'fontWeight', title: 'Weight', icon: 'fa-bold', active: false },
+      { id: 'textShadow', title: 'Shadow', icon: 'fa-eye-slash', active: false },
+      { id: 'textBackground', title: 'Background', icon: 'fa-x-text-background', active: false },
+      { id: 'textEffects', title: 'Effects', icon: 'fa-magic', active: false },
+      { id: 'laterSpacing', title: 'Spacing', icon: 'fa-arrows-h', active: false },
+      { id: 'lineHeight', title: 'Line Height', icon: 'fa-arrows-v', active: false },
+      { id: 'textTransformation', title: 'Transformation', icon: 'fa-text-width', active: false },
+      { id: 'position', title: 'Position', icon: 'fa-x-position', active: false },
+      { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
+      { id: 'control', title: 'Control', icon: 'fa-x-control', active: false },
+      { id: 'rotation', title: 'Rotation', icon: 'fa-x-rotation', active: false }
+    ],
+    image: [
+      { id: 'position', title: 'Position', icon: 'fa-', active: false },
+      { id: 'dimension', title: 'Dimension', icon: 'fa-', active: false },
+      { id: 'fill', title: 'Fill', icon: 'fa-', active: false },
+      { id: 'opacity', title: 'opacity', icon: 'fa-', active: false },
+      { id: 'originX', title: 'originX', icon: 'fa-', active: false },
+      { id: 'originY', title: 'originY', icon: 'fa-', active: false },
+      { id: 'rotation', title: 'rotation', icon: 'fa-', active: false },
+      { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }
+    ]
+
   }
   fontFamilies = [
     {
@@ -150,7 +176,6 @@ export class ImageGenerateComponent {
     control?.setValue(value);
   }
   updateValue(d: { data: Data, index: number }) {
-    console.log(d)
     const value = this.postDetailsForm.get('data') as FormArray | null;
     if (value) {
       const t = value.at(d.index) as FormControl | null;
@@ -231,6 +256,7 @@ export class ImageGenerateComponent {
     }
     d && this.dataArray.push(d);
     this.postDetails = this.postDetailsForm.value;
+    this.selectedElement = this.dataArray.length;
   }
   removeData(index: number) {
     this.dataArray.removeAt(index);
@@ -252,24 +278,25 @@ export class ImageGenerateComponent {
       rotation: 45,
     }
   };
-  createRectFormGroup(r: { title: string, editable: boolean, boxed: boolean, rect: RectProperties }): FormGroup {
+  createRectFormGroup(r: Data): FormGroup {
     return this.fb.group({
-      title: [r.title, Validators.required],
-      editable: [r.editable],
-      boxed: [r.boxed],
+      title: [r.title || '', Validators.required],
+      editable: [r.editable || false],
+      boxed: [r.boxed || false],
       rect: this.fb.group({
-        x: [r.rect.x, Validators.required],
-        y: [r.rect.y, Validators.required],
-        width: [r.rect.width, Validators.required],
-        height: [r.rect.height, Validators.required],
-        fill: [r.rect.fill, Validators.required],
-        opacity: [r.rect.opacity, Validators.required],
-        originX: [r.rect.originX, Validators.required],
-        originY: [r.rect.originY, Validators.required],
-        rotation: [r.rect.rotation, Validators.required]
+        x: [r.rect?.x || 0, Validators.required],
+        y: [r.rect?.y || 0, Validators.required],
+        width: [r.rect?.width || 150, Validators.required],
+        height: [r.rect?.height || 150, Validators.required],
+        fill: [r.rect?.fill || '#000000', Validators.required],
+        opacity: [r.rect?.opacity || '1', Validators.required],
+        originX: [r.rect?.originX || 0, Validators.required],
+        originY: [r.rect?.originY || 0, Validators.required],
+        rotation: [r.rect?.rotation || 0, Validators.required]
       })
     });
   }
+
   circleData = {
     title: "Circle 1",
     editable: false,
@@ -285,19 +312,19 @@ export class ImageGenerateComponent {
     }
   };
 
-  createCircleFormGroup(c: { title: string, editable: boolean, boxed: boolean, circle: CircleProperties }): FormGroup {
+  createCircleFormGroup(c: Data): FormGroup {
     return this.fb.group({
       title: [c.title, Validators.required],
       editable: [c.editable],
       boxed: [c.boxed],
       circle: this.fb.group({
-        cx: [c.circle.cx, Validators.required],
-        cy: [c.circle.cy, Validators.required],
-        r: [c.circle.r, Validators.required],
-        fill: [c.circle.fill, Validators.required],
-        opacity: [c.circle.opacity, Validators.required],
-        originX: [c.circle.originX, Validators.required],
-        originY: [c.circle.originY, Validators.required]
+        cx: [c.circle?.cx, Validators.required],
+        cy: [c.circle?.cy, Validators.required],
+        r: [c.circle?.r, Validators.required],
+        fill: [c.circle?.fill, Validators.required],
+        opacity: [c.circle?.opacity, Validators.required],
+        originX: [c.circle?.originX, Validators.required],
+        originY: [c.circle?.originY, Validators.required]
       })
     })
   }
@@ -317,21 +344,21 @@ export class ImageGenerateComponent {
       rotation: 45
     }
   };
-  createEllipseFormGroup(e: { title: string, editable: boolean, boxed: boolean, ellipse: EllipseProperties }): FormGroup {
+  createEllipseFormGroup(e: Data): FormGroup {
     return this.fb.group({
       title: [e.title, Validators.required],
       editable: [e.editable],
       boxed: [e.boxed],
       ellipse: this.fb.group({
-        cx: [e.ellipse.cx, Validators.required],
-        cy: [e.ellipse.cy, Validators.required],
-        rx: [e.ellipse.rx, Validators.required],
-        ry: [e.ellipse.ry, Validators.required],
-        fill: [e.ellipse.fill, Validators.required],
-        opacity: [e.ellipse.opacity, Validators.required],
-        originX: [e.ellipse.originX, Validators.required],
-        originY: [e.ellipse.originY, Validators.required],
-        rotation: [e.ellipse.rotation, Validators.required]
+        cx: [e.ellipse?.cx, Validators.required],
+        cy: [e.ellipse?.cy, Validators.required],
+        rx: [e.ellipse?.rx, Validators.required],
+        ry: [e.ellipse?.ry, Validators.required],
+        fill: [e.ellipse?.fill, Validators.required],
+        opacity: [e.ellipse?.opacity, Validators.required],
+        originX: [e.ellipse?.originX, Validators.required],
+        originY: [e.ellipse?.originY, Validators.required],
+        rotation: [e.ellipse?.rotation, Validators.required]
       })
     });
   }
@@ -353,22 +380,22 @@ export class ImageGenerateComponent {
     }
   };
 
-  createLineFormGroup(l: { title: string, editable: boolean, boxed: boolean, line: LineProperties }): FormGroup {
+  createLineFormGroup(l: Data): FormGroup {
     return this.fb.group({
       title: [l.title, Validators.required],
       editable: [l.editable],
       boxed: [l.boxed],
       line: this.fb.group({
-        x1: [l.line.x1, Validators.required],
-        y1: [l.line.y1, Validators.required],
-        x2: [l.line.x2, Validators.required],
-        y2: [l.line.y2, Validators.required],
-        stroke: [l.line.stroke, Validators.required],
-        strokeWidth: [l.line.strokeWidth, Validators.required],
-        opacity: [l.line.opacity, Validators.required],
-        originX: [l.line.originX, Validators.required],
-        originY: [l.line.originY, Validators.required],
-        rotation: [l.line.rotation, Validators.required]
+        x1: [l.line?.x1, Validators.required],
+        y1: [l.line?.y1, Validators.required],
+        x2: [l.line?.x2, Validators.required],
+        y2: [l.line?.y2, Validators.required],
+        stroke: [l.line?.stroke, Validators.required],
+        strokeWidth: [l.line?.strokeWidth, Validators.required],
+        opacity: [l.line?.opacity, Validators.required],
+        originX: [l.line?.originX, Validators.required],
+        originY: [l.line?.originY, Validators.required],
+        rotation: [l.line?.rotation, Validators.required]
       })
     });
   }
@@ -390,7 +417,7 @@ export class ImageGenerateComponent {
       staticValue: false,
       textAlign: "left",
       rotate: 0,
-      fontFamily: "Arial",
+      fontFamily: "Hind Vadodara",
       textShadow: {
         enable: false,
         color: "#FFFFFF",
@@ -425,57 +452,57 @@ export class ImageGenerateComponent {
       textTransformation: "none"
     }
   };
-  createTextFormGroup(t: { title: string, editable: boolean, boxed: boolean, text: TextElement }): FormGroup {
+  createTextFormGroup(t: Data): FormGroup {
     return this.fb.group({
       title: [t.title, Validators.required],
       editable: [t.editable],
       boxed: [t.boxed],
       text: this.fb.group({
-        x: [t.text.x, Validators.required],
-        y: [t.text.y, Validators.required],
-        fs: [t.text.fs, Validators.required],
-        fw: [t.text.fw, Validators.required],
-        text: [t.text.text, Validators.required],
-        color: [t.text.color, Validators.required],
+        x: [t.text?.x, Validators.required],
+        y: [t.text?.y, Validators.required],
+        fs: [t.text?.fs, Validators.required],
+        fw: [t.text?.fw, Validators.required],
+        text: [t.text?.text, Validators.required],
+        color: [t.text?.color, Validators.required],
         fontStyle: this.fb.group({
-          italic: [t.text.fontStyle.italic, Validators.required],
-          underline: [t.text.fontStyle.underline, Validators.required]
+          italic: [t.text?.fontStyle.italic, Validators.required],
+          underline: [t.text?.fontStyle.underline, Validators.required]
         }),
-        textAlign: [t.text.textAlign, Validators.required],
-        rotate: [t.text.rotate, Validators.required],
-        fontFamily: [t.text.fontFamily, Validators.required],
+        textAlign: [t.text?.textAlign, Validators.required],
+        rotate: [t.text?.rotate, Validators.required],
+        fontFamily: [t.text?.fontFamily, Validators.required],
         textShadow: this.fb.group({
           enable: [false],
-          color: [t.text.textShadow.color],
-          blur: [t.text.textShadow.blur],
-          offsetX: [t.text.textShadow.offsetX],
-          offsetY: [t.text.textShadow.offsetY]
+          color: [t.text?.textShadow.color],
+          blur: [t.text?.textShadow.blur],
+          offsetX: [t.text?.textShadow.offsetX],
+          offsetY: [t.text?.textShadow.offsetY]
         }),
-        backgroundColor: [t.text.backgroundColor, Validators.required],
+        backgroundColor: [t.text?.backgroundColor, Validators.required],
         textEffects: this.fb.group({
           enable: [false],
           gradient: this.fb.group({
             enable: [false],
-            startColor: [t.text.textEffects.gradient.startColor, Validators.required],
-            endColor: [t.text.textEffects.gradient.endColor, Validators.required],
-            direction: [t.text.textEffects.gradient.direction, Validators.required]
+            startColor: [t.text?.textEffects.gradient.startColor, Validators.required],
+            endColor: [t.text?.textEffects.gradient.endColor, Validators.required],
+            direction: [t.text?.textEffects.gradient.direction, Validators.required]
           }),
           outline: this.fb.group({
             enable: [false],
-            color: [t.text.textEffects.outline.color, Validators.required],
-            width: [t.text.textEffects.outline.width, Validators.required]
+            color: [t.text?.textEffects.outline.color, Validators.required],
+            width: [t.text?.textEffects.outline.width, Validators.required]
           }),
           glow: this.fb.group({
             enable: [false],
-            color: [t.text.textEffects.glow.color, Validators.required],
-            blur: [t.text.textEffects.glow.blur, Validators.required]
+            color: [t.text?.textEffects.glow.color, Validators.required],
+            blur: [t.text?.textEffects.glow.blur, Validators.required]
           })
         }),
-        textAnchor: [t.text.textAnchor],
-        alignmentBaseline: [t.text.textAnchor],
-        letterSpacing: [t.text.letterSpacing, Validators.required],
-        lineHeight: [t.text.lineHeight, Validators.required],
-        textTransformation: [t.text.textTransformation, Validators.required]
+        textAnchor: [t.text?.textAnchor],
+        alignmentBaseline: [t.text?.textAnchor],
+        letterSpacing: [t.text?.letterSpacing, Validators.required],
+        lineHeight: [t.text?.lineHeight, Validators.required],
+        textTransformation: [t.text?.textTransformation, Validators.required]
       })
     });
   }
@@ -532,22 +559,22 @@ export class ImageGenerateComponent {
       }
     }
   };
-  createImageFormGroup(i: { title: string, editable: boolean, boxed: boolean, image: ImageElement }): FormGroup {
+  createImageFormGroup(i: Data): FormGroup {
     return this.fb.group({
       title: [i.title, Validators.required],
       editable: [i.editable],
       boxed: [i.boxed],
       image: this.fb.group({
-        r: [i.image.r, Validators.required],
-        x: [i.image.x, Validators.required],
-        y: [i.image.y, Validators.required],
-        imageUrl: [i.image.imageUrl, Validators.required],
-        borderColor: [i.image.borderColor, Validators.required],
-        borderWidth: [i.image.borderWidth, Validators.required],
-        shape: [i.image.shape, Validators.required],
-        origin: [i.image.origin, Validators.required],
-        placeholder: [i.image.placeholder, Validators.required],
-        svgProperties: this.createSvgPropertiesFormGroup(i.image.svgProperties)
+        r: [i.image?.r, Validators.required],
+        x: [i.image?.x, Validators.required],
+        y: [i.image?.y, Validators.required],
+        imageUrl: [i.image?.imageUrl, Validators.required],
+        borderColor: [i.image?.borderColor, Validators.required],
+        borderWidth: [i.image?.borderWidth, Validators.required],
+        shape: [i.image?.shape, Validators.required],
+        origin: [i.image?.origin, Validators.required],
+        placeholder: [i.image?.placeholder, Validators.required],
+        svgProperties: this.createSvgPropertiesFormGroup(i.image?.svgProperties!)
       })
     });
   }
@@ -556,31 +583,22 @@ export class ImageGenerateComponent {
     if (dataArray) {
       moveItemInArray(dataArray, event.previousIndex, event.currentIndex);
     }
-    this.dataArray.clear();
-    this.controlSet = [];
-    for (let i = 0; i < dataArray.length; i++) {
-      const item = dataArray[i];
-      (item.rect) && this.dataArray.push(this.createRectFormGroup(item));
-      (item.rect) && this.controlSet.push(this.controlValues.rect);
-      (item.circle) && this.dataArray.push(this.createCircleFormGroup(item));
-      (item.ellipse) && this.dataArray.push(this.createEllipseFormGroup(item));
-      (item.line) && this.dataArray.push(this.createLineFormGroup(item));
-      (item.text) && this.dataArray.push(this.createTextFormGroup(item));
-      (item.image) && this.dataArray.push(this.createImageFormGroup(item))
-    }
-    this.postDetails.data = dataArray;
+    this.rebuild(dataArray)
   }
   setActiveControl(rectIndex: number, controlIndex: number) {
     this.controlSet[rectIndex].forEach((control, index) => {
       control.active = index === controlIndex;
     });
   }
-  getActiveControl(rectIndex: number, controlTitle: string): boolean {
+  getActiveControl(rectIndex: number, controlId: string): boolean {
     const controls = this.controlSet[rectIndex];
-    const activeControl = controls.find(control => control.title === controlTitle && control.active);
+    const activeControl = controls.find(control => control.id === controlId && control.active);
     return activeControl ? true : false;
   }
-
+  toggleExpand(event: Event) {
+    event.stopPropagation();
+    this.isExpanded = !this.isExpanded;
+  }
   scaleFactor = 1;
   // offsetX = 0;
   // offsetY = 0;
@@ -622,5 +640,69 @@ export class ImageGenerateComponent {
   //   this.offsetX -= deltaX;
   //   this.offsetY -= deltaY;
   // }
+  moveDown(index: number) {
+    const data = this.postDetails.data;
+    if (index > 0) {
+      let temp = data[index - 1];
+      data[index - 1] = data[index];
+      data[index] = temp;
+      this.selectedElement = index - 1;
+    }
+    this.rebuild(data);
+    return false;
+  }
+  moveUp(index: number) {
+    const data = this.postDetails.data;
+    if (index < data.length - 1) {
+      const temp = data[index];
+      data[index] = data[index + 1];
+      data[index + 1] = temp;
+      this.selectedElement = index + 1;
+    }
+    this.rebuild(data);
+    return false;
+  }
 
+  moveToBack(index: number) {
+    const data = this.postDetails.data;
+    if (index > 0) {
+      const temp = data[index];
+      data.splice(index, 1);
+      data.unshift(temp);
+      this.selectedElement = 0;
+    }
+    this.rebuild(data);
+    return false;
+  }
+  moveToTop(index: number) {
+    const data = this.postDetails.data;
+    if (index < data.length - 1) {
+      const temp = data[index];
+      data.splice(index, 1);
+      data.push(temp);
+      this.selectedElement = data.length - 1;
+    }
+    this.rebuild(data);
+    return false;
+  }
+  rebuild(dataArray: Data[]) {
+    this.dataArray.clear();
+    this.controlSet = [];
+    for (let i = 0; i < dataArray.length; i++) {
+      const item = dataArray[i];
+      (item.rect) && this.dataArray.push(this.createRectFormGroup(item));
+      (item.rect) && this.controlSet.push(this.controlValues.rect);
+      (item.circle) && this.dataArray.push(this.createCircleFormGroup(item));
+      (item.circle) && this.controlSet.push(this.controlValues.circle);
+      (item.ellipse) && this.dataArray.push(this.createEllipseFormGroup(item));
+      (item.ellipse) && this.controlSet.push(this.controlValues.ellipse);
+      (item.line) && this.dataArray.push(this.createLineFormGroup(item));
+      (item.line) && this.controlSet.push(this.controlValues.line);
+      (item.text) && this.dataArray.push(this.createTextFormGroup(item));
+      (item.text) && this.controlSet.push(this.controlValues.text);
+      (item.image) && this.dataArray.push(this.createImageFormGroup(item));
+      (item.image) && this.controlSet.push(this.controlValues.image);
+    }
+    this.postDetailsForm.get('data')?.setValue(dataArray);
+  }
 }

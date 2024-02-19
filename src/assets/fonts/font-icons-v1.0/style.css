@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'font-icons';
-  src:  url('fonts/font-icons.eot?h0ypgu');
-  src:  url('fonts/font-icons.eot?h0ypgu#iefix') format('embedded-opentype'),
-    url('fonts/font-icons.ttf?h0ypgu') format('truetype'),
-    url('fonts/font-icons.woff?h0ypgu') format('woff'),
-    url('fonts/font-icons.svg?h0ypgu#font-icons') format('svg');
+  src:  url('fonts/font-icons.eot?akvu45');
+  src:  url('fonts/font-icons.eot?akvu45#iefix') format('embedded-opentype'),
+    url('fonts/font-icons.ttf?akvu45') format('truetype'),
+    url('fonts/font-icons.woff?akvu45') format('woff'),
+    url('fonts/font-icons.svg?akvu45#font-icons') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,30 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.fa-x-layer:before {
+  content: "\e90b";
+}
+.fa-x-back:before {
+  content: "\e90c";
+}
+.fa-x-layer-backward:before {
+  content: "\e90d";
+}
+.fa-x-layer-forward:before {
+  content: "\e90e";
+}
+.fa-x-front:before {
+  content: "\e90f";
+}
+.fa-x-text-background:before {
+  content: "\e90a";
+}
+.fa-x-font-size:before {
+  content: "\e909";
+}
+.fa-x-edit:before {
+  content: "\e908";
+}
 .fa-x-opacity:before {
   content: "\e904";
 }

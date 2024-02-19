@@ -58,14 +58,17 @@ input::-webkit-inner-spin-button {
 input[type=number] {
     -moz-appearance: textfield;
 }
-.overflow-y-auto{
+
+.overflow-y-auto {
     overflow-y: auto !important;
     overflow-x: hidden !important;
 }
-.overflow-x-auto{
+
+.overflow-x-auto {
     overflow-x: auto !important;
     overflow-y: hidden !important;
 }
+
 @for $i from 5 through 100 {
     .min-vh-#{$i} {
         min-height: #{$i}vh !important;
@@ -185,13 +188,18 @@ $fab-background-color-2: inherit;
     justify-content: flex-end;
     align-items: center;
     user-select: none;
-    position: absolute;
-    bottom: 30px;
-    right: 30px;
+    position: fixed;
+    bottom: 0;
+    right: 0;
     z-index: 5;
+    align-items: end;
+    padding-bottom: 30px;
+    padding-right: 30px;
 
-    &:hover {
+    &.expanded {
         height: 100%;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.1);
 
         .fab {
             background-color: $fab-background-color-1;
@@ -231,6 +239,7 @@ $fab-background-color-2: inherit;
         color: $fab-color;
         border-radius: 50%;
         z-index: 2;
+        margin-right: 5px;
 
         .fab-content {
             display: flex;
@@ -282,5 +291,28 @@ $fab-background-color-2: inherit;
         }
 
         transition: all 0.3s ease;
+    }
+}
+
+.control-group {
+    overflow-x: auto;
+    display: block;
+
+    :-webkit-scrollbar {
+        display: none;
+    }
+
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    label {
+        &.btn {
+            display: inline-block !important;
+            width: 14.2857143%;
+        }
+
+        small {
+            font-size: 70%;
+            white-space: nowrap;
+        }
     }
 }

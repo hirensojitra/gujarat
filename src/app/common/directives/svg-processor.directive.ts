@@ -13,13 +13,15 @@ import {
 import ColorThief from 'colorthief';
 
 interface Data {
-  title: string,
-  rect?: RectProperties,
-  circle?: CircleProperties,
-  ellipse?: EllipseProperties,
-  line?: LineProperties,
-  text?: TextElement,
-  image?: ImageElement
+  title: string;
+  editable: boolean;
+  boxed: boolean;
+  rect?: RectProperties;
+  circle?: CircleProperties;
+  ellipse?: EllipseProperties;
+  line?: LineProperties;
+  text?: TextElement;
+  image?: ImageElement;
 }
 
 @Directive({
@@ -138,12 +140,13 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (this.el.nativeElement && d.circle) {
       const svg = this.el.nativeElement;
       const c = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
-      const { cx, cy, r, fill } = d.circle; // Assuming cx, cy, r, and fill are properties of the circle
+      const { cx, cy, r, fill, opacity } = d.circle; // Assuming cx, cy, r, and fill are properties of the circle
       this.renderer.setAttribute(c, 'cx', String(cx));
       this.renderer.setAttribute(c, 'cy', String(cy));
       this.renderer.setAttribute(c, 'r', r.toString());
       this.renderer.setAttribute(c, 'data-type', 'circle');
       this.renderer.setAttribute(c, 'fill', fill);
+      this.renderer.setAttribute(c, 'opacity', String(opacity));
       this.renderer.appendChild(svg, c);
       return c;
     }
@@ -540,7 +543,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                 y = parseFloat(element.getAttribute('y') || '0');
               }
               console.log(this.width, this.height);
-              if (x!==undefined && y!==undefined) {
+              if (x !== undefined && y !== undefined) {
                 const oX = svgPoint.x - x + this.offsetX;
                 const oY = svgPoint.y - y + this.offsetY;
                 const newX = x + oX;
