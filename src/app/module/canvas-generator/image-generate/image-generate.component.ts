@@ -425,7 +425,7 @@ export class ImageGenerateComponent {
         offsetX: 0,
         offsetY: 0
       },
-      backgroundColor: "#ffffff",
+      backgroundColor: "#FFFFFF",
       textEffects: {
         enable: false,
         gradient: {

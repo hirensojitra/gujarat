@@ -12,6 +12,7 @@ import { DraggableDirective } from '../directives/draggable.directive';  // Add 
 import { KeysPipe } from '../pipes/keys.pipe';
 import { SvgProcessorDirective } from '../directives/svg-processor.directive';
 import { ColorService } from '../services/color.service';
+import { ColorPickerComponent } from '../controllers/color-picker/color-picker.component';
 
 @NgModule({
   imports: [
@@ -28,7 +29,8 @@ import { ColorService } from '../services/color.service';
     LocalitySelectorComponent,
     DraggableDirective,
     KeysPipe,
-    SvgProcessorDirective
+    SvgProcessorDirective,
+    ColorPickerComponent
   ],
   exports: [
     CaptchaDirective,
@@ -40,8 +42,9 @@ import { ColorService } from '../services/color.service';
     LocalitySelectorComponent,
     DraggableDirective,
     KeysPipe,
-    SvgProcessorDirective
+    SvgProcessorDirective,
+    ColorPickerComponent
   ],
-  providers: [KeysPipe, ColorService]
+  providers: [KeysPipe, ColorService, ColorPickerComponent]
 })
 export class SharedModule { }

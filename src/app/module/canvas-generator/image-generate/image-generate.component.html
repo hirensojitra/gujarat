@@ -74,8 +74,7 @@
                                                 <label class="form-label">Title</label>
                                                 <input type="text" class="form-control" formControlName="title">
                                             </div>
-                                            <div class="col-8 d-flex"
-                                                [class.d-none]="!getActiveControl(i,'control')">
+                                            <div class="col-8 d-flex" [class.d-none]="!getActiveControl(i,'control')">
                                                 <div class="form-check form-switch">
                                                     <input class="form-check-input" type="checkbox" [id]="'boxed-'+i"
                                                         formControlName="boxed">
@@ -88,8 +87,7 @@
                                                         Edit</label>
                                                 </div>
                                             </div>
-                                            <div class="col-4 d-flex"
-                                                [class.d-none]="!getActiveControl(i,'control')">
+                                            <div class="col-4 d-flex" [class.d-none]="!getActiveControl(i,'control')">
                                                 <button class="btn btn-sm btn-danger ms-auto" (click)="removeData(i)"><i
                                                         class="fa fa-trash"></i></button>
                                             </div>
@@ -99,30 +97,30 @@
                                                     <div class="col-6">
                                                         <button
                                                             class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100"
-                                                            (click)="i>0&&moveDown(i)"
-                                                            [class.disabled]="i==0">
+                                                            (click)="i>0&&moveDown(i)" [class.disabled]="i==0">
                                                             <i class="fa fa-x-layer-backward fa-2x me-2"></i> Backward
                                                         </button>
                                                     </div>
                                                     <div class="col-6">
                                                         <button
                                                             class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100"
-                                                            (click)="i<dataArray.controls.length-1&&moveUp(i)" [class.disabled]="i==dataArray.controls.length-1">
+                                                            (click)="i<dataArray.controls.length-1&&moveUp(i)"
+                                                            [class.disabled]="i==dataArray.controls.length-1">
                                                             <i class="fa fa-x-layer-forward fa-2x me-2"></i> Forward
                                                         </button>
                                                     </div>
                                                     <div class="col-6">
                                                         <button
                                                             class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100"
-                                                            (click)="i>0&&moveToBack(i)"
-                                                            [class.disabled]="i==0">
+                                                            (click)="i>0&&moveToBack(i)" [class.disabled]="i==0">
                                                             <i class="fa fa-x-back fa-2x me-2"></i> To Back
                                                         </button>
                                                     </div>
                                                     <div class="col-6">
                                                         <button
                                                             class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100"
-                                                            (click)="i<dataArray.controls.length-1&&moveToTop(i)" [class.disabled]="i==dataArray.controls.length-1">
+                                                            (click)="i<dataArray.controls.length-1&&moveToTop(i)"
+                                                            [class.disabled]="i==dataArray.controls.length-1">
                                                             <i class="fa fa-x-front fa-2x me-2"></i> To Top
                                                         </button>
                                                     </div>
@@ -457,6 +455,13 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                <div class="col-6" [class.d-none]="!getActiveControl(i,'fill')">
+                                                    <color-picker [colorSet]="colorSet"
+                                                        [getActiveControl]="getActiveControl" formControlName="color"
+                                                        [i]="i">
+                                                    </color-picker>
+                                                </div>
                                                 <ng-container>
                                                     <div class="col-6" [class.d-none]="!getActiveControl(i,'fill')">
                                                         <div class="form-group">
@@ -683,12 +688,37 @@
                                                         </ng-container>
                                                     </div>
                                                 </ng-container>
-                                                <div class="form-group col-6"
+                                                <div class="form-group col-12"
                                                     [class.d-none]="!getActiveControl(i,'textBackground')">
                                                     <label for="backgroundColor" class="form-label">Background
                                                         Color</label>
-                                                    <input type="text" id="backgroundColor" class="form-control"
-                                                        formControlName="backgroundColor">
+                                                    <div class="btn-group rounded-0 d-block" role="group"
+                                                        data-toggle="buttons">
+                                                        <ng-container *ngFor="let borderColorOption of colorSet">
+                                                            <input type="radio" class="btn-check"
+                                                                [id]="'backgroundColor-group-' + borderColorOption + i"
+                                                                formControlName="backgroundColor"
+                                                                [value]="borderColorOption" autocomplete="off">
+                                                            <label
+                                                                class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
+                                                                [for]="'backgroundColor-group-' + borderColorOption + i"
+                                                                [class.border-secondary]="item.get('text')?.get('backgroundColor')?.value == borderColorOption">
+                                                                <span
+                                                                    [style]="'background-color: '+borderColorOption+'; display: block;'"
+                                                                    class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
+                                                                    [class]="getColorClass(item.get('text')?.get('backgroundColor')?.value == borderColorOption)"></span>
+                                                            </label>
+                                                        </ng-container>
+                                                        <div class="spinner-border" role="status"
+                                                            *ngIf="!colorSet.length">
+                                                            <span class="sr-only">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 d-flex align-items-end">
+                                                    <input type="text" class="form-control"
+                                                        [value]="item.get('text')?.get('backgroundColor')?.value"
+                                                        (input)="updateColor($event, item.get('text')?.get('backgroundColor'))">
                                                 </div>
                                                 <ng-container formGroupName="textEffects">
                                                     <div class="col-12">
@@ -837,7 +867,9 @@
                                             <ng-container formGroupName="image" *ngIf="item.get('image')">
                                                 <div class="form-group col-12">
                                                     <label for="r" class="form-label">Radius (r)</label>
-                                                    <input type="range" class="form-range" [attr.min]="postDetailsForm.get('w')?.value/20||80" [attr.max]="postDetailsForm.get('w')?.value/6" step="0.5"
+                                                    <input type="range" class="form-range"
+                                                        [attr.min]="postDetailsForm.get('w')?.value/20||80"
+                                                        [attr.max]="postDetailsForm.get('w')?.value/8" step="0.5"
                                                         formControlName="r">
                                                 </div>
                                                 <div class="form-group col-6">

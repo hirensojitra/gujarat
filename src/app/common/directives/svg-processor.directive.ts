@@ -351,18 +351,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
     return null;
   }
-  textAnchor(t: string): string {
-    switch (t) {
-      case 'center':
-        return 'middle';
-      case 'left':
-        return 'start';
-      case 'right':
-        return 'end';
-      default:
-        return 'middle';
-    }
-  }
   updateElements(data: Data[]) {
     const svg = this.el.nativeElement;
     const children = svg.childNodes;
