@@ -200,13 +200,49 @@ export class ImageGenerateComponent {
 
   ngOnInit(): void {
     this.postDetails = {
-      id: 1,
-      deleted: false,
-      h: 1024,
-      w: 1024,
-      title: "image",
-      backgroundUrl: "https://images.unsplash.com/photo-1538291323976-37dcaafccb12?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      data: []
+      "id": 1,
+      "deleted": false,
+      "h": 1024,
+      "w": 1024,
+      "title": "image",
+      "backgroundUrl": "https://images.unsplash.com/photo-1538291323976-37dcaafccb12?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "data": [
+        {
+          "title": "Image 1",
+          "editable": true,
+          "boxed": true,
+          "image": {
+            "r": 50,
+            "x": 100,
+            "y": 100,
+            "imageUrl": "assets/images/jpeg/profile-1.jpeg",
+            "borderColor": "#000000",
+            "borderWidth": 2,
+            "shape": "circle",
+            "origin": "center",
+            "placeholder": "Placeholder Text",
+            "svgProperties": {
+              "fill": "#ffffff",
+              "stroke": "#000000",
+              "strokeWidth": 2
+            }
+          }
+        },
+        {
+          "title": "Circle 1",
+          "editable": false,
+          "boxed": true,
+          "circle": {
+            "cx": 50,
+            "cy": 50,
+            "r": 30,
+            "fill": "#FFFFFF",
+            "opacity": 1,
+            "originX": 0,
+            "originY": 0
+          }
+        }
+      ]
     }
     // Initialize the form
     this.postDetailsForm = this.fb.group({
@@ -218,12 +254,20 @@ export class ImageGenerateComponent {
       backgroundUrl: [this.postDetails.backgroundUrl, Validators.required],
       data: this.fb.array([])
     });
-    this.getColors(this.postDetails.backgroundUrl, 10)
+    this.getColors(this.postDetails.backgroundUrl, 10);
+    this.postDetails.data.map((d) => {
+      d.rect && this.addData('rect', d);
+      d.circle && this.addData('circle', d);
+      d.ellipse && this.addData('ellipse', d);
+      d.line && this.addData('line', d);
+      d.text && this.addData('text', d);
+      d.image && this.addData('image', d);
+    })
   }
   get dataArray() {
     return this.postDetailsForm.get('data') as FormArray;
   }
-  addData(t: string) {
+  addData(t: string, value?: Data) {
     let d: FormGroup = this.fb.group({})
     switch (t) {
       case 'rect':
@@ -247,7 +291,7 @@ export class ImageGenerateComponent {
         this.controlSet.push(this.controlValues.text);
         break;
       case 'image':
-        d = this.createImageFormGroup(this.imageData);
+        d = this.createImageFormGroup(value || this.imageData);
         this.controlSet.push(this.controlValues.image);
         break;
       default:

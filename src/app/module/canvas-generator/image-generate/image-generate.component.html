@@ -23,7 +23,7 @@
                 <div class="col-md-6 col-lg-5 py-3 d-flex flex-column">
                     <div class="flex-grow-1 position-relative">
                         <div class="position-absolute w-100 p-3 overflow-auto">
-                            <!-- <pre>{{this.postDetailsForm.get('data')?.value|json}}</pre> -->
+                            <!-- <pre>{{this.postDetailsForm?.value|json}}</pre> -->
                             <!-- <ul class="list-group border-0" cdkDropList (cdkDropListDropped)="drop($event)">
                                 <li class="list-group-item"
                                     *ngFor="let item of postDetailsForm.get('data')?.value; let i=index">
@@ -455,47 +455,14 @@
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                <div class="col-6" [class.d-none]="!getActiveControl(i,'fill')">
-                                                    <color-picker [colorSet]="colorSet"
-                                                        [getActiveControl]="getActiveControl" formControlName="color"
-                                                        [i]="i">
-                                                    </color-picker>
-                                                </div>
                                                 <ng-container>
                                                     <div class="col-6" [class.d-none]="!getActiveControl(i,'fill')">
                                                         <div class="form-group">
                                                             <label class="form-label d-block">Color</label>
-                                                            <div class="btn-group rounded-0 d-block" role="group"
-                                                                data-toggle="buttons">
-                                                                <ng-container *ngFor="let color of colorSet">
-                                                                    <input type="radio" class="btn-check"
-                                                                        [id]="'color-group-' + color+i"
-                                                                        formControlName="color" [value]="color"
-                                                                        autocomplete="off">
-                                                                    <label
-                                                                        class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
-                                                                        [for]="'color-group-' + color+i"
-                                                                        [class.border-secondary]="item.get('color')?.value == color">
-                                                                        <!-- Display a color sample -->
-                                                                        <span
-                                                                            [style]="'background-color: '+color+'; display: block;'"
-                                                                            class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"
-                                                                            [class]="getColorClass(item.get('color')?.value == color)"></span>
-                                                                    </label>
-                                                                </ng-container>
-                                                                <div class="spinner-border" role="status"
-                                                                    *ngIf="!colorSet.length">
-                                                                    <span class="sr-only">Loading...</span>
-                                                                </div>
-                                                            </div>
+                                                            <color-picker [colorSet]="colorSet"
+                                                                [getActiveControl]="getActiveControl"
+                                                                formControlName="color"></color-picker>
                                                         </div>
-                                                    </div>
-                                                    <div class="col-6 d-flex align-items-end"
-                                                        [class.d-none]="!getActiveControl(i,'fill')">
-                                                        <input type="text" class="form-control"
-                                                            [value]="item.get('text')?.get('color')?.value"
-                                                            (input)="updateColor($event, item.get('text')?.get('color'))">
                                                     </div>
                                                 </ng-container>
                                                 <div formGroupName="fontStyle" class="col-6"
@@ -630,13 +597,9 @@
                                                             <div class="form-group col-6">
                                                                 <label for="shadowColor" class="form-label">Shadow
                                                                     Color</label>
-                                                                <div class="btn-group rounded-0 d-block" role="group"
-                                                                    data-toggle="buttons">
+                                                                <div class="btn-group rounded-0 d-block" role="group" data-toggle="buttons">
                                                                     <ng-container *ngFor="let color of colorSet">
-                                                                        <input type="radio" class="btn-check"
-                                                                            [id]="'shadow-color-' + color+i"
-                                                                            formControlName="color" [value]="color"
-                                                                            autocomplete="off">
+                                                                        <input type="radio" class="btn-check" [id]="'shadow-color-' + color+i" formControlName="color" [value]="color" autocomplete="off">
                                                                         <label
                                                                             class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3"
                                                                             [for]="'shadow-color-' + color+i"
@@ -715,7 +678,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-6 d-flex align-items-end">
+                                                <div class="col-6 d-flex align-items-end" [class.d-none]="!getActiveControl(i,'textBackground')">
                                                     <input type="text" class="form-control"
                                                         [value]="item.get('text')?.get('backgroundColor')?.value"
                                                         (input)="updateColor($event, item.get('text')?.get('backgroundColor'))">

@@ -1,24 +1,24 @@
+
 <div class="color-picker position-relative">
-    <ng-container *ngIf="colorSet.length; else loading">
-      <ng-container *ngFor="let color of colorSet">
-        <input type="radio" class="btn-check" [id]="'color-group-' + color"
-               [value]="color" [checked]="selectedColor === color" (change)="selectColor(color)">
-        <label class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3 position-relative"
-               [for]="'color-group-' + color">
-          <!-- Display a color sample -->
-          <span [style]="'background-color: '+color+'; display: block;'"
-                class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle"></span>
-        </label>
-      </ng-container>
+  <ng-container *ngIf="colorSet.length; else loading">
+    <ng-container *ngFor="let color of colorSet">
+      <input type="radio" class="btn-check" [id]="'color-group-' + color" [value]="color"
+        [checked]="selectedColor === color" (change)="selectColor(color)">
+      <label class="btn btn-outline-white p-3 rounded-0 w-50-px h-50-px border-2 rounded-3 position-relative"
+        [for]="'color-group-' + color">
+        <!-- Display a color sample -->
+        <span [style]="'background-color: '+color+'; display: block;'"
+          class="position-absolute w-75 h-75 top-50 start-50 rounded-3 translate-middle border border-3 border-light shadow"></span>
+      </label>
     </ng-container>
-    <div class="spinner-border" role="status" *ngIf="!colorSet.length">
-      <span class="sr-only">Loading...</span>
-    </div>
+  </ng-container>
+  <div class="spinner-border" role="status" *ngIf="!colorSet.length">
+    <span class="sr-only">Loading...</span>
   </div>
-  
-  <ng-template #loading>
-    <div class="spinner-border" role="status">
-      <span class="sr-only">Loading...</span>
-    </div>
-  </ng-template>
-  
+</div>
+<ng-template #loading>
+  <div class="spinner-border" role="status">
+    <span class="sr-only">Loading...</span>
+  </div>
+</ng-template>
+<input type="text" [(ngModel)]="selectedColor" class="form-control">

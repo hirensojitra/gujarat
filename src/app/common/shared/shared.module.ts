@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CaptchaDirective } from '../directives/captcha.directive';
 import { TogglePasswordDirective } from '../directives/toggle-password.directive';
 import { AccordionActiveDirective } from '../directives/accordion-active.directive';
@@ -17,7 +17,8 @@ import { ColorPickerComponent } from '../controllers/color-picker/color-picker.c
 @NgModule({
   imports: [
     ReactiveFormsModule,
-    CommonModule
+    CommonModule,
+    FormsModule 
   ],
   declarations: [
     CaptchaDirective,

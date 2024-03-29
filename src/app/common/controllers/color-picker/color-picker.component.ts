@@ -16,7 +16,6 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 export class ColorPickerComponent implements ControlValueAccessor, OnInit {
   @Input() colorSet!: string[];
   @Input() getActiveControl!: (index: number, controlName: string) => boolean;
-  @Input() i!: number;
 
   selectedColor!: string;
 
