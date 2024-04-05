@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, SvgProperties, TextElement } from 'src/app/common/interfaces/image-element';
 import { ColorService } from 'src/app/common/services/color.service';
@@ -36,6 +36,7 @@ interface ShapeControls {
   styleUrls: ['./image-generate.component.scss']
 })
 export class ImageGenerateComponent {
+  @ViewChild('controlGroup') controlGroup!: ElementRef;
   isExpanded: boolean = false;
   selectedElement: number | null = null;
   colorSet: string[] = [];
@@ -45,7 +46,7 @@ export class ImageGenerateComponent {
       { id: 'fill', title: 'Fill', icon: 'fa-x-fill', active: false },
       { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
       { id: 'opacity', title: 'Opacity', icon: 'fa-x-opacity', active: false },
-      { id: 'rotation', title: 'Rotation', icon: 'fa-x-rotation', active: false },
+      { id: 'rotate', title: 'Rotation', icon: 'fa-x-rotation', active: false },
       { id: 'origin', title: 'Origin', icon: 'fa-x-origin', active: false },
       { id: 'position', title: 'Position', icon: 'fa-x-position', active: false },
       { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }
@@ -64,16 +65,16 @@ export class ImageGenerateComponent {
       { id: 'opacity', title: 'opacity', icon: 'fa-x-opacity', active: false },
       { id: 'originX', title: 'originX', icon: 'fa-', active: false },
       { id: 'originY', title: 'originY', icon: 'fa-', active: false },
-      { id: 'rotation', title: 'rotation', icon: 'fa-', active: false },
+      { id: 'rotate', title: 'rotate', icon: 'fa-', active: false },
       { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }],
     line: [
-      { id: 'position', title: 'Position', icon: 'fa-', active: false },
-      { id: 'dimension', title: 'Dimension', icon: 'fa-', active: false },
-      { id: 'fill', title: 'Fill', icon: 'fa-', active: false },
-      { id: 'opacity', title: 'opacity', icon: 'fa-', active: false },
+      { id: 'position', title: 'Position', icon: 'fa-x-position', active: false },
+      { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
+      { id: 'fill', title: 'Fill', icon: 'fa-x-fill', active: false },
+      { id: 'opacity', title: 'opacity', icon: 'fa-x-opacity', active: false },
       { id: 'originX', title: 'originX', icon: 'fa-', active: false },
       { id: 'originY', title: 'originY', icon: 'fa-', active: false },
-      { id: 'rotation', title: 'rotation', icon: 'fa-', active: false },
+      { id: 'rotate', title: 'rotate', icon: 'fa-', active: false },
       { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }
     ],
     text: [
@@ -93,17 +94,18 @@ export class ImageGenerateComponent {
       { id: 'position', title: 'Position', icon: 'fa-x-position', active: false },
       { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
       { id: 'control', title: 'Control', icon: 'fa-x-control', active: false },
-      { id: 'rotation', title: 'Rotation', icon: 'fa-x-rotation', active: false }
+      { id: 'rotate', title: 'Rotation', icon: 'fa-x-rotation', active: false }
     ],
     image: [
-      { id: 'position', title: 'Position', icon: 'fa-', active: false },
-      { id: 'dimension', title: 'Dimension', icon: 'fa-', active: false },
-      { id: 'fill', title: 'Fill', icon: 'fa-', active: false },
-      { id: 'opacity', title: 'opacity', icon: 'fa-', active: false },
-      { id: 'originX', title: 'originX', icon: 'fa-', active: false },
-      { id: 'originY', title: 'originY', icon: 'fa-', active: false },
-      { id: 'rotation', title: 'rotation', icon: 'fa-', active: false },
-      { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }
+      { id: 'position', title: 'Position', icon: 'fa-x-position', active: false },
+      { id: 'edit', title: 'Edit', icon: 'fa-x-edit', active: false },
+      { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
+      { id: 'fill', title: 'Fill', icon: 'fa-x-fill', active: false },
+      { id: 'opacity', title: 'opacity', icon: 'fa-x-opacity', active: false },
+      { id: 'origin', title: 'Origin', icon: 'fa-x-origin', active: false },
+      { id: 'rotate', title: 'rotate', icon: 'fa-x-rotation', active: false },
+      { id: 'url', title: 'URL', icon: 'fa-link', active: false },
+      { id: 'control', title: 'Control', icon: 'fa-x-control', active: false },
     ]
 
   }
@@ -205,7 +207,7 @@ export class ImageGenerateComponent {
       "h": 1024,
       "w": 1024,
       "title": "image",
-      "backgroundUrl": "https://images.unsplash.com/photo-1538291323976-37dcaafccb12?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "backgroundUrl": "https://plus.unsplash.com/premium_photo-1668824632073-5b76f7946a72?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       "data": [
         {
           "title": "Image 1",
@@ -225,7 +227,8 @@ export class ImageGenerateComponent {
               "fill": "#ffffff",
               "stroke": "#000000",
               "strokeWidth": 2
-            }
+            },
+            "rotate":0
           }
         },
         {
@@ -254,6 +257,10 @@ export class ImageGenerateComponent {
       backgroundUrl: [this.postDetails.backgroundUrl, Validators.required],
       data: this.fb.array([])
     });
+    this.postDetailsForm.get('backgroundUrl')?.valueChanges.subscribe((value: PostDetails) => {
+      this.getColors(this.postDetails.backgroundUrl, 10);
+    });
+
     this.getColors(this.postDetails.backgroundUrl, 10);
     this.postDetails.data.map((d) => {
       d.rect && this.addData('rect', d);
@@ -305,6 +312,7 @@ export class ImageGenerateComponent {
   removeData(index: number) {
     this.dataArray.removeAt(index);
     this.postDetails = this.postDetailsForm.value;
+    this.rebuild(this.postDetails.data);
   }
   rectData = {
     title: "Rect",
@@ -319,7 +327,7 @@ export class ImageGenerateComponent {
       opacity: 0.8,
       originX: 5,
       originY: 5,
-      rotation: 45,
+      rotate: 45,
     }
   };
   createRectFormGroup(r: Data): FormGroup {
@@ -336,7 +344,7 @@ export class ImageGenerateComponent {
         opacity: [r.rect?.opacity || '1', Validators.required],
         originX: [r.rect?.originX || 0, Validators.required],
         originY: [r.rect?.originY || 0, Validators.required],
-        rotation: [r.rect?.rotation || 0, Validators.required]
+        rotate: [r.rect?.rotate || 0, Validators.required]
       })
     });
   }
@@ -385,7 +393,7 @@ export class ImageGenerateComponent {
       opacity: 0.8,
       originX: 0,
       originY: 0,
-      rotation: 45
+      rotate: 45
     }
   };
   createEllipseFormGroup(e: Data): FormGroup {
@@ -402,7 +410,7 @@ export class ImageGenerateComponent {
         opacity: [e.ellipse?.opacity, Validators.required],
         originX: [e.ellipse?.originX, Validators.required],
         originY: [e.ellipse?.originY, Validators.required],
-        rotation: [e.ellipse?.rotation, Validators.required]
+        rotate: [e.ellipse?.rotate, Validators.required]
       })
     });
   }
@@ -420,7 +428,7 @@ export class ImageGenerateComponent {
       opacity: 1,
       originX: 0,
       originY: 0,
-      rotation: 0
+      rotate: 0
     }
   };
 
@@ -439,7 +447,7 @@ export class ImageGenerateComponent {
         opacity: [l.line?.opacity, Validators.required],
         originX: [l.line?.originX, Validators.required],
         originY: [l.line?.originY, Validators.required],
-        rotation: [l.line?.rotation, Validators.required]
+        rotate: [l.line?.rotate, Validators.required]
       })
     });
   }
@@ -493,7 +501,9 @@ export class ImageGenerateComponent {
       alignmentBaseline: 'middle',
       letterSpacing: 1,
       lineHeight: 1,
-      textTransformation: "none"
+      textTransformation: "none",
+      originX: 0,
+      originY: 0
     }
   };
   createTextFormGroup(t: Data): FormGroup {
@@ -600,7 +610,8 @@ export class ImageGenerateComponent {
         fill: "#ffffff",
         stroke: "#000000",
         strokeWidth: 2
-      }
+      },
+      rotate:0
     }
   };
   createImageFormGroup(i: Data): FormGroup {
@@ -618,7 +629,8 @@ export class ImageGenerateComponent {
         shape: [i.image?.shape, Validators.required],
         origin: [i.image?.origin, Validators.required],
         placeholder: [i.image?.placeholder, Validators.required],
-        svgProperties: this.createSvgPropertiesFormGroup(i.image?.svgProperties!)
+        svgProperties: this.createSvgPropertiesFormGroup(i.image?.svgProperties!),
+        rotate:[i.image?.rotate]
       })
     });
   }
@@ -748,5 +760,21 @@ export class ImageGenerateComponent {
       (item.image) && this.controlSet.push(this.controlValues.image);
     }
     this.postDetailsForm.get('data')?.setValue(dataArray);
+  }
+  centerActiveButton() {
+    setTimeout(() => {
+      const btnGroup: HTMLElement = this.controlGroup.nativeElement;
+      const activeButton: HTMLElement | null = btnGroup.querySelector('.btn.active');
+      if (activeButton) {
+        const scrollLeft: number = activeButton.offsetLeft;
+        btnGroup.scrollLeft = scrollLeft;
+      }
+    }, 500);
+  }
+  scrollToCenter(event: MouseEvent) {
+    const target = event.currentTarget as HTMLElement;
+    const btnGroup: HTMLElement = this.controlGroup.nativeElement;
+    const scrollLeft: number = target.offsetLeft;
+    btnGroup.scrollLeft = scrollLeft;
   }
 }

@@ -17,6 +17,7 @@ export class ColorPickerComponent implements ControlValueAccessor, OnInit {
   @Input() colorSet!: string[];
   @Input() getActiveControl!: (index: number, controlName: string) => boolean;
 
+  uniqueId: string = ''; 
   selectedColor!: string;
 
   onChange: any = () => {};
@@ -25,6 +26,7 @@ export class ColorPickerComponent implements ControlValueAccessor, OnInit {
   constructor() { }
 
   ngOnInit(): void {
+    this.uniqueId = 'color-picker-' + Math.random().toString(36).substr(2, 9);
   }
 
   getColorClass(color: string): string {

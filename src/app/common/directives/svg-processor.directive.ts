@@ -68,6 +68,9 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       this.renderer.setAttribute(b, 'height', '100%'); // Set height to 100%
       this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
       this.renderer.setAttribute(b, 'href', background);
+      this.renderer.listen(b, 'click', (event) => {
+        this.getSelected.emit({ index: -1 })
+      });
       const firstChild = svg.firstChild;
       if (firstChild) {
         svg.insertBefore(b, firstChild);
@@ -111,7 +114,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (this.el.nativeElement && d.rect) {
       const svg = this.el.nativeElement;
       const rect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
-      const { x, y, width, height, fill, opacity, originX, originY, rotation } = d.rect;
+      const { x, y, width, height, fill, opacity, originX, originY, rotate } = d.rect;
 
       // Set attributes using an object
       this.renderer.setAttribute(rect, 'x', String(x));
@@ -121,10 +124,10 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       this.renderer.setAttribute(rect, 'fill', fill);
       this.renderer.setAttribute(rect, 'opacity', String(opacity));
 
-      // Apply rotation and origin if specified
-      if (rotation || (originX !== undefined && originY !== undefined)) {
-        // const transformValue = `translate(${originX || 0} ${originY || 0}) rotate(${rotation || 0} ${x} ${y})`;
-        // this.renderer.setAttribute(rect, 'transform', transformValue);
+      // Apply rotate and origin if specified
+      if (rotate || (originX !== undefined && originY !== undefined)) {
+        const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
+        this.renderer.setAttribute(rect, 'transform', transformValue);
       }
 
       // Set additional attributes if needed
@@ -156,14 +159,14 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (this.el.nativeElement && d.ellipse) {
       const svg = this.el.nativeElement;
       const e = this.renderer.createElement('ellipse', 'http://www.w3.org/2000/svg');
-      const { cx, cy, rx, ry, fill, opacity, rotation } = d.ellipse; // Assuming cx, cy, rx, ry, fill, opacity, and rotation are properties of the ellipse
+      const { cx, cy, rx, ry, fill, opacity, rotate } = d.ellipse; // Assuming cx, cy, rx, ry, fill, opacity, and rotate are properties of the ellipse
       this.renderer.setAttribute(e, 'cx', String(cx));
       this.renderer.setAttribute(e, 'cy', String(cy));
       this.renderer.setAttribute(e, 'rx', String(rx));
       this.renderer.setAttribute(e, 'ry', String(ry));
       this.renderer.setAttribute(e, 'fill', fill);
       this.renderer.setAttribute(e, 'opacity', String(opacity));
-      this.renderer.setAttribute(e, 'transform', `rotate(${rotation} ${cx} ${cy})`); // Apply rotation
+      this.renderer.setAttribute(e, 'transform', `rotate(${rotate} ${cx} ${cy})`); // Apply rotate
       this.renderer.setAttribute(e, 'data-type', 'ellipse');
       this.renderer.appendChild(svg, e);
       return e;
@@ -174,7 +177,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (this.el.nativeElement && d.line) {
       const svg = this.el.nativeElement;
       const line = this.renderer.createElement('line', 'http://www.w3.org/2000/svg');
-      const { x1, y1, x2, y2, stroke, strokeWidth, opacity, rotation } = d.line; // Extract line properties
+      const { x1, y1, x2, y2, stroke, strokeWidth, opacity, rotate } = d.line; // Extract line properties
       this.renderer.setAttribute(line, 'x1', String(x1));
       this.renderer.setAttribute(line, 'y1', String(y1));
       this.renderer.setAttribute(line, 'x2', String(x2));
@@ -182,7 +185,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       this.renderer.setAttribute(line, 'stroke', stroke);
       this.renderer.setAttribute(line, 'stroke-width', String(strokeWidth));
       this.renderer.setAttribute(line, 'opacity', String(opacity));
-      this.renderer.setAttribute(line, 'transform', `rotate(${rotation} ${x1} ${y1})`); // Apply rotation
+      this.renderer.setAttribute(line, 'transform', `rotate(${rotate} ${x1} ${y1})`); // Apply rotate
       this.renderer.setAttribute(line, 'data-type', 'line');
       this.renderer.appendChild(svg, line);
       return line;
@@ -192,9 +195,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   createImage(d: Data, i: number) {
     if (this.el.nativeElement && d.image) {
       const svg = this.el.nativeElement as SVGSVGElement | null;
-
-      const { x, y, r, imageUrl, borderColor, borderWidth, shape, origin, placeholder, svgProperties } = d.image;
-
+      const { x, y, r, imageUrl, borderColor, borderWidth, shape, origin, placeholder, svgProperties, rotate } = d.image;
       let element: any; // Initialize as null
 
       switch (shape) {
@@ -266,6 +267,13 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         //   });
         // }
         this.renderer.appendChild(svg, element);
+        if (rotate || (x !== undefined && y !== undefined)) {
+          const bbox = element.getBBox();
+          const width = bbox.width;
+          const height = bbox.height;
+          const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
+          this.renderer.setAttribute(element, 'transform', transformValue);
+        }
         return element as any;
       }
     }
@@ -277,7 +285,8 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (this.el.nativeElement && d.text) {
       console.log(d.text)
       const svg = this.el.nativeElement;
-      const text = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
+      const t = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
+      const { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, staticValue, originX, originY } = d.text;
       let textAttributes: Record<string, string> = {
         'data-type': 'text',
         'x': d.text.x.toString(),
@@ -337,17 +346,23 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       if (d.text.textShadow.enable) {
         textStyles['text-shadow'] = `${d.text.textShadow.offsetX}px ${d.text.textShadow.offsetY}px ${d.text.textShadow.blur}px ${d.text.textShadow.color}` || 'none'
       }
-      Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(text, key, value));
-      Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(text, key, value));
+      Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(t, key, value));
+      Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(t, key, value));
 
       // Add text content if available
-      if (d.text.text) {
-        this.renderer.appendChild(text, this.renderer.createText(d.text.text));
+      if (text) {
+        this.renderer.appendChild(t, this.renderer.createText(d.text.text));
       }
-
+      this.renderer.appendChild(svg, t);
+      if (rotate || (originX !== undefined && originY !== undefined)) {
+        const bbox = t.getBBox();
+        const width = bbox.width;
+        const height = bbox.height;
+        const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
+        this.renderer.setAttribute(t, 'transform', transformValue);
+      }
       // Append the text element to the SVG
-      this.renderer.appendChild(svg, text);
-      return text;
+      return t;
     }
     return null;
   }
@@ -469,8 +484,8 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                   line.setAttribute('y1', position.y1.toString());
                   line.setAttribute('x2', position.x2.toString());
                   line.setAttribute('y2', position.y2.toString());
-                  line.setAttribute('stroke', 'white');
-                  line.setAttribute('stroke-width', '3');
+                  line.setAttribute('stroke', '#CCC');
+                  line.setAttribute('stroke-width', '1');
                   line.setAttribute('stroke-linecap', 'round');
                   svg.appendChild(line);
                 });
@@ -498,7 +513,42 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
               // Logic for handling rectangle elements
               break;
             case 'text':
-              // Logic for handling text elements
+              if (showControls[index]) {
+                const linePositions = [
+                  { x1: x, y1: y, x2: x + width, y2: y }, // Top boundary
+                  { x1: x + width, y1: y, x2: x + width, y2: y + height }, // Right boundary
+                  { x1: x + width, y1: y + height, x2: x, y2: y + height }, // Bottom boundary
+                  { x1: x, y1: y + height, x2: x, y2: y } // Left boundary
+                ];
+                linePositions.forEach((position, i) => {
+                  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                  line.setAttribute('x1', position.x1.toString());
+                  line.setAttribute('y1', position.y1.toString());
+                  line.setAttribute('x2', position.x2.toString());
+                  line.setAttribute('y2', position.y2.toString());
+                  line.setAttribute('stroke', '#CCC');
+                  line.setAttribute('stroke-width', '1');
+                  line.setAttribute('stroke-linecap', 'round');
+                  svg.appendChild(line);
+                });
+                const centerX = x + parseFloat(width) / 2;
+                const centerY = y + parseFloat(height) / 2;
+                [
+                  { x: centerX, y: y, cursor: 'n-resize' }, // Top-center
+                  { x: x, y: centerY, cursor: 'w-resize' }, // Middle-left
+                  { x: x + parseFloat(width), y: centerY, cursor: 'e-resize' }, // Middle-right
+                  { x: centerX, y: y + parseFloat(height), cursor: 's-resize' } // Bottom-center
+                ].map((position) => {
+                  const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                  handle.setAttribute('cx', position.x.toString());
+                  handle.setAttribute('cy', position.y.toString());
+                  handle.setAttribute('r', '5');
+                  handle.setAttribute('fill', 'blue');
+                  handle.setAttribute('cursor', position.cursor);
+                  svg.appendChild(handle);
+                  handleResize.push(handle)
+                });
+              }
               break;
             case 'image':
               // Logic for handling image elements
@@ -575,14 +625,24 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                     if (eleData.rect) {
                       eleData.rect.x = adjustedX;
                       eleData.rect.y = adjustedY;
+                      const transformValue = `rotate(${eleData.rect.rotate || 0} ${x + width / 2} ${y + height / 2})`;
+                      this.renderer.setAttribute(element, 'transform', transformValue);
                     }
                     if (eleData.text) {
                       eleData.text.x = adjustedX;
                       eleData.text.y = adjustedY;
+                      const bbox = element.getBBox();
+                      const width = bbox.width;
+                      const height = bbox.height;
+                      console.log(adjustedX + width / 2);
+                      const transformValue = `rotate(${eleData.text.rotate || 0} ${adjustedX + width / 2} ${adjustedY + height / 2})`;
+                      this.renderer.setAttribute(element, 'transform', transformValue);
                     }
                     if (eleData.image) {
                       eleData.image.x = adjustedX;
                       eleData.image.y = adjustedY;
+                      const transformValue = `rotate(${eleData.image.rotate || 0} ${x + width / 2} ${y + height / 2})`;
+                      this.renderer.setAttribute(element, 'transform', transformValue);
                     }
                     break;
                   default:
@@ -699,5 +759,30 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     this.destroy$.next();
     this.destroy$.complete();
   }
+  rotateRect(x: number, y: number, width: number, height: number, angle: number): [number, number] {
+    // Calculate the center point of the rectangle
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+
+    // Translate the coordinate system to center of the rectangle
+    const translateX = centerX;
+    const translateY = centerY;
+
+    // Apply rotate transformation
+    const radianAngle = angle * Math.PI / 180; // Convert angle to radians
+    const cosAngle = Math.cos(radianAngle);
+    const sinAngle = Math.sin(radianAngle);
+
+    // Rotate the rectangle's center around the origin (0, 0)
+    const rotatedCenterX = centerX * cosAngle - centerY * sinAngle;
+    const rotatedCenterY = centerX * sinAngle + centerY * cosAngle;
+
+    // Translate back to the original coordinate system
+    const finalX = rotatedCenterX + translateX;
+    const finalY = rotatedCenterY + translateY;
+
+    return [finalX, finalY];
+  }
+
 }
 

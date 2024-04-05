@@ -296,7 +296,7 @@ $fab-background-color-2: inherit;
 
 .control-group {
     overflow-x: auto;
-    display: block;
+    display: flex;
 
     :-webkit-scrollbar {
         display: none;
@@ -306,8 +306,8 @@ $fab-background-color-2: inherit;
     scrollbar-width: none;
     label {
         &.btn {
-            display: inline-block !important;
-            width: 14.2857143%;
+            display: block !important;
+            min-width: 16.6666666667%;
         }
 
         small {
