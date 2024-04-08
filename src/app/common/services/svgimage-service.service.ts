@@ -14,11 +14,11 @@ export class SVGImageService {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
   makeDataForImage(d: Post) {
-    const { w, h, backgroundUrl, data } = d.details;
+    const { w, h, backgroundurl, data } = d.details;
     const e = {
       svgWidth: w || 0,
       svgHeight: h || 0,
-      background: backgroundUrl || '',
+      background: backgroundurl || '',
       viewBox: "0 0 " + (w || 0) + " " + (h || 0),
       elements: data.map((item, index) => {
         if (item.type === 'text_group') {

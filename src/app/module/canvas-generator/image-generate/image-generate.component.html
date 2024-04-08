@@ -1,10 +1,12 @@
-<form class="container-fluid p-0 h-100 d-flex flex-column" [formGroup]="postDetailsForm">
+<form class="container-fluid p-0 h-100 d-flex flex-column" [formGroup]="postDetailsForm" *ngIf="postDetailsForm" (ngSubmit)="onSubmit()">
     <div class="d-flex align-items-center w-100 p-3 shadow border-bottom">
         <div class="form-group">
             <div class="form-label d-none">Name</div>
             <label for="title" class="me-2 h4 m-0"><i class="fa fa-edit"></i></label>
             <input type="text" id="title" class="h4 m-0 border-0 border-secondary" formControlName="title" placeholder="Enter Image Name">
         </div>
+        <button class="btn btn-success ms-auto">Save</button>
+        <button class="btn btn-danger ms-2" type="button">Cancel</button>
     </div>
     <div class="d-flex align-items-center w-100 flex-grow-1 flex-column position-relative">
         <div class="w-100 h-100 posistion-absolute overflow-y-auto">
@@ -17,15 +19,6 @@
                 <div class="col-md-6 col-lg-5 py-3 d-flex flex-column">
                     <div class="flex-grow-1 position-relative">
                         <div class="position-absolute w-100 p-3 overflow-auto">
-                            <!-- <pre>{{this.postDetailsForm?.value|json}}</pre> -->
-                            <!-- <ul class="list-group border-0" cdkDropList (cdkDropListDropped)="drop($event)">
-                                <li class="list-group-item"
-                                    *ngFor="let item of postDetailsForm.get('data')?.value; let i=index">
-                                    {{ item.title }}
-                                    <button type="button" cdkDrag><i class="fa fa-arrows"></i></button>
-
-                                </li>
-                            </ul> -->
                             <div class="row g-3">
                                 <input type="hidden" id="id" class="form-control" formControlName="id">
                                 <input type="hidden" id="deleted" class="form-control" formControlName="deleted">
@@ -38,8 +31,8 @@
                                     <input type="text" id="w" class="form-control" formControlName="w">
                                 </div>
                                 <div class="form-group col-12">
-                                    <label for="backgroundUrl" class="form-label">Background URL</label>
-                                    <input type="text" id="backgroundUrl" class="form-control" formControlName="backgroundUrl">
+                                    <label for="backgroundurl" class="form-label">Background URL</label>
+                                    <input type="text" id="backgroundurl" class="form-control" formControlName="backgroundurl">
                                 </div>
                                 <div formArrayName="data" class="col-12">
                                     <!-- Use ngFor to iterate over each element in the data form array -->
@@ -49,7 +42,7 @@
                                                 <div class="btn-group btn-group-toggle w-100 rounded-0 control-group" #controlGroup>
                                                     <ng-container *ngFor="let control of controlSet[i]; let j = index">
                                                         <input type="radio" class="btn-check" [id]="'control-' + i + '-' + j" [value]="control.id" [checked]="control.active" (change)="setActiveControl(i, j);">
-                                                        <label class="btn btn-lg btn-outline-dark border-0 rounded-0 d-flex flex-column align-items-center justify-content-center p-2" [class.active]="control.active" [for]="'control-' + i + '-' + j" [title]="control.id"  (click)="scrollToCenter($event)"><i [ngClass]="'fa '+control.icon"></i>
+                                                        <label class="btn btn-lg btn-outline-dark border-0 rounded-0 d-flex flex-column align-items-center justify-content-center p-2" [class.active]="control.active" [for]="'control-' + i + '-' + j" [title]="control.id" (click)="scrollToCenter($event)"><i [ngClass]="'fa '+control.icon"></i>
                                                             <small class="d-block">{{control.title}}</small></label>
                                                     </ng-container>
                                                 </div>
@@ -554,6 +547,10 @@
                                                     <label for="textTransformation" class="form-label">Text
                                                         Transformation</label>
                                                     <input type="text" id="textTransformation" class="form-control" formControlName="textTransformation">
+                                                </div>
+                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'opacity')">
+                                                    <label [for]="'opacity'+i" class="form-label">Opacity</label>
+                                                    <input type="range" [id]="'opacity'+i" class="form-range" min="0" max="1" step="0.01" formControlName="opacity">
                                                 </div>
                                             </ng-container>
                                             <ng-container formGroupName="image" *ngIf="item.get('image')">

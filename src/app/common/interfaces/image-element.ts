@@ -8,7 +8,7 @@ export interface RectProperties {
     originX: number;
     originY: number;
     rotate: number;
-    
+
 }
 
 export interface CircleProperties {
@@ -19,7 +19,7 @@ export interface CircleProperties {
     opacity: number;
     originX: number;
     originY: number;
-    
+
 }
 
 export interface EllipseProperties {
@@ -32,7 +32,7 @@ export interface EllipseProperties {
     originX: number;
     originY: number;
     rotate: number;
-    
+
 }
 
 export interface LineProperties {
@@ -46,7 +46,7 @@ export interface LineProperties {
     originX: number;
     originY: number;
     rotate: number;
-    
+
 }
 
 export interface FontStyle {
@@ -103,6 +103,7 @@ export interface TextElement {
     letterSpacing: number;
     lineHeight: number;
     textTransformation: string;
+    opacity: number;
     staticValue: boolean;
     originX: number;
     originY: number;
@@ -125,16 +126,16 @@ export interface ImageElement {
     origin: string;
     placeholder: string;
     svgProperties: SvgProperties;
-    rotate:number;
+    rotate: number;
 }
 
 export interface PostDetails {
-    id: number;
+    id: number | null;
     deleted: boolean;
     h: number;
     w: number;
     title: string;
-    backgroundUrl: string;
+    backgroundurl: string;
     data: {
         title: string;
         editable: boolean;

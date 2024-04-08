@@ -225,7 +225,7 @@ export class CanvasEditorComponent {
       details: this.fb.group({
         w: [1024, Validators.required],
         h: [1024, Validators.required],
-        backgroundUrl: ['', Validators.required],
+        backgroundurl: ['', Validators.required],
         data: this.fb.array([])
       })
     });
@@ -245,8 +245,8 @@ export class CanvasEditorComponent {
   }
   async drawSVG(e: any) {
     const { svgWidth, svgHeight, background, viewBox, elements } = e;
-    const backgroundUrl = await this.getImageDataUrl(background);
-    await this.getColors(backgroundUrl);
+    const backgroundurl = await this.getImageDataUrl(background);
+    await this.getColors(backgroundurl);
     const svg = this.imageDraw.nativeElement;
     while (svg.firstChild) {
       svg.removeChild(svg.firstChild);
@@ -258,7 +258,7 @@ export class CanvasEditorComponent {
     this.renderer.setAttribute(b, 'width', '100%'); // Set width to 100%
     this.renderer.setAttribute(b, 'height', '100%'); // Set height to 100%
     this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
-    this.renderer.setAttribute(b, 'href', backgroundUrl);
+    this.renderer.setAttribute(b, 'href', backgroundurl);
     this.renderer.appendChild(svg, b);
     elements.forEach((element: any, index: number) => {
       if (element.type === 'name' || element.type === 'address') {

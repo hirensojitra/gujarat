@@ -31,7 +31,7 @@ export interface TextGroupDetails {
 export interface PostDetails {
     w: number;
     h: number;
-    backgroundUrl: string;
+    backgroundurl: string;
     data: TextDetails[] | AvatarDetails[] | TextGroupDetails[];
 }
 

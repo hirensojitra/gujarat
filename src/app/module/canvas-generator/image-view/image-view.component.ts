@@ -82,7 +82,7 @@ export class ImageViewComponent {
   async drawSVG(e: any) {
     this.requiredValues = [];
     const { background, viewBox, elements } = e;
-    const backgroundUrl = await this.getImageDataUrl(background);
+    const backgroundurl = await this.getImageDataUrl(background);
     const svg = this.imageDraw.nativeElement;
     while (svg.firstChild) {
       svg.removeChild(svg.firstChild);
@@ -94,7 +94,7 @@ export class ImageViewComponent {
     this.renderer.setAttribute(b, 'width', '100%'); // Set width to 100%
     this.renderer.setAttribute(b, 'height', '100%'); // Set height to 100%
     this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
-    this.renderer.setAttribute(b, 'href', backgroundUrl);
+    this.renderer.setAttribute(b, 'href', backgroundurl);
     this.renderer.appendChild(svg, b);
 
     elements.map((element: any, index: number) => {

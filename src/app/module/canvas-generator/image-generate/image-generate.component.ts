@@ -1,8 +1,11 @@
-import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, SvgProperties, TextElement } from 'src/app/common/interfaces/image-element';
 import { ColorService } from 'src/app/common/services/color.service';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { timer } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { PostDetailService } from 'src/app/common/services/post-detail.service';
 
 interface Data {
   title: string;
@@ -35,7 +38,7 @@ interface ShapeControls {
   templateUrl: './image-generate.component.html',
   styleUrls: ['./image-generate.component.scss']
 })
-export class ImageGenerateComponent {
+export class ImageGenerateComponent implements OnInit, AfterViewInit {
   @ViewChild('controlGroup') controlGroup!: ElementRef;
   isExpanded: boolean = false;
   selectedElement: number | null = null;
@@ -91,6 +94,7 @@ export class ImageGenerateComponent {
       { id: 'laterSpacing', title: 'Spacing', icon: 'fa-arrows-h', active: false },
       { id: 'lineHeight', title: 'Line Height', icon: 'fa-arrows-v', active: false },
       { id: 'textTransformation', title: 'Transformation', icon: 'fa-text-width', active: false },
+      { id: 'opacity', title: 'Opacity', icon: 'fa-x-opacity', active: false },
       { id: 'position', title: 'Position', icon: 'fa-x-position', active: false },
       { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
       { id: 'control', title: 'Control', icon: 'fa-x-control', active: false },
@@ -159,6 +163,84 @@ export class ImageGenerateComponent {
       "variables": []
     }
   ]
+  postDetailsForm!: FormGroup;
+  imgParam: any;
+  postDetails: PostDetails = {
+    "id": null,
+    "deleted": false,
+    "h": 1024,
+    "w": 1024,
+    "title": "image",
+    "backgroundurl": "https://images.unsplash.com/photo-1564053489984-317bbd824340?q=80&w=2096&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "data": [
+      {
+        "title": "Text 1",
+        "editable": true,
+        "boxed": true,
+        "text": {
+          "x": 706,
+          "y": 955,
+          "fs": 40,
+          "fw": "normal",
+          "text": "Sample Text",
+          "color": "#FFFFFF",
+          "fontStyle": {
+            "italic": false,
+            "underline": false
+          },
+          "textAlign": "left",
+          "rotate": 0,
+          "fontFamily": "Hind Vadodara",
+          "textShadow": {
+            "enable": false,
+            "color": "#FFFFFF",
+            "blur": 0,
+            "offsetX": 0,
+            "offsetY": 0
+          },
+          "backgroundColor": "#FFFFFF",
+          "textEffects": {
+            "enable": false,
+            "gradient": {
+              "enable": false,
+              "startColor": "#ffffff",
+              "endColor": "#000000",
+              "direction": "horizontal"
+            },
+            "outline": {
+              "enable": false,
+              "color": "#FFFFFF",
+              "width": 2
+            },
+            "glow": {
+              "enable": false,
+              "color": "#ffffff",
+              "blur": 0
+            }
+          },
+          "textAnchor": "start",
+          "alignmentBaseline": "start",
+          "letterSpacing": 1,
+          "lineHeight": 1,
+          "textTransformation": "none",
+          "opacity": 100,
+          "originX": 0,
+          "originY": 0,
+          "staticValue": false
+        }
+      }
+    ]
+  }
+  constructor(
+    private fb: FormBuilder,
+    private colorService: ColorService,
+    private route: ActivatedRoute,
+    private PS: PostDetailService
+  ) {
+    this.route.queryParams.subscribe(params => {
+      this.imgParam = params['img'];
+    });
+  }
   async getColors(image: string, colorCounts: number) {
     try {
       this.colorSet = await this.colorService.getColors(image, colorCounts);
@@ -194,75 +276,44 @@ export class ImageGenerateComponent {
     this.selectedElement = d.index;
   }
 
-
-  postDetailsForm!: FormGroup;
-  postDetails!: PostDetails;
-
-  constructor(private fb: FormBuilder, private colorService: ColorService) { }
-
-  ngOnInit(): void {
-    this.postDetails = {
-      "id": 1,
-      "deleted": false,
-      "h": 1024,
-      "w": 1024,
-      "title": "image",
-      "backgroundUrl": "https://plus.unsplash.com/premium_photo-1668824632073-5b76f7946a72?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      "data": [
-        {
-          "title": "Image 1",
-          "editable": true,
-          "boxed": true,
-          "image": {
-            "r": 50,
-            "x": 100,
-            "y": 100,
-            "imageUrl": "assets/images/jpeg/profile-1.jpeg",
-            "borderColor": "#000000",
-            "borderWidth": 2,
-            "shape": "circle",
-            "origin": "center",
-            "placeholder": "Placeholder Text",
-            "svgProperties": {
-              "fill": "#ffffff",
-              "stroke": "#000000",
-              "strokeWidth": 2
-            },
-            "rotate":0
+  getPostById(postId: any): void {
+    this.postDetailsForm = new FormGroup({});
+    this.PS.getPostById(postId)
+      .subscribe(
+        post => {
+          if (post) {
+            this.postDetails = post;
+            this.initForm();
+          } else {
           }
         },
-        {
-          "title": "Circle 1",
-          "editable": false,
-          "boxed": true,
-          "circle": {
-            "cx": 50,
-            "cy": 50,
-            "r": 30,
-            "fill": "#FFFFFF",
-            "opacity": 1,
-            "originX": 0,
-            "originY": 0
-          }
+        error => {
+          console.error('Error fetching post:', error);
         }
-      ]
-    }
-    // Initialize the form
+      );
+  }
+
+  ngAfterViewInit(): void {
+    this.imgParam && this.getPostById(this.imgParam);
+  }
+  ngOnInit(): void {
+    this.initForm()
+  }
+  initForm() {
     this.postDetailsForm = this.fb.group({
-      id: [this.postDetails.id, Validators.required],
+      id: [this.postDetails.id],
       deleted: [this.postDetails.deleted, Validators.required],
       h: [this.postDetails.h, Validators.required],
       w: [this.postDetails.w, Validators.required],
       title: [this.postDetails.title, Validators.required],
-      backgroundUrl: [this.postDetails.backgroundUrl, Validators.required],
+      backgroundurl: [this.postDetails.backgroundurl, Validators.required],
       data: this.fb.array([])
     });
-    this.postDetailsForm.get('backgroundUrl')?.valueChanges.subscribe((value: PostDetails) => {
-      this.getColors(this.postDetails.backgroundUrl, 10);
+    this.postDetailsForm.get('backgroundurl')?.valueChanges.subscribe((value: PostDetails) => {
+      this.getColors(this.postDetails.backgroundurl, 10);
     });
-
-    this.getColors(this.postDetails.backgroundUrl, 10);
-    this.postDetails.data.map((d) => {
+    this.getColors(this.postDetails.backgroundurl, 10);
+    this.postDetails.data.forEach((d) => {
       d.rect && this.addData('rect', d);
       d.circle && this.addData('circle', d);
       d.ellipse && this.addData('ellipse', d);
@@ -278,23 +329,23 @@ export class ImageGenerateComponent {
     let d: FormGroup = this.fb.group({})
     switch (t) {
       case 'rect':
-        d = this.createRectFormGroup(this.rectData);
+        d = this.createRectFormGroup(value || this.rectData);
         this.controlSet.push(this.controlValues.rect);
         break;
       case 'circle':
-        d = this.createCircleFormGroup(this.circleData);
+        d = this.createCircleFormGroup(value || this.circleData);
         this.controlSet.push(this.controlValues.circle);
         break;
       case 'ellipse':
-        d = this.createEllipseFormGroup(this.ellipseData);
+        d = this.createEllipseFormGroup(value || this.ellipseData);
         this.controlSet.push(this.controlValues.ellipse);
         break;
       case 'line':
-        d = this.createLineFormGroup(this.lineData);
+        d = this.createLineFormGroup(value || this.lineData);
         this.controlSet.push(this.controlValues.line);
         break;
       case 'text':
-        d = this.createTextFormGroup(this.textData);
+        d = this.createTextFormGroup(value || this.textData);
         this.controlSet.push(this.controlValues.text);
         break;
       case 'image':
@@ -502,6 +553,7 @@ export class ImageGenerateComponent {
       letterSpacing: 1,
       lineHeight: 1,
       textTransformation: "none",
+      opacity: 100,
       originX: 0,
       originY: 0
     }
@@ -556,7 +608,11 @@ export class ImageGenerateComponent {
         alignmentBaseline: [t.text?.textAnchor],
         letterSpacing: [t.text?.letterSpacing, Validators.required],
         lineHeight: [t.text?.lineHeight, Validators.required],
-        textTransformation: [t.text?.textTransformation, Validators.required]
+        textTransformation: [t.text?.textTransformation, Validators.required],
+        opacity: [t.text?.opacity, Validators.required],
+        originX: [t.text?.originX],
+        originY: [t.text?.originY],
+        staticValue: [t.text?.staticValue]
       })
     });
   }
@@ -611,7 +667,7 @@ export class ImageGenerateComponent {
         stroke: "#000000",
         strokeWidth: 2
       },
-      rotate:0
+      rotate: 0
     }
   };
   createImageFormGroup(i: Data): FormGroup {
@@ -630,7 +686,7 @@ export class ImageGenerateComponent {
         origin: [i.image?.origin, Validators.required],
         placeholder: [i.image?.placeholder, Validators.required],
         svgProperties: this.createSvgPropertiesFormGroup(i.image?.svgProperties!),
-        rotate:[i.image?.rotate]
+        rotate: [i.image?.rotate]
       })
     });
   }
@@ -697,7 +753,7 @@ export class ImageGenerateComponent {
   //   this.offsetY -= deltaY;
   // }
   moveDown(index: number) {
-    const data = this.postDetails.data;
+    const data = this.postDetailsForm.get('data')?.value;
     if (index > 0) {
       let temp = data[index - 1];
       data[index - 1] = data[index];
@@ -708,7 +764,7 @@ export class ImageGenerateComponent {
     return false;
   }
   moveUp(index: number) {
-    const data = this.postDetails.data;
+    const data = this.postDetailsForm.get('data')?.value;
     if (index < data.length - 1) {
       const temp = data[index];
       data[index] = data[index + 1];
@@ -720,7 +776,7 @@ export class ImageGenerateComponent {
   }
 
   moveToBack(index: number) {
-    const data = this.postDetails.data;
+    const data = this.postDetailsForm.get('data')?.value;
     if (index > 0) {
       const temp = data[index];
       data.splice(index, 1);
@@ -731,7 +787,7 @@ export class ImageGenerateComponent {
     return false;
   }
   moveToTop(index: number) {
-    const data = this.postDetails.data;
+    const data = this.postDetailsForm.get('data')?.value;
     if (index < data.length - 1) {
       const temp = data[index];
       data.splice(index, 1);
@@ -776,5 +832,43 @@ export class ImageGenerateComponent {
     const btnGroup: HTMLElement = this.controlGroup.nativeElement;
     const scrollLeft: number = target.offsetLeft;
     btnGroup.scrollLeft = scrollLeft;
+  }
+  onSubmit() {
+    if (this.postDetailsForm.valid) {
+      const formData = this.postDetailsForm.value;
+      if (formData.id === null) {
+        alert()
+        const { id, ...formDataWithoutId } = formData;
+        this.addPost(formDataWithoutId);
+      } else {
+        this.updatePost(formData);
+      }
+    } else {
+      // If the form is invalid, mark all fields as touched to display validation errors
+      this.postDetailsForm.markAllAsTouched();
+    }
+  }
+  addPost(newPostData: PostDetails): void {
+    this.PS.addPost(newPostData)
+      .subscribe(
+        (response: PostDetails) => {
+          const addedDataId = response.id;
+          console.log('Added data ID:', addedDataId);
+          this.postDetailsForm.get('id')?.setValue(addedDataId);
+          this.postDetails.id = addedDataId
+        },
+        error => {
+          console.error(error); // Handle error appropriately
+        }
+      );
+  }
+
+  updatePost(newData: PostDetails): void {
+    this.PS.updatePost(newData)
+      .subscribe(response => {
+
+      }, error => {
+        console.error(error); // Handle error appropriately
+      });
   }
 }

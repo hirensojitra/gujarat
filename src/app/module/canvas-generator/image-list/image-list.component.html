@@ -1,0 +1,38 @@
+<div class="h-100 d-flex flex-column p-3">
+    <div class="flex-grow-1 position-relative overflow-hidden">
+        <div class="position-absolute h-100 w-100 d-flex overflow-auto flex-column">
+            <div class="container h-100 w-100">
+                <div class="row g-3">
+                    <div class="col-12 pb-3">
+                        <button class="btn btn-success" (click)="window.open('/canvas/editor', '_blank');false"><i class="fa fa-plus me-2"></i>Image</button>
+                    </div>
+                    <div class="row g-3" *ngIf="posts.length">
+                        <div class="col-lg-3 col-md-4 col-sm-6 col-12" *ngFor="let post of posts">
+                            <div class="position-relative">
+                                <!-- <img [src]="post.backgroundurl" alt="" class="img w-100"> -->
+                                <svg svgProcessor class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [postDataSet]="post" [loadOnly]="post"></svg>
+                                <div class="d-flex flex-column position-absolute start-0 top-0 h-100 w-100 p-3 ">
+                                    <div class="d-flex mb-auto">
+                                        <a class="btn btn-secondary btn-sm me-auto" href="#" (click)="window.open('/images/generate?img=' + post.id, '_blank');false"><i class="fa fa-edit"></i>Edit</a>
+                                        <a class="btn btn-secondary btn-sm ms-auto" href="#" (click)="window.open('/images/download?img=' + post.id, '_blank');false"><i class="fa fa-eye"></i>View</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="btn-group btn-group-toggle py-3">
+                                <button class="btn btn-outline-dark" (click)="onPageChange(1)" [disabled]="currentPage === 1">First</button>
+                                <button class="btn btn-outline-dark" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">Previous</button>
+                                <button class="btn" *ngFor="let page of getPaginationControls()" (click)="onPageChange(page)" [ngClass]="{'btn-outline-dark': page !== currentPage, 'btn-outline-primary active': page === currentPage}">
+                                    {{ page }}
+                                </button>
+                                <button class="btn btn-outline-dark" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages">Next</button>
+                                <button class="btn btn-outline-dark" (click)="onPageChange(totalPages)" [disabled]="currentPage === totalPages">Last</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

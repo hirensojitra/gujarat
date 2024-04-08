@@ -1,5 +1,5 @@
 import { Directive, Input, ElementRef, OnInit, Renderer2, Output, EventEmitter, AfterViewInit } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, timer } from 'rxjs';
 import {
   PostDetails,
   RectProperties,
@@ -32,11 +32,13 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   offsetY: number = 0;
   width: number = 0;
   height: number = 0;
+  defaultValue!: PostDetails;
   private postDataSetSubject = new Subject<PostDetails>();
-
+  @Input() loadOnly!: PostDetails;
   private destroy$ = new Subject<void>();
   @Input() set postDataSet(value: PostDetails) {
     this.postDataSetSubject.next(value);
+    this.defaultValue = value;
   }
   postDataSet$ = this.postDataSetSubject.asObservable();
 
@@ -45,6 +47,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   postData!: PostDetails;
   data: Data[] = [];
   dataLoaded: boolean = false;
+  firstLoad: boolean = true;
   private eventListeners: (() => void)[] = [];
   constructor(private el: ElementRef<SVGSVGElement>, private renderer: Renderer2) {
 
@@ -52,14 +55,11 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   get dataArray(): Data[] {
     return this.data;
   }
-  createSVG(data: any) {
 
-  }
-  updateSvg(d: Data[]) { }
-  async updateBackGround(backgroundUrl: string) {
-    if (backgroundUrl) {
+  async updateBackGround(backgroundurl: string) {
+    if (backgroundurl) {
       const svg = this.el.nativeElement;
-      const background = await this.getImageDataUrl(backgroundUrl);
+      const background = await this.getImageDataUrl(backgroundurl);
       const b = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
       this.renderer.setAttribute(b, 'x', '0');
       this.renderer.setAttribute(b, 'data-type', 'background-img');
@@ -74,10 +74,11 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       const firstChild = svg.firstChild;
       if (firstChild) {
         svg.insertBefore(b, firstChild);
+        firstChild.nodeName === 'image' && firstChild.remove();
       } else {
         svg.appendChild(b);
       }
-      await this.getColors(backgroundUrl);
+      await this.getColors(backgroundurl);
     }
   }
   colorSet: string[] = [];
@@ -283,10 +284,9 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
 
   createText(d: Data, i: number) {
     if (this.el.nativeElement && d.text) {
-      console.log(d.text)
       const svg = this.el.nativeElement;
       const t = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
-      const { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, staticValue, originX, originY } = d.text;
+      const { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, staticValue, originX, originY, opacity } = d.text;
       let textAttributes: Record<string, string> = {
         'data-type': 'text',
         'x': d.text.x.toString(),
@@ -300,6 +300,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         'font-weight': d.text.fw || 'normal',
         'text-decoration': d.text.fontStyle.underline ? 'underline' : 'none',
         'font-style': d.text.fontStyle.italic ? 'italic' : 'normal',
+        'opacity': d.text.opacity ? d.text.opacity.toString() : '100',
       };
 
       // Apply text shadow if available
@@ -693,37 +694,31 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     this.eventListeners.forEach(removeListener => removeListener());
     this.eventListeners = [];
   }
-  ngOnInit() {
-    // const post = this.postDataSet$;
-    // post.pipe(
-    //   takeUntil(this.destroy$)
-    // ).subscribe((value: PostDetails) => {
-    //   this.initSVG(value)
-    // });
-  }
   ngAfterViewInit(): void {
-    setTimeout(() => {
-      const post = this.postDataSet$;
-      post.pipe(
-        takeUntil(this.destroy$)
-      ).subscribe((value: PostDetails) => {
-        this.initSVG(value)
-      });
-    }, 1500);
+    this.loadOnly && this.initSVG(this.loadOnly);
+  }
+  ngOnInit(): void {
+    this.postDataSet$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value: PostDetails) => {
+      this.initSVG(value);
+    });
   }
   initSVG(d: PostDetails) {
-    const { id, deleted, h, w, title, backgroundUrl, data } = d;
+    const { id, deleted, h, w, title, backgroundurl, data } = d;
+
     this.height = h;
     this.width = w;
-    if (!this.postData || backgroundUrl !== this.postData.backgroundUrl) {
-      this.updateBackGround(backgroundUrl);
+    if (!this.postData || backgroundurl !== this.postData.backgroundurl) {
+      this.updateBackGround(backgroundurl);
     }
     if (!this.postData || w !== this.postData.w || h !== this.postData.h) {
       this.updateViewBox(Math.min(Math.max(w, 1024), 1920), Math.min(Math.max(h, 1024), 1920));
     }
     if (data && this.postData) {
-      if (data != this.postData.data) {
+      if (data != this.postData.data || this.firstLoad) {
         if (data.length !== this.postData.data.length) {
+
           let added = data.filter(item => !this.postData.data.includes(item));
           let removed = this.postData.data.filter(item => !data.includes(item));
           if (added) {
@@ -752,36 +747,13 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (!this.dataLoaded) {
       this.dataLoaded = true;
       this.postData = d;
+      this.updateElements(data);
     }
   }
   ngOnDestroy() {
     this.removeEventListeners();
     this.destroy$.next();
     this.destroy$.complete();
-  }
-  rotateRect(x: number, y: number, width: number, height: number, angle: number): [number, number] {
-    // Calculate the center point of the rectangle
-    const centerX = x + width / 2;
-    const centerY = y + height / 2;
-
-    // Translate the coordinate system to center of the rectangle
-    const translateX = centerX;
-    const translateY = centerY;
-
-    // Apply rotate transformation
-    const radianAngle = angle * Math.PI / 180; // Convert angle to radians
-    const cosAngle = Math.cos(radianAngle);
-    const sinAngle = Math.sin(radianAngle);
-
-    // Rotate the rectangle's center around the origin (0, 0)
-    const rotatedCenterX = centerX * cosAngle - centerY * sinAngle;
-    const rotatedCenterY = centerX * sinAngle + centerY * cosAngle;
-
-    // Translate back to the original coordinate system
-    const finalX = rotatedCenterX + translateX;
-    const finalY = rotatedCenterY + translateY;
-
-    return [finalX, finalY];
   }
 
 }
