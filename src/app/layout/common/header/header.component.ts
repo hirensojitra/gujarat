@@ -80,7 +80,17 @@ export class HeaderComponent {
     }, {
       label: 'Canvas Generator',
       icon: 'fa-image',
-      link: '/canvas-generator'
+      link: '/images',
+      subItems:[{
+        label:'Image List',
+        link:'/images/list'
+      },{
+        label:'Image Editor',
+        link:'/images/generate'
+      },{
+        label:'Image Deleted',
+        link:'/images/deleted'
+      }]
     }, {
       label: 'User Profile',
       icon: 'fa-user',

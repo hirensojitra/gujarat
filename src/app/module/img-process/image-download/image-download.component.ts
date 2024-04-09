@@ -74,6 +74,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     });
   }
   ngAfterViewInit(): void {
+    this.imgParam ??= '5';
     this.imgParam && this.getPostById(this.imgParam);
   }
   getPostById(postId: any): void {
@@ -177,7 +178,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             break;
           case !!item.rect:
             if (item.rect) {
-
               const rect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
               const { x, y, width, height, fill, opacity, originX, originY, rotate } = item.rect;
               this.renderer.setAttribute(rect, 'x', String(x));
@@ -193,7 +193,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               this.renderer.setAttribute(rect, 'data-type', 'rect');
               this.renderer.appendChild(svg, rect);
               return rect;
-
             }
             break;
           case !!item.circle || !!item.ellipse:
@@ -423,7 +422,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         this.capturePhoto();
         break;
     }
-    this.capturePhoto();
     return true;
   }
   handleImageInputChange(event: Event): void {

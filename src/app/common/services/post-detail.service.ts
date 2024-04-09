@@ -41,6 +41,9 @@ export class PostDetailService {
     softDeletePost(id: string): Observable<any> {
         return this.http.delete<any>(`${this.baseUrl}/soft-delete/${id}`);
     }
+    recoverPost(id: string): Observable<any> {
+        return this.http.delete<any>(`${this.baseUrl}/recover/${id}`);
+    }
 
     hardDeletePost(id: string): Observable<any> {
         return this.http.delete<any>(`${this.baseUrl}/hard-delete/${id}`);

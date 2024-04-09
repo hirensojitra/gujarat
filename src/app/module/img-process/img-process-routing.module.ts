@@ -5,7 +5,13 @@ import { ImgProcessComponent } from './img-process.component';
 const routes: Routes = [{
   path: '',
   component: ImgProcessComponent,
-  data: { title: 'Photo Processing', breadcrumb: 'Photo Processing' }
+  data: {
+    title: 'Canvas Generator', breadcrumb: 'Canvas Generator', layout: 'dense-layout'
+  },
+  children: [
+    { path: '', pathMatch: 'full', redirectTo: 'download' },
+    { path: 'download', loadChildren: () => import('./image-download/image-download.module').then(m => m.ImageDownloadModule) }
+  ]
 }];
 
 @NgModule({

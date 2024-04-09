@@ -3,9 +3,9 @@ import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Valida
 import { CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, SvgProperties, TextElement } from 'src/app/common/interfaces/image-element';
 import { ColorService } from 'src/app/common/services/color.service';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { timer } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
+declare const bootstrap: any;
 
 interface Data {
   title: string;
@@ -163,7 +163,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       "variables": []
     }
   ]
-  postDetailsForm!: FormGroup;
+  postDetailsForm: FormGroup | undefined = undefined;
   imgParam: any;
   postDetails: PostDetails = {
     "id": null,
@@ -230,6 +230,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       }
     ]
   }
+  confirmDelete: any;
   constructor(
     private fb: FormBuilder,
     private colorService: ColorService,
@@ -259,7 +260,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     control?.setValue(value);
   }
   updateValue(d: { data: Data, index: number }) {
-    const value = this.postDetailsForm.get('data') as FormArray | null;
+    const value = this.postDetailsForm?.get('data') as FormArray | null;
     if (value) {
       const t = value.at(d.index) as FormControl | null;
       if (t) {
@@ -276,7 +277,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   }
 
   getPostById(postId: any): void {
-    this.postDetailsForm = new FormGroup({});
     this.PS.getPostById(postId)
       .subscribe(
         post => {
@@ -292,12 +292,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       );
   }
 
-  ngAfterViewInit(): void {
-    this.imgParam && this.getPostById(this.imgParam);
-  }
-  ngOnInit(): void {
-    this.initForm()
-  }
   initForm() {
     this.postDetailsForm = this.fb.group({
       id: [this.postDetails.id],
@@ -308,7 +302,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       backgroundurl: [this.postDetails.backgroundurl, Validators.required],
       data: this.fb.array([])
     });
-    this.postDetailsForm.get('backgroundurl')?.valueChanges.subscribe((value: PostDetails) => {
+    this.postDetailsForm?.get('backgroundurl')?.valueChanges.subscribe((value: PostDetails) => {
       this.getColors(this.postDetails.backgroundurl, 10);
     });
     this.getColors(this.postDetails.backgroundurl, 10);
@@ -320,9 +314,10 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       d.text && this.addData('text', d);
       d.image && this.addData('image', d);
     })
+    this.rebuild(this.postDetails.data)
   }
   get dataArray() {
-    return this.postDetailsForm.get('data') as FormArray;
+    return this.postDetailsForm?.get('data') as FormArray;
   }
   addData(t: string, value?: Data) {
     let d: FormGroup = this.fb.group({})
@@ -356,12 +351,12 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         break;
     }
     d && this.dataArray.push(d);
-    this.postDetails = this.postDetailsForm.value;
+    this.postDetails = this.postDetailsForm?.value;
     this.selectedElement = this.dataArray.length;
   }
   removeData(index: number) {
     this.dataArray.removeAt(index);
-    this.postDetails = this.postDetailsForm.value;
+    this.postDetails = this.postDetailsForm?.value;
     this.rebuild(this.postDetails.data);
   }
   rectData = {
@@ -688,7 +683,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     });
   }
   drop(event: CdkDragDrop<string[]>) {
-    const dataArray = this.postDetailsForm.get('data')?.value; // Retrieve the array of data
+    const dataArray = this.postDetailsForm?.get('data')?.value; // Retrieve the array of data
     if (dataArray) {
       moveItemInArray(dataArray, event.previousIndex, event.currentIndex);
     }
@@ -750,7 +745,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   //   this.offsetY -= deltaY;
   // }
   moveDown(index: number) {
-    const data = this.postDetailsForm.get('data')?.value;
+    const data = this.postDetailsForm?.get('data')?.value;
     if (index > 0) {
       let temp = data[index - 1];
       data[index - 1] = data[index];
@@ -761,7 +756,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     return false;
   }
   moveUp(index: number) {
-    const data = this.postDetailsForm.get('data')?.value;
+    const data = this.postDetailsForm?.get('data')?.value;
     if (index < data.length - 1) {
       const temp = data[index];
       data[index] = data[index + 1];
@@ -773,7 +768,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   }
 
   moveToBack(index: number) {
-    const data = this.postDetailsForm.get('data')?.value;
+    const data = this.postDetailsForm?.get('data')?.value;
     if (index > 0) {
       const temp = data[index];
       data.splice(index, 1);
@@ -784,7 +779,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     return false;
   }
   moveToTop(index: number) {
-    const data = this.postDetailsForm.get('data')?.value;
+    const data = this.postDetailsForm?.get('data')?.value;
     if (index < data.length - 1) {
       const temp = data[index];
       data.splice(index, 1);
@@ -812,7 +807,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       (item.image) && this.dataArray.push(this.createImageFormGroup(item));
       (item.image) && this.controlSet.push(this.controlValues.image);
     }
-    this.postDetailsForm.get('data')?.setValue(dataArray);
+    this.postDetailsForm?.get('data')?.setValue(dataArray);
   }
   centerActiveButton() {
     setTimeout(() => {
@@ -831,8 +826,8 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     btnGroup.scrollLeft = scrollLeft;
   }
   onSubmit() {
-    if (this.postDetailsForm.valid) {
-      const formData = this.postDetailsForm.value;
+    if (this.postDetailsForm?.valid) {
+      const formData = this.postDetailsForm?.value;
       if (formData.id === null) {
         alert()
         const { id, ...formDataWithoutId } = formData;
@@ -842,7 +837,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       }
     } else {
       // If the form is invalid, mark all fields as touched to display validation errors
-      this.postDetailsForm.markAllAsTouched();
+      this.postDetailsForm?.markAllAsTouched();
     }
   }
   addPost(newPostData: PostDetails): void {
@@ -851,7 +846,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         (response: PostDetails) => {
           const addedDataId = response.id;
           console.log('Added data ID:', addedDataId);
-          this.postDetailsForm.get('id')?.setValue(addedDataId);
+          this.postDetailsForm?.get('id')?.setValue(addedDataId);
           this.postDetails.id = addedDataId
         },
         error => {
@@ -867,5 +862,45 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       }, error => {
         console.error(error); // Handle error appropriately
       });
+  }
+  softDelete(): void {
+    const id = this.postDetailsForm?.get('id')?.value;
+    id && this.PS.softDeletePost(id)
+      .subscribe(
+        response => {
+          console.log('Soft deletion successful:', response);
+          this.confirmDelete.hide();
+        },
+        error => {
+          console.error('Error during soft deletion:', error);
+        }
+      );
+  }
+
+  hardDelete(): void {
+    const id = this.postDetailsForm?.get('id')?.value;
+    id && this.PS.hardDeletePost(id)
+      .subscribe(
+        response => {
+          console.log('Hard deletion successful:', response);
+        },
+        error => {
+          console.error('Error during hard deletion:', error);
+        }
+      );
+  }
+  ngAfterViewInit(): void {
+    
+  }
+  ngOnInit(): void {
+    this.confirmDelete = new bootstrap.Modal(document.getElementById('confirmDelete')!, { focus: false, keyboard: false, static: false });
+    this.confirmDelete._element.addEventListener('hide.bs.modal', () => {
+    });
+    this.confirmDelete._element.addEventListener('show.bs.modal', () => {
+    });
+    this.confirmDelete._element.addEventListener('shown.bs.modal', () => {
+    });
+    this.imgParam && this.getPostById(this.imgParam);
+    !this.imgParam && this.initForm();
   }
 }
