@@ -104,7 +104,6 @@ export interface TextElement {
     lineHeight: number;
     textTransformation: string;
     opacity: number;
-    staticValue: boolean;
     originX: number;
     originY: number;
 }

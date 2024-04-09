@@ -225,8 +225,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
           "textTransformation": "none",
           "opacity": 100,
           "originX": 0,
-          "originY": 0,
-          "staticValue": false
+          "originY": 0
         }
       }
     ]
@@ -517,7 +516,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         italic: false,
         underline: false
       },
-      staticValue: false,
       textAlign: "left",
       rotate: 0,
       fontFamily: "Hind Vadodara",
@@ -611,8 +609,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         textTransformation: [t.text?.textTransformation, Validators.required],
         opacity: [t.text?.opacity, Validators.required],
         originX: [t.text?.originX],
-        originY: [t.text?.originY],
-        staticValue: [t.text?.staticValue]
+        originY: [t.text?.originY]
       })
     });
   }

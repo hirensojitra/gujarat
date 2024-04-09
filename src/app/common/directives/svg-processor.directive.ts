@@ -286,7 +286,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (this.el.nativeElement && d.text) {
       const svg = this.el.nativeElement;
       const t = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
-      const { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, staticValue, originX, originY, opacity } = d.text;
+      const { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = d.text;
       let textAttributes: Record<string, string> = {
         'data-type': 'text',
         'x': d.text.x.toString(),
