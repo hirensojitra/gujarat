@@ -27,7 +27,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   textModalTitle: string | undefined = '';
   inputTextForm: FormGroup;
   @ViewChild('textInput') textInput!: ElementRef;
-  
+
   cropperModal: any;
   imgModalTitle: string = '';
   cropper!: Cropper;
@@ -175,10 +175,28 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               });
             }
             break;
-          case !!item.rect || !!item.circle || !!item.ellipse:
+          case !!item.rect:
             if (item.rect) {
 
+              const rect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
+              const { x, y, width, height, fill, opacity, originX, originY, rotate } = item.rect;
+              this.renderer.setAttribute(rect, 'x', String(x));
+              this.renderer.setAttribute(rect, 'y', String(y));
+              this.renderer.setAttribute(rect, 'width', String(width));
+              this.renderer.setAttribute(rect, 'height', String(height));
+              this.renderer.setAttribute(rect, 'fill', fill);
+              this.renderer.setAttribute(rect, 'opacity', String(opacity));
+              if (rotate || (originX !== undefined && originY !== undefined)) {
+                const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
+                this.renderer.setAttribute(rect, 'transform', transformValue);
+              }
+              this.renderer.setAttribute(rect, 'data-type', 'rect');
+              this.renderer.appendChild(svg, rect);
+              return rect;
+
             }
+            break;
+          case !!item.circle || !!item.ellipse:
             if (item.text) {
 
             }
@@ -379,7 +397,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.cropperModal.hide();
   }
 
-  checkDownload(): boolean {
+  checkDownload(t: string): boolean {
     for (const item of this.dataset) {
       if (!item.value) {
         const elementToClick = this.elementRef.nativeElement.querySelector(`[data-id="${item.id}"]`);
@@ -394,6 +412,18 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         return false;
       }
     }
+    switch (t) {
+      case 'download':
+        this.capturePhoto();
+        break;
+      case 'whatsapp':
+        this.capturePhoto();
+        break;
+      default:
+        this.capturePhoto();
+        break;
+    }
+    this.capturePhoto();
     return true;
   }
   handleImageInputChange(event: Event): void {
@@ -451,5 +481,127 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       inputElement.value = null;
     }
     this.cropperModal.hide();
+  }
+  capturePhoto() {
+    // Get the SVG element
+    const svgElement = this.imageDraw.nativeElement;
+
+    // Extract viewBox dimensions
+    const viewBoxAttr = svgElement.getAttribute('viewBox') || '';
+    const viewBoxValues = viewBoxAttr.split(' ').map(Number);
+    const viewBoxWidth = viewBoxValues[2];
+    const viewBoxHeight = viewBoxValues[3];
+
+    // Create a new canvas element
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    // Set canvas dimensions to match the viewBox dimensions
+    canvas.width = viewBoxWidth;
+    canvas.height = viewBoxHeight;
+
+    // Create a new Image object
+    const image = new Image();
+
+    // Create a new XMLSerializer object to serialize the SVG element
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svgElement);
+
+    // Set the Image source to a data URL representing the SVG element
+    image.onload = () => {
+      // Draw the Image onto the canvas
+      context?.drawImage(image, 0, 0);
+
+      // Convert the canvas to a data URL representing a PNG image
+      const dataURL = canvas.toDataURL('image/png');
+
+      // Create a timestamp for the file name
+      const timestamp = new Date().toISOString().replace(/:/g, '-');
+
+      // Create the file name
+      const fileName = `IMG-${timestamp}.png`;
+
+      // Create a temporary anchor element
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = fileName;
+
+      // Simulate a click on the anchor element to trigger the download
+      link.click();
+    };
+
+    // Set the source of the image after defining the onload handler
+    image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+  }
+  async shareToWhatsApp() {
+    // URL of the exported image
+    try {
+      const imageUrl = await this.getImageDataURL();
+      if (imageUrl) {
+        // Description to be shared
+        const description = 'Check out this image!';
+
+        // URL of the current window
+        const currentUrl = window.location.href;
+
+        // Construct the WhatsApp message
+        const message = `${description}\n${currentUrl}`;
+
+        // Construct the WhatsApp sharing URL
+        const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}&image=${encodeURIComponent(imageUrl)}`;
+
+        // Open the WhatsApp sharing URL
+        window.open(whatsappUrl, '_blank');
+      } else {
+        console.error('Failed to retrieve image data URL.');
+      }
+    } catch (error) {
+      console.error('Error capturing photo:', error);
+    }
+  }
+  async getImageDataURL(): Promise<string | null> {
+    // Get the SVG element
+    const svgElement = this.imageDraw.nativeElement;
+
+    // Create a new canvas element
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      console.error('Canvas context is not available.');
+      return null;
+    }
+
+    // Extract viewBox dimensions
+    const viewBoxAttr = svgElement.getAttribute('viewBox') || '';
+    const viewBoxValues = viewBoxAttr.split(' ').map(Number);
+    const viewBoxWidth = viewBoxValues[2];
+    const viewBoxHeight = viewBoxValues[3];
+
+    // Set canvas dimensions to match the viewBox dimensions
+    canvas.width = viewBoxWidth;
+    canvas.height = viewBoxHeight;
+
+    // Create a new Image object
+    const image = new Image();
+
+    // Create a new XMLSerializer object to serialize the SVG element
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svgElement);
+
+    // Define a promise to handle image loading
+    return new Promise<string>((resolve, reject) => {
+      image.onload = () => {
+        // Draw the Image onto the canvas
+        context.drawImage(image, 0, 0);
+
+        // Convert the canvas to a data URL representing a PNG image
+        const dataURL = canvas.toDataURL('image/png');
+        resolve(dataURL);
+      };
+
+      // Set the source of the image after defining the onload handler
+      image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+    });
   }
 }
