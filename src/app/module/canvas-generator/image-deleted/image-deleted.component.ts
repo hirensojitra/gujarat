@@ -17,6 +17,7 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
   window!: Window & typeof globalThis;
 
 
+  confirmRecover: any;
   confirmDelete: any;
   selectedID: string | undefined;
   constructor(private PS: PostDetailService) {
@@ -26,8 +27,21 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
     this.window = window;
     this.getAllPosts();
     this.getTotalPostLength();
+    this.confirmRecover = new bootstrap.Modal(document.getElementById('confirmRecover')!, { focus: false, keyboard: false, static: false });
+    this.confirmRecover._element.addEventListener('hide.bs.modal', () => {
+    });
+    this.confirmRecover._element.addEventListener('hidden.bs.modal', () => {
+      this.selectedID = undefined;
+    });
+    this.confirmRecover._element.addEventListener('show.bs.modal', () => {
+
+    });
+    this.confirmRecover._element.addEventListener('shown.bs.modal', () => {
+    });
     this.confirmDelete = new bootstrap.Modal(document.getElementById('confirmDelete')!, { focus: false, keyboard: false, static: false });
     this.confirmDelete._element.addEventListener('hide.bs.modal', () => {
+    });
+    this.confirmDelete._element.addEventListener('hidden.bs.modal', () => {
       this.selectedID = undefined;
     });
     this.confirmDelete._element.addEventListener('show.bs.modal', () => {
@@ -39,7 +53,11 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
 
   }
-  selectId(id: any) {
+  selectRecoverId(id: any) {
+    this.selectedID = id;
+    id && this.confirmRecover.show();
+  }
+  selectDeleteId(id: any) {
     this.selectedID = id;
     id && this.confirmDelete.show();
   }
@@ -62,14 +80,27 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
       .subscribe(
         response => {
           console.log('Resored successful:', response);
-          this.confirmDelete.hide();
+          this.confirmRecover.hide();
           this.getAllPosts();
         },
         error => {
           console.error('Error during Restore:', error);
         }
       );
-    this.confirmDelete.hide();
+    this.confirmRecover.hide();
+  }
+  hardDelete(): void {
+    this.selectedID &&  this.PS.hardDeletePost(this.selectedID)
+      .subscribe(
+        response => {
+          console.log('Soft deletion successful:', response);
+          this.confirmDelete.hide();
+          window.close();
+        },
+        error => {
+          console.error('Error during soft deletion:', error);
+        }
+      );
   }
   calculateTotalPages(): void {
     const postLimitPerPage = 12;

@@ -1,0 +1,30 @@
+<svg
+  (mousemove)="onSvgMouseMove($event)"
+  (mouseup)="onSvgMouseUp()"
+  (mouseleave)="onSvgMouseLeave()"
+  viewBox="0 0 500 500"
+  width="500"
+  height="500"
+>
+  <!-- Rectangle -->
+  <rect
+    #rectangle
+    x="100"
+    y="100"
+    width="200"
+    height="150"
+    fill="blue"
+    (mousedown)="startDragging($event, 'rectangle')"
+  ></rect>
+
+  <!-- Handles -->
+  <rect
+    *ngFor="let handle of handles"
+    [attr.x]="handle.x - handle.size / 2"
+    [attr.y]="handle.y - handle.size / 2"
+    [attr.width]="handle.size"
+    [attr.height]="handle.size"
+    fill="red"
+    (mousedown)="startDragging($event, handle.id)"
+  ></rect>
+</svg>

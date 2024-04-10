@@ -352,8 +352,66 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
 
       // Add text content if available
       if (text) {
-        this.renderer.appendChild(t, this.renderer.createText(d.text.text));
+
+        const lines = this.textFormat(d.text.text);
+        if (lines.length === 1) {
+          // If there's only one line of text, create a single tspan element
+          this.renderer.appendChild(t, this.renderer.createText(d.text.text));
+        } else {
+          // Calculate dy offset based on font size
+          const dyOffset = fs * lineHeight || 0;
+
+          // Calculate dx offset based on text-anchor
+          let dxOffset = 0;
+          switch (textAnchor) {
+            case 'middle':
+              // For middle alignment, calculate the total width of the text and divide by 2
+              const totalWidth = lines.reduce((sum, line) => sum + this.getTextWidth(line, fs, fontFamily), 0);
+              dxOffset = totalWidth / 2;
+              break;
+            case 'end':
+              // For end alignment, calculate the total width of the text
+              dxOffset = lines.reduce((maxWidth, line) => {
+                const lineWidth = this.getTextWidth(line, fs, fontFamily);
+                return lineWidth > maxWidth ? lineWidth : maxWidth;
+              }, 0);
+              break;
+            // For start alignment, dxOffset remains 0
+          }
+
+          // Iterate over each line of text
+          lines.forEach((line, index) => {
+            // Create a tspan element for each line
+            const tspanElement = this.renderer.createElement('tspan', 'http://www.w3.org/2000/svg');
+
+            // Set text content
+            this.renderer.appendChild(tspanElement, this.renderer.createText(line));
+
+            // Apply dy offset
+            if (index > 0 || (index === 0 && line.trim() === '')) {
+              this.renderer.setAttribute(tspanElement, 'dy', `${dyOffset}px`);
+            }
+            this.renderer.setAttribute(tspanElement, 'x', x.toString());
+            // Apply dx offset based on text-anchor
+            switch (textAnchor) {
+              case 'middle':
+                // For middle alignment, set dx to half of the total width
+                this.renderer.setAttribute(tspanElement, 'dx', `-${dxOffset}px`);
+                break;
+              case 'end':
+                // For end alignment, set dx to the total width
+                this.renderer.setAttribute(tspanElement, 'dx', `-${dxOffset}px`);
+                break;
+              // For start alignment, dx remains 0
+            }
+
+            // Append tspan to text element
+            this.renderer.appendChild(t, tspanElement);
+          });
+        }
       }
+
+
       this.renderer.appendChild(svg, t);
       if (rotate || (originX !== undefined && originY !== undefined)) {
         const bbox = t.getBBox();
@@ -389,6 +447,16 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     this.removeEventListeners();
     this.addDraggableBehavior(elements);
   }
+  getTextWidth(text: string, fontSize: number, fontFamily: string): number {
+    const svgText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    svgText.setAttribute('font-size', `${fontSize}px`);
+    svgText.setAttribute('font-family', fontFamily);
+    svgText.textContent = text;
+    document.body.appendChild(svgText);
+    const width = svgText.getBBox().width;
+    document.body.removeChild(svgText);
+    return width;
+  }
 
   async getImageDataUrl(imageUrl: string): Promise<string> {
     try {
@@ -411,7 +479,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     const showControls = elements.map(() => {
       return false;
     })
-    let handleResize: any = [];
     elements.forEach((element: any, index: number) => {
       const eleData = this.postData.data[index]
       if (element) {
@@ -422,26 +489,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         const y = bbox.y;
         const width = bbox.width;
         const height = bbox.height;
-        // const resizeHandles = [
-        //   { x: x - 5, y: y - 5, cursor: 'nw-resize' }, // Top-left corner
-        //   { x: x + width / 2 - 5, y: y - 5, cursor: 'n-resize' }, // Top-center
-        //   { x: x + width - 5, y: y - 5, cursor: 'ne-resize' }, // Top-right corner
-        //   { x: x - 5, y: y + height / 2 - 5, cursor: 'w-resize' }, // Middle-left
-        //   { x: x + width - 5, y: y + height / 2 - 5, cursor: 'e-resize' }, // Middle-right
-        //   { x: x - 5, y: y + height - 5, cursor: 'sw-resize' }, // Bottom-left corner
-        //   { x: x + width / 2 - 5, y: y + height - 5, cursor: 's-resize' }, // Bottom-center
-        //   { x: x + width - 5, y: y + height - 5, cursor: 'se-resize' } // Bottom-right corner
-        // ].map((position, idx) => {
-        //   const handle = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        //   handle.setAttribute('x', position.x.toString());
-        //   handle.setAttribute('y', position.y.toString());
-        //   handle.setAttribute('width', '10');
-        //   handle.setAttribute('height', '10');
-        //   handle.setAttribute('fill', 'blue');
-        //   handle.setAttribute('cursor', position.cursor); // Set the cursor style based on position
-        //   svg.appendChild(handle);
-        //   return handle;
-        // });
+
         this.renderer.setAttribute(element, 'cursor', 'grab');
         const elementType = element.getAttribute('data-type');
         const onMouseDown = (event: MouseEvent) => {
@@ -464,92 +512,16 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
           this.offsetX = elementX - clickedX;
           this.offsetY = elementY - clickedY;
           this.renderer.setAttribute(element, 'cursor', 'grabbing');
-          while (handleResize.length > 0) {
-            const handle = handleResize.pop(); // Remove the last element from the array
-            if (handle && handle.parentNode) {
-              handle.parentNode.removeChild(handle); // Remove handle from SVG DOM
-            }
-          }
+
           switch (elementType) {
             case 'circle':
-              if (showControls[index]) {
-                const linePositions = [
-                  { x1: x, y1: y, x2: x + width, y2: y }, // Top boundary
-                  { x1: x + width, y1: y, x2: x + width, y2: y + height }, // Right boundary
-                  { x1: x + width, y1: y + height, x2: x, y2: y + height }, // Bottom boundary
-                  { x1: x, y1: y + height, x2: x, y2: y } // Left boundary
-                ];
-                linePositions.forEach((position, i) => {
-                  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                  line.setAttribute('x1', position.x1.toString());
-                  line.setAttribute('y1', position.y1.toString());
-                  line.setAttribute('x2', position.x2.toString());
-                  line.setAttribute('y2', position.y2.toString());
-                  line.setAttribute('stroke', '#CCC');
-                  line.setAttribute('stroke-width', '1');
-                  line.setAttribute('stroke-linecap', 'round');
-                  svg.appendChild(line);
-                });
-                const radius = element.getAttribute('r');
-                const centerX = x + parseFloat(radius);
-                const centerY = y + parseFloat(radius);
-                [
-                  { x: centerX, y: y, cursor: 'n-resize' }, // Top-center
-                  { x: x, y: centerY, cursor: 'w-resize' }, // Middle-left
-                  { x: x + parseFloat(width), y: centerY, cursor: 'e-resize' }, // Middle-right
-                  { x: centerX, y: y + parseFloat(height), cursor: 's-resize' } // Bottom-center
-                ].map((position) => {
-                  const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                  handle.setAttribute('cx', position.x.toString());
-                  handle.setAttribute('cy', position.y.toString());
-                  handle.setAttribute('r', '5');
-                  handle.setAttribute('fill', 'blue');
-                  handle.setAttribute('cursor', position.cursor);
-                  svg.appendChild(handle);
-                  handleResize.push(handle)
-                });
-              }
+
               break;
             case 'rectangle':
-              // Logic for handling rectangle elements
+
               break;
             case 'text':
-              if (showControls[index]) {
-                const linePositions = [
-                  { x1: x, y1: y, x2: x + width, y2: y }, // Top boundary
-                  { x1: x + width, y1: y, x2: x + width, y2: y + height }, // Right boundary
-                  { x1: x + width, y1: y + height, x2: x, y2: y + height }, // Bottom boundary
-                  { x1: x, y1: y + height, x2: x, y2: y } // Left boundary
-                ];
-                linePositions.forEach((position, i) => {
-                  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                  line.setAttribute('x1', position.x1.toString());
-                  line.setAttribute('y1', position.y1.toString());
-                  line.setAttribute('x2', position.x2.toString());
-                  line.setAttribute('y2', position.y2.toString());
-                  line.setAttribute('stroke', '#CCC');
-                  line.setAttribute('stroke-width', '1');
-                  line.setAttribute('stroke-linecap', 'round');
-                  svg.appendChild(line);
-                });
-                const centerX = x + parseFloat(width) / 2;
-                const centerY = y + parseFloat(height) / 2;
-                [
-                  { x: centerX, y: y, cursor: 'n-resize' }, // Top-center
-                  { x: x, y: centerY, cursor: 'w-resize' }, // Middle-left
-                  { x: x + parseFloat(width), y: centerY, cursor: 'e-resize' }, // Middle-right
-                  { x: centerX, y: y + parseFloat(height), cursor: 's-resize' } // Bottom-center
-                ].map((position) => {
-                  const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                  handle.setAttribute('cx', position.x.toString());
-                  handle.setAttribute('cy', position.y.toString());
-                  handle.setAttribute('r', '5');
-                  handle.setAttribute('fill', 'blue');
-                  handle.setAttribute('cursor', position.cursor);
-                  svg.appendChild(handle);
-                  handleResize.push(handle)
-                });
-              }
+
               break;
             case 'image':
               // Logic for handling image elements
@@ -563,12 +535,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         const onMouseMove = (event: MouseEvent) => {
           if (isDragging) {
             isDragged = true;
-            while (handleResize.length > 0) {
-              const handle = handleResize.pop(); // Remove the last element from the array
-              if (handle && handle.parentNode) {
-                handle.parentNode.removeChild(handle); // Remove handle from SVG DOM
-              }
-            }
+
             const svgPoint = this.getMousePosition(event, svg);
             if (element) {
               let x, y;
@@ -637,6 +604,13 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                       const height = bbox.height;
                       console.log(adjustedX + width / 2);
                       const transformValue = `rotate(${eleData.text.rotate || 0} ${adjustedX + width / 2} ${adjustedY + height / 2})`;
+                      const tspanElements = element.getElementsByTagName('tspan');
+                      if (tspanElements.length > 0) {
+                        for (let i = 0; i < tspanElements.length; i++) {
+                          const tspanElement = tspanElements[i];
+                          this.renderer.setAttribute(tspanElement, 'x', adjustedX.toString());
+                        }
+                      }
                       this.renderer.setAttribute(element, 'transform', transformValue);
                     }
                     if (eleData.image) {
@@ -694,6 +668,16 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     this.eventListeners.forEach(removeListener => removeListener());
     this.eventListeners = [];
   }
+  textFormat(text: string): string[] {
+    const formattedText = text.replace(/\n/g, '\n').replace(/\n(?!\*{3})/g, '***\n');
+    const lines = formattedText.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      lines[i] = lines[i].replace(/\*\*\*/g, '\u00A0');
+    }
+    console.log(lines)
+    return lines;
+}
+
   ngAfterViewInit(): void {
     this.loadOnly && this.initSVG(this.loadOnly);
   }

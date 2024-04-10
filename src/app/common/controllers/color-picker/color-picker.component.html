@@ -21,6 +21,6 @@
         <span class="sr-only">Loading...</span>
       </div>
     </ng-template>
-    <input type="text" [(ngModel)]="selectedColor" class="form-control">
+    <input type="text" [(ngModel)]="selectedColor" class="form-control" (change)="selectColor(selectedColor)">
   </div>
 </div>

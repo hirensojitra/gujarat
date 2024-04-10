@@ -129,7 +129,7 @@
                                                 </div>
                                                 <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'rotate')">
                                                     <label [for]="'rotate'+i" class="form-label">Rotate</label>
-                                                    <input type="range" [id]="'rotate'+i" class="form-range" min="-180" max="180" step="1" formControlName="rotate">
+                                                    <input type="range" [id]="'rotate'+i" class="form-range" min="0" max="360" step="1" formControlName="rotate">
                                                 </div>
                                             </ng-container>
                                             <ng-container formGroupName="circle" *ngIf="item.get('circle')">
@@ -280,17 +280,16 @@
                                             <ng-container formGroupName="text" *ngIf="item.get('text')">
                                                 <div class="form-group col-12" [class.d-none]="!getActiveControl(i,'edit')">
                                                     <label for="text" class="form-label">Input Text</label>
-                                                    <input type="text" id="text" class="form-control" formControlName="text">
+                                                    <textarea id="text" class="form-control" formControlName="text"></textarea>
                                                 </div>
                                                 <input type="hidden" formControlName="x">
                                                 <input type="hidden" formControlName="y">
                                                 <div class="form-group col-12" [class.d-none]="!getActiveControl(i,'fontSize')">
                                                     <div class="input-group d-flex align-items-center">
                                                         <div class="input-group-prepend">
-                                                            <span class="input-group-text b">Font
-                                                                Size</span>
+                                                            <span class="input-group-text b">Font Size</span>
                                                         </div>
-                                                        <input type="range" class="form-control border-0 mx-4 form-range" [attr.min]="postDetailsForm.get('w')?.value/80" [attr.max]="postDetailsForm.get('w')?.value/15" step="0.1" formControlName="fs">
+                                                        <input type="range" class="form-control border-0 mx-4 form-range" [attr.min]="postDetailsForm.get('w')?.value/90" [attr.max]="postDetailsForm.get('w')?.value/5" step="0.5" formControlName="fs">
                                                         <div class="input-group-append w-60-px">
                                                             <span class="input-group-text text-end d-block">{{
                                                                 item.get('text')?.get('fs')?.value | number:
@@ -539,10 +538,15 @@
                                                         Spacing</label>
                                                     <input type="number" id="letterSpacing" class="form-control" formControlName="letterSpacing">
                                                 </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'lineHeight')">
-                                                    <label for="lineHeight" class="form-label">Line
-                                                        Height</label>
-                                                    <input type="number" id="lineHeight" class="form-control" formControlName="lineHeight">
+                                                <div class="form-group col-12" [class.d-none]="!getActiveControl(i,'lineHeight')">
+                                                    <label for="lineHeight" class="form-label">Line Height</label>
+                                                    <input type="range" class="border-0 form-range" [attr.min]="0" [attr.max]="5" step="0.1"  formControlName="lineHeight">
+                                                    <div class="input-group-append w-60-px">
+                                                        <span class="input-group-text text-end d-block">{{
+                                                            item.get('text')?.get('lineHeight')?.value | number:
+                                                            '1.2-2' }}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'textTransformation')">
                                                     <label for="textTransformation" class="form-label">Text
@@ -557,7 +561,7 @@
                                             <ng-container formGroupName="image" *ngIf="item.get('image')">
                                                 <div class="form-group col-12" [class.d-none]="!getActiveControl(i,'dimension')">
                                                     <label for="r" class="form-label">Radius (r)</label>
-                                                    <input type="range" class="form-range" [attr.min]="postDetailsForm.get('w')?.value/20||80" [attr.max]="postDetailsForm.get('w')?.value/8" step="0.5" formControlName="r">
+                                                    <input type="range" class="form-range" [attr.min]="postDetailsForm.get('w')?.value/20||80" [attr.max]="postDetailsForm.get('w')?.value/2-30" step="0.5" formControlName="r">
                                                 </div>
                                                 <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'position')">
                                                     <label for="x" class="form-label">X Position</label>
@@ -601,7 +605,7 @@
                                                 </div>
                                                 <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'rotate')">
                                                     <label [for]="'rotate'+i" class="form-label">Rotate</label>
-                                                    <input type="range" [id]="'rotate'+i" class="form-range" min="-180" max="180" step="1" formControlName="rotate">
+                                                    <input type="range" [id]="'rotate'+i" class="form-range" min="0" max="360" step="1" formControlName="rotate">
                                                 </div>
                                                 <ng-container formGroupName="svgProperties">
                                                     <div class="col-6">

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'color-picker',
@@ -23,7 +23,10 @@ export class ColorPickerComponent implements ControlValueAccessor, OnInit {
   onChange: any = () => {};
   onTouch: any = () => {};
 
-  constructor() { }
+  colorControl!: FormControl;
+  constructor() {
+    this.colorControl = new FormControl();
+  }
 
   ngOnInit(): void {
     this.uniqueId = 'color-picker-' + Math.random().toString(36).substr(2, 9);
@@ -35,6 +38,7 @@ export class ColorPickerComponent implements ControlValueAccessor, OnInit {
 
   selectColor(color: string): void {
     this.selectedColor = color;
+    this.colorControl.setValue(this.selectedColor);
     this.onChange(this.selectedColor);
     this.onTouch();
   }
@@ -42,6 +46,7 @@ export class ColorPickerComponent implements ControlValueAccessor, OnInit {
   // ControlValueAccessor methods
   writeValue(value: any): void {
     this.selectedColor = value;
+    this.colorControl.setValue(value);
   }
 
   registerOnChange(fn: any): void {

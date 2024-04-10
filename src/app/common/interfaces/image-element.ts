@@ -129,7 +129,7 @@ export interface ImageElement {
 }
 
 export interface PostDetails {
-    id: number | null;
+    id: string | null;
     deleted: boolean;
     h: number;
     w: number;

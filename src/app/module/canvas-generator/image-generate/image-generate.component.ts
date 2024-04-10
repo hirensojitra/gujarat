@@ -364,15 +364,15 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     editable: false,
     boxed: true,
     rect: {
-      x: 10,
-      y: 20,
+      x: 30,
+      y: 30,
       width: 100,
       height: 50,
       fill: "#FFFFFF",
       opacity: 0.8,
       originX: 5,
       originY: 5,
-      rotate: 45,
+      rotate: 0,
     }
   };
   createRectFormGroup(r: Data): FormGroup {
@@ -438,7 +438,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       opacity: 0.8,
       originX: 0,
       originY: 0,
-      rotate: 45
+      rotate: 0
     }
   };
   createEllipseFormGroup(e: Data): FormGroup {
@@ -829,7 +829,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     if (this.postDetailsForm?.valid) {
       const formData = this.postDetailsForm?.value;
       if (formData.id === null) {
-        alert()
         const { id, ...formDataWithoutId } = formData;
         this.addPost(formDataWithoutId);
       } else {
@@ -870,6 +869,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         response => {
           console.log('Soft deletion successful:', response);
           this.confirmDelete.hide();
+          window.close();
         },
         error => {
           console.error('Error during soft deletion:', error);
@@ -888,6 +888,18 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
           console.error('Error during hard deletion:', error);
         }
       );
+  }
+  onScroll(event: any) {
+    const element = event.target;
+    // Synchronize the horizontal scroll position with the vertical scroll position
+    element.scrollLeft = element.scrollLeft;
+  }
+
+  onWheel(event: any) {
+    const delta = Math.max(-1, Math.min(1, (event.deltaY || -event.detail)));
+    // Horizontal scrolling only
+    this.controlGroup.nativeElement.scrollLeft -= (delta * 40);
+    event.preventDefault();
   }
   ngAfterViewInit(): void {
     

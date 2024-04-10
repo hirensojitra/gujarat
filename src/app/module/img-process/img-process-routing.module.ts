@@ -10,7 +10,8 @@ const routes: Routes = [{
   },
   children: [
     { path: '', pathMatch: 'full', redirectTo: 'download' },
-    { path: 'download', loadChildren: () => import('./image-download/image-download.module').then(m => m.ImageDownloadModule) }
+    { path: 'download', loadChildren: () => import('./image-download/image-download.module').then(m => m.ImageDownloadModule) },
+    { path: 'rect', loadChildren: () => import('./rect-resize/rect-resize.module').then(m => m.RectResizeModule) }
   ]
 }];
 
