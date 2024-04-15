@@ -207,7 +207,7 @@ export class CanvasEditorComponent {
       if (item.type === 'name' || item.type === 'address') {
         item.text = item.type == 'name' ? this.userFullName : item.type == 'address' ? this.address : item.type;
       } else if (item.type === 'avatar') {
-        item.imageUrl = this.user.image || 'assets/images/jpeg/profile-1.jpeg';
+        item.imageUrl = this.user.image || 'assets/images/svg/upload-img.svg';
       }
     }
     data.details = d;

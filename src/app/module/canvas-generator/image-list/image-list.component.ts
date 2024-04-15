@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { PostDetails } from 'src/app/common/interfaces/image-element';
+import { MetadataService } from 'src/app/common/services/metadata.service';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
 
 @Component({
@@ -14,8 +15,8 @@ export class ImageListComponent implements OnInit, AfterViewInit {
   totalPages: number = 0;
   totalLength: number = 0;
   window!: Window & typeof globalThis;
-  constructor(private PS: PostDetailService) {
-
+  constructor(private PS: PostDetailService,private metadataService: MetadataService) {
+    this.metadataService.setMetadata();
   }
   ngOnInit(): void {
     this.window = window;

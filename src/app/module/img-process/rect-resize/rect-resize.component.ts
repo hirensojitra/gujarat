@@ -107,13 +107,10 @@ export class RectResizeComponent {
       this.calculateHandles();
     }
   }
-  
-
   onSvgMouseUp() {
     this.dragging = false;
     this.dragTarget = null;
   }
-
   onSvgMouseLeave() {
     if (this.dragging) {
       this.dragging = false;

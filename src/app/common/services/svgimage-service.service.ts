@@ -51,7 +51,7 @@ export class SVGImageService {
             r: d.r || 0,
             borderwidth: d.borderwidth || 0,
             bordercolor: d.bordercolor || '',
-            imageUrl: d.imageUrl || 'assets/images/jpeg/profile-1.jpeg',
+            imageUrl: d.imageUrl || 'assets/images/svg/upload-img.svg',
             x: d.x || 0,
             y: d.y || 0
           };

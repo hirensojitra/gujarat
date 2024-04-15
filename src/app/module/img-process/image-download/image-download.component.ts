@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { PostDetails } from 'src/app/common/interfaces/image-element';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
@@ -28,6 +29,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   inputTextForm: FormGroup;
   @ViewChild('textInput') textInput!: ElementRef;
 
+  myInfo: any;
+  encodedText = encodeURIComponent("Hello, Hiren!\nI'm interested to create Poster Generate Link");
   cropperModal: any;
   imgModalTitle: string = '';
   cropper!: Cropper;
@@ -41,7 +44,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     private PS: PostDetailService,
     private renderer: Renderer2,
     private fb: FormBuilder,
-    private elementRef: ElementRef) {
+    private elementRef: ElementRef,
+    private meta: Meta,
+    private titleService: Title) {
     this.route.queryParams.subscribe(params => {
       this.imgParam = params['img'];
     });
@@ -62,6 +67,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.textModal._element.addEventListener('shown.bs.modal', () => {
       this.textInput.nativeElement.focus();
     });
+
+    this.myInfo = new bootstrap.Modal(document.getElementById('myInfo')!, { focus: false, keyboard: false, static: false });
 
     this.cropperModal = new bootstrap.Modal(document.getElementById('cropperModal')!, { focus: false, keyboard: false, static: false });
     this.cropperModal._element.addEventListener('hide.bs.modal', () => {
@@ -88,6 +95,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             this.postDetails = post;
             this.postDetailsDefault = p;
             this.drawSVG()
+            this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
+            this.titleService.setTitle(this.postDetails.title);
           } else {
 
           }
@@ -123,7 +132,63 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               const t = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
               let { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = item.text;
               if (text) {
-                this.renderer.appendChild(t, this.renderer.createText(text));
+
+                const lines = this.textFormat(text);
+                if (lines.length === 1) {
+                  // If there's only one line of text, create a single tspan element
+                  this.renderer.appendChild(t, this.renderer.createText(text));
+                } else {
+                  // Calculate dy offset based on font size
+                  const dyOffset = fs * lineHeight || 0;
+
+                  // Calculate dx offset based on text-anchor
+                  let dxOffset = 0;
+                  switch (textAnchor) {
+                    case 'middle':
+                      // For middle alignment, calculate the total width of the text and divide by 2
+                      const totalWidth = lines.reduce((sum, line) => sum + this.getTextWidth(line, fs, fontFamily), 0);
+                      dxOffset = totalWidth / 2;
+                      break;
+                    case 'end':
+                      // For end alignment, calculate the total width of the text
+                      dxOffset = lines.reduce((maxWidth, line) => {
+                        const lineWidth = this.getTextWidth(line, fs, fontFamily);
+                        return lineWidth > maxWidth ? lineWidth : maxWidth;
+                      }, 0);
+                      break;
+                    // For start alignment, dxOffset remains 0
+                  }
+
+                  // Iterate over each line of text
+                  lines.forEach((line, index) => {
+                    // Create a tspan element for each line
+                    const tspanElement = this.renderer.createElement('tspan', 'http://www.w3.org/2000/svg');
+
+                    // Set text content
+                    this.renderer.appendChild(tspanElement, this.renderer.createText(line));
+
+                    // Apply dy offset
+                    if (index > 0 || (index === 0 && line.trim() === '')) {
+                      this.renderer.setAttribute(tspanElement, 'dy', `${dyOffset}px`);
+                    }
+                    this.renderer.setAttribute(tspanElement, 'x', x.toString());
+                    // Apply dx offset based on text-anchor
+                    switch (textAnchor) {
+                      case 'middle':
+                        // For middle alignment, set dx to half of the total width
+                        this.renderer.setAttribute(tspanElement, 'dx', `-${dxOffset}px`);
+                        break;
+                      case 'end':
+                        // For end alignment, set dx to the total width
+                        this.renderer.setAttribute(tspanElement, 'dx', `-${dxOffset}px`);
+                        break;
+                      // For start alignment, dx remains 0
+                    }
+
+                    // Append tspan to text element
+                    this.renderer.appendChild(t, tspanElement);
+                  });
+                }
               }
               this.renderer.appendChild(svg, t);
               let textAttributes: Record<string, string> = {
@@ -465,9 +530,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       const croppedCanvas = this.cropper.getCroppedCanvas();
       const resizedCanvas = document.createElement('canvas');
       const resizedContext = resizedCanvas.getContext('2d')!;
-      resizedCanvas.width = 200;
-      resizedCanvas.height = 200;
-      resizedContext.drawImage(croppedCanvas, 0, 0, 200, 200);
+      resizedCanvas.width = 800;
+      resizedCanvas.height = 800;
+      resizedContext.drawImage(croppedCanvas, 0, 0, 800, 800);
       const resizedImageData = resizedCanvas.toDataURL('image/png'); // Adjust format as needed
       this.inputImageForm.get('image')?.setValue(resizedImageData);
     }
@@ -601,5 +666,24 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       // Set the source of the image after defining the onload handler
       image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
     });
+  }
+  textFormat(text: string): string[] {
+    const formattedText = text.replace(/\n/g, '\n').replace(/\n(?!\*{3})/g, '***\n');
+    const lines = formattedText.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      lines[i] = lines[i].replace(/\*\*\*/g, '\u00A0');
+    }
+    console.log(lines)
+    return lines;
+  }
+  getTextWidth(text: string, fontSize: number, fontFamily: string): number {
+    const svgText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    svgText.setAttribute('font-size', `${fontSize}px`);
+    svgText.setAttribute('font-family', fontFamily);
+    svgText.textContent = text;
+    document.body.appendChild(svgText);
+    const width = svgText.getBBox().width;
+    document.body.removeChild(svgText);
+    return width;
   }
 }

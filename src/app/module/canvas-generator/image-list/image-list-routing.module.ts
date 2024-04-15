@@ -7,7 +7,11 @@ const routes: Routes = [{
   path: '',
   canActivate: [AuthGuard],
   component: ImageListComponent,
-  data: { title: 'Image List', breadcrumb: 'Image List' }
+  data: {
+    title: 'Image List',
+    breadcrumb: 'Image List',
+    description: 'Your Page Description'
+  }
 }]
 
 @NgModule({

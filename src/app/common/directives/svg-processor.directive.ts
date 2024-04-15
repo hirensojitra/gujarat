@@ -353,10 +353,10 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       // Add text content if available
       if (text) {
 
-        const lines = this.textFormat(d.text.text);
+        const lines = this.textFormat(text);
         if (lines.length === 1) {
           // If there's only one line of text, create a single tspan element
-          this.renderer.appendChild(t, this.renderer.createText(d.text.text));
+          this.renderer.appendChild(t, this.renderer.createText(text));
         } else {
           // Calculate dy offset based on font size
           const dyOffset = fs * lineHeight || 0;
@@ -676,7 +676,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
     console.log(lines)
     return lines;
-}
+  }
 
   ngAfterViewInit(): void {
     this.loadOnly && this.initSVG(this.loadOnly);

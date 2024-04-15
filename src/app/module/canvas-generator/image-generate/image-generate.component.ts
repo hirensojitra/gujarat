@@ -171,6 +171,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     "h": 1024,
     "w": 1024,
     "title": "image",
+    "info": "",
     "backgroundurl": "https://images.unsplash.com/photo-1564053489984-317bbd824340?q=80&w=2096&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "data": [
       {
@@ -300,6 +301,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       w: [this.postDetails.w, Validators.required],
       title: [this.postDetails.title, Validators.required],
       backgroundurl: [this.postDetails.backgroundurl, Validators.required],
+      info: [this.postDetails.info || '', Validators.required],
       data: this.fb.array([])
     });
     this.postDetailsForm?.get('backgroundurl')?.valueChanges.subscribe((value: PostDetails) => {
@@ -648,7 +650,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       r: 50,
       x: 100,
       y: 100,
-      imageUrl: "assets/images/jpeg/profile-1.jpeg",
+      imageUrl: "assets/images/svg/upload-img.svg",
       borderColor: "#000000",
       borderWidth: 2,
       shape: "circle",
@@ -902,7 +904,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     event.preventDefault();
   }
   ngAfterViewInit(): void {
-    
+
   }
   ngOnInit(): void {
     this.confirmDelete = new bootstrap.Modal(document.getElementById('confirmDelete')!, { focus: false, keyboard: false, static: false });

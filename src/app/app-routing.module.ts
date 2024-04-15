@@ -22,7 +22,9 @@ const routes: Routes = [
     path: '',
     component: LayoutComponent,
     data: {
-      layout: 'empty-layout'
+      layout: 'empty-layout',
+      title: 'Your Page Title',
+      description: 'Your Page Description'
     },
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'auth' },

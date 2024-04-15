@@ -23,6 +23,10 @@
                             <div class="row g-3">
                                 <input type="hidden" id="id" class="form-control" formControlName="id">
                                 <input type="hidden" id="deleted" class="form-control" formControlName="deleted">
+                                <div class="form-group col-12" [class.d-none]="selectedElement!==-1">
+                                    <label for="info" class="form-label">Info</label>
+                                    <textarea id="info" class="form-control" formControlName="info"></textarea>
+                                </div>
                                 <div class="form-group col-6" [class.d-none]="selectedElement!==-1">
                                     <label for="h" class="form-label">Height</label>
                                     <input type="text" id="h" class="form-control" formControlName="h">
@@ -540,7 +544,7 @@
                                                 </div>
                                                 <div class="form-group col-12" [class.d-none]="!getActiveControl(i,'lineHeight')">
                                                     <label for="lineHeight" class="form-label">Line Height</label>
-                                                    <input type="range" class="border-0 form-range" [attr.min]="0" [attr.max]="5" step="0.1"  formControlName="lineHeight">
+                                                    <input type="range" class="border-0 form-range" [attr.min]="0" [attr.max]="5" step="0.1" formControlName="lineHeight">
                                                     <div class="input-group-append w-60-px">
                                                         <span class="input-group-text text-end d-block">{{
                                                             item.get('text')?.get('lineHeight')?.value | number:

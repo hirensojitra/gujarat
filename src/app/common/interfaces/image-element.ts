@@ -131,6 +131,7 @@ export interface ImageElement {
 export interface PostDetails {
     id: string | null;
     deleted: boolean;
+    info: string,
     h: number;
     w: number;
     title: string;

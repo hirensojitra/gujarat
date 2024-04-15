@@ -194,7 +194,7 @@ export class ImageViewComponent {
           break; // No need to continue checking if condition is met
         }
       } else if (item.type === 'avatar') {
-        if (item.value === 'assets/images/jpeg/profile-1.jpeg') {
+        if (item.value === 'assets/images/svg/upload-img.svg') {
           this.getDownload = false;
           break; // No need to continue checking if condition is met
         }
