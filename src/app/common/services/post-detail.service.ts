@@ -30,7 +30,6 @@ export class PostDetailService {
     }
 
     getPostById(id: string): Observable<PostDetails> {
-        console.log(`${this.baseUrl}/get/${id}`)
         return this.http.get<PostDetails>(`${this.baseUrl}/get/${id}`);
     }
 
@@ -47,6 +46,12 @@ export class PostDetailService {
 
     hardDeletePost(id: string): Observable<any> {
         return this.http.delete<any>(`${this.baseUrl}/hard-delete/${id}`);
+    }
+    downloadCounter(id: string): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/download-counter/${id}`);
+    }
+    updateDownloadCounter(id: string): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/update-download-counter/${id}`);
     }
 
     getAllSoftDeletedPosts(page: number): Observable<PostDetails[]> {

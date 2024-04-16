@@ -18,7 +18,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   imgParam: any;
   postDetailsDefault: PostDetails | undefined;
   postDetails: PostDetails | undefined;
-
+  totalDownload: number = 0;
   @ViewChild('imageDraw') imageDraw!: ElementRef<SVGElement | HTMLElement>;
 
   selectedIndex: number | null = null;
@@ -84,9 +84,25 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.imgParam ??= '5';
     this.imgParam && this.getPostById(this.imgParam);
   }
+
   getPostById(postId: any): void {
     this.postDetails = undefined;
     this.postDetailsDefault = undefined;
+    this.PS.downloadCounter(postId.toString())
+      .subscribe(
+        post => {
+          console.log(post)
+          if (post) {
+            const p = JSON.parse(JSON.stringify(post));
+            this.totalDownload = p.download_counter;
+          } else {
+
+          }
+        },
+        error => {
+          console.error('Error fetching post:', error);
+        }
+      )
     this.PS.getPostById(postId.toString())
       .subscribe(
         post => {
@@ -569,27 +585,29 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     // Create a new XMLSerializer object to serialize the SVG element
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svgElement);
-
-    // Set the Image source to a data URL representing the SVG element
     image.onload = () => {
-      // Draw the Image onto the canvas
       context?.drawImage(image, 0, 0);
-
-      // Convert the canvas to a data URL representing a PNG image
       const dataURL = canvas.toDataURL('image/png');
-
-      // Create a timestamp for the file name
       const timestamp = new Date().toISOString().replace(/:/g, '-');
-
-      // Create the file name
       const fileName = `IMG-${timestamp}.png`;
-
-      // Create a temporary anchor element
       const link = document.createElement('a');
       link.href = dataURL;
       link.download = fileName;
+      this.PS.updateDownloadCounter(this.imgParam)
+      .subscribe(
+        post => {
+          console.log(post)
+          if (post) {
+            const p = JSON.parse(JSON.stringify(post));
+            this.totalDownload = p.download_counter;
+          } else {
 
-      // Simulate a click on the anchor element to trigger the download
+          }
+        },
+        error => {
+          console.error('Error fetching post:', error);
+        }
+      )
       link.click();
     };
 
@@ -655,18 +673,14 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     // Define a promise to handle image loading
     return new Promise<string>((resolve, reject) => {
       image.onload = () => {
-        // Draw the Image onto the canvas
         context.drawImage(image, 0, 0);
-
-        // Convert the canvas to a data URL representing a PNG image
         const dataURL = canvas.toDataURL('image/png');
         resolve(dataURL);
       };
-
-      // Set the source of the image after defining the onload handler
       image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
     });
   }
+
   textFormat(text: string): string[] {
     const formattedText = text.replace(/\n/g, '\n').replace(/\n(?!\*{3})/g, '***\n');
     const lines = formattedText.split('\n');

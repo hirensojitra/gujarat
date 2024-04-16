@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Meta } from '@angular/platform-browser';
+import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
@@ -7,7 +7,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
     providedIn: 'root'
   })
   export class MetadataService {
-    constructor(private meta: Meta, private router: Router, private route: ActivatedRoute) {}
+    constructor(private meta: Meta, private router: Router, private route: ActivatedRoute, private titleService: Title) {}
   
     setMetadata(): void {
       this.router.events.pipe(
@@ -23,7 +23,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
       ).subscribe(data => {
         this.meta.updateTag({ name: 'description', content: (data as any).description });
         this.meta.updateTag({ property: 'og:title', content: (data as any).title });
-        alert()
+        this.titleService.setTitle((data as any).title);
       });
     }
   }
