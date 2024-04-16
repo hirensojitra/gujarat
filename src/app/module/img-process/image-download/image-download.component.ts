@@ -15,6 +15,7 @@ interface data {
   styleUrls: ['./image-download.component.scss']
 })
 export class ImageDownloadComponent implements AfterViewInit, OnInit {
+  downloaded: boolean = false;
   imgParam: any;
   postDetailsDefault: PostDetails | undefined;
   postDetails: PostDetails | undefined;
@@ -383,6 +384,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       })
 
     }
+    this.downloaded = false;
   }
   async getImageDataUrl(imageUrl: string): Promise<string> {
     try {
@@ -593,21 +595,22 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       const link = document.createElement('a');
       link.href = dataURL;
       link.download = fileName;
-      this.PS.updateDownloadCounter(this.imgParam)
-      .subscribe(
-        post => {
-          console.log(post)
-          if (post) {
-            const p = JSON.parse(JSON.stringify(post));
-            this.totalDownload = p.download_counter;
-          } else {
+      !this.downloaded && this.PS.updateDownloadCounter(this.imgParam)
+        .subscribe(
+          post => {
+            console.log(post)
+            if (post) {
+              const p = JSON.parse(JSON.stringify(post));
+              this.totalDownload = p.download_counter;
+            } else {
 
+            }
+          },
+          error => {
+            console.error('Error fetching post:', error);
           }
-        },
-        error => {
-          console.error('Error fetching post:', error);
-        }
-      )
+        )
+      this.downloaded = true;
       link.click();
     };
 
@@ -699,5 +702,48 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     const width = svgText.getBBox().width;
     document.body.removeChild(svgText);
     return width;
+  }
+  copyAddressToClipboard(): void {
+    // Check if the Clipboard API is supported
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      // If not supported, fallback to older method (e.g., document.execCommand for older browsers)
+      this.copyAddressFallback();
+      return;
+    }
+
+    // Get the current URL
+    const currentUrl = window.location.href;
+
+    // Copy the current URL to the clipboard
+    navigator.clipboard.writeText(currentUrl)
+      .then(() => {
+        console.log('Address copied to clipboard');
+      })
+      .catch(error => {
+        console.error('Error copying address to clipboard:', error);
+      });
+  }
+
+  copyAddressFallback(): void {
+    // Create a temporary input element
+    const tempInput = document.createElement('input');
+    tempInput.value = window.location.href;
+
+    // Append the input element to the document body
+    document.body.appendChild(tempInput);
+
+    // Select the input element
+    tempInput.select();
+
+    try {
+      // Execute the copy command
+      document.execCommand('copy');
+      console.log('Address copied to clipboard');
+    } catch (error) {
+      console.error('Error copying address to clipboard:', error);
+    } finally {
+      // Remove the input element from the document body
+      document.body.removeChild(tempInput);
+    }
   }
 }
