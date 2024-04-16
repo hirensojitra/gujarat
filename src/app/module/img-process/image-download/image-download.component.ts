@@ -92,7 +92,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.PS.downloadCounter(postId.toString())
       .subscribe(
         post => {
-          console.log(post)
           if (post) {
             const p = JSON.parse(JSON.stringify(post));
             this.totalDownload = p.download_counter;
@@ -125,7 +124,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   }
   async drawSVG() {
     if (this.postDetails) {
-      console.log(this.postDetails)
       const backgroundurl = await this.getImageDataUrl(this.postDetails.backgroundurl);
       const svg = this.imageDraw.nativeElement;
       while (svg.firstChild) {
@@ -142,7 +140,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       this.renderer.appendChild(svg, b);
       let s = 0;
       this.postDetails?.data.forEach((item, i) => {
-        const uniqueId = this.dataset[s]?.id || Math.random().toString(36).substr(2, 9);
+        const uniqueId = item.editable ? this.dataset[s]?.id || Math.random().toString(36).substr(2, 9) : Math.random().toString(36).substr(2, 9);
         switch (true) {
           case !!item.text:
             if (item.text) {
@@ -222,7 +220,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 'text-decoration': fontStyle.underline ? 'underline' : 'none',
                 'font-style': fontStyle.italic ? 'italic' : 'normal',
                 'opacity': opacity ? opacity.toString() : '100',
-                'data-id': uniqueId
               };
               if (backgroundColor) {
                 textAttributes['background-color'] = backgroundColor;
@@ -250,12 +247,15 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
                 this.renderer.setAttribute(t, 'transform', transformValue);
               }
-              this.dataset[s] == undefined && item.editable && this.dataset.push({ id: uniqueId, value: '' })
+              this.renderer.setAttribute(t, 'data-id', uniqueId);
+
+              if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '' }); }
               item.editable && this.renderer.listen(t, 'click', () => {
                 this.selectedIndex = i;
                 this.selectedID = uniqueId;
                 this.setText();
               });
+              if (item.editable) { s++ }
             }
             break;
           case !!item.rect:
@@ -331,14 +331,13 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 this.renderer.setAttribute(imagePattern, 'width', '100%');
                 this.renderer.setAttribute(imagePattern, 'viewBox', '0 0 ' + String(r * 2) + ' ' + String(r * 2));
                 this.renderer.setAttribute(element, 'data-id', uniqueId);
-
-                this.dataset[s] == undefined && item.editable && this.dataset.push({ id: uniqueId, value: '' })
+                if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '' }); }
                 item.editable && this.renderer.listen(element, 'click', () => {
                   this.selectedIndex = i;
                   this.selectedID = uniqueId;
                   this.setImage();
-
                 });
+                if (item.editable) { s++ }
                 const image = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
                 this.renderer.setAttribute(image, 'x', '0');
                 this.renderer.setAttribute(image, 'y', '0');
@@ -380,7 +379,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             console.log('Element data not found');
             break;
         }
-        s++;
       })
 
     }
@@ -442,7 +440,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               if (filteredItems[0]) {
                 filteredItems[0].value = v || item.text.text;
               }
-              console.log(filteredItems)
             }
           }
           return { ...item, text: { ...item.text, text: v } };
@@ -467,7 +464,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               if (filteredItems[0]) {
                 filteredItems[0].value = v || item.image.imageUrl;
               }
-              console.log(filteredItems)
             }
           }
           return { ...item, image: { ...item.image, imageUrl: v } };
@@ -481,7 +477,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
 
   checkDownload(t: string): boolean {
     for (const item of this.dataset) {
-      if (!item.value) {
+      if (item.value == '') {
         const elementToClick = this.elementRef.nativeElement.querySelector(`[data-id="${item.id}"]`);
         if (elementToClick) {
           const clickEvent = new MouseEvent('click', {
@@ -505,7 +501,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         this.capturePhoto();
         break;
     }
-    return true;
+    return true
   }
   handleImageInputChange(event: Event): void {
     const inputElement = event.target as HTMLInputElement;
@@ -598,7 +594,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       !this.downloaded && this.PS.updateDownloadCounter(this.imgParam)
         .subscribe(
           post => {
-            console.log(post)
             if (post) {
               const p = JSON.parse(JSON.stringify(post));
               this.totalDownload = p.download_counter;
@@ -690,7 +685,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     for (let i = 0; i < lines.length; i++) {
       lines[i] = lines[i].replace(/\*\*\*/g, '\u00A0');
     }
-    console.log(lines)
     return lines;
   }
   getTextWidth(text: string, fontSize: number, fontFamily: string): number {
