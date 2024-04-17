@@ -27,7 +27,8 @@ const routes: Routes = [
       description: 'Your Page Description'
     },
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'auth' },
+      { path: '', pathMatch: 'full', redirectTo: 'about-us' },
+      { path: 'about-us', loadChildren: () => import('./module/about-us/about-us.module').then(m => m.AboutUsModule) },
       { path: 'auth', loadChildren: () => import('./module/auth/auth.module').then(m => m.AuthModule) },
       { path: 'img', loadChildren: () => import('./module/img-process/img-process.module').then(m => m.ImgProcessModule) }
     ]

@@ -1,0 +1,39 @@
+.main-container {
+    height: 100vh;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+    background: #FFF;
+
+    .main-back {
+        height: 100%;
+        width: 70%;
+        background: linear-gradient(120deg, #408253 0%, #81c784 100%) !important;
+        color: #FFF;
+        position: relative;
+        z-index: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .main-back-content {
+            width: 100%;
+            position: relative;
+
+            img {
+                width: 500px;
+                max-width: 50%;
+                margin: 0 auto 2rem;
+                display: block;
+            }
+        }
+    }
+
+    .main-content {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+}
