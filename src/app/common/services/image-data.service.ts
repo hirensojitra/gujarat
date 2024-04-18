@@ -1,22 +1,21 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class ImageDataService {
-  private readonly apiUrl = 'http://localhost:8888/api';
-
-  constructor(private http: HttpClient) {}
-
-  // Fetch data from the JSON file
-  getImageData(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl);
+  private apiUrl = 'https://api.imgbb.com/1/upload';
+  private apiKey = '7271ebac17911e06d3b28f77e14f1c23';
+  constructor(private http: HttpClient) { }
+  uploadImage(image: File) {
+    const formData = new FormData();
+    formData.append('key', this.apiKey);
+    formData.append('image', image);
+    return this.http.post<any>(this.apiUrl, formData);
   }
-
-  // Update data in the JSON file
-  updateImageData(data: any[]): Observable<any> {
-    return this.http.put<any>(this.apiUrl+`/update`, data);
+  getUploadedImages() {
+    const url = 'https://api.imgbb.com/1/images?key=' + this.apiKey;
+    return this.http.get<any>(url);
   }
 }
