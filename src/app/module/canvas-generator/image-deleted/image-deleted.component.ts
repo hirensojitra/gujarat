@@ -18,7 +18,7 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
 
 
   confirmRecover: any;
-  confirmDelete: any;
+  hardDeleteModal: any;
   selectedID: string | undefined;
   constructor(private PS: PostDetailService) {
 
@@ -38,16 +38,16 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
     });
     this.confirmRecover._element.addEventListener('shown.bs.modal', () => {
     });
-    this.confirmDelete = new bootstrap.Modal(document.getElementById('confirmDelete')!, { focus: false, keyboard: false, static: false });
-    this.confirmDelete._element.addEventListener('hide.bs.modal', () => {
+    this.hardDeleteModal = new bootstrap.Modal(document.getElementById('hardDeleteModal')!, { focus: false, keyboard: false, static: false });
+    this.hardDeleteModal._element.addEventListener('hide.bs.modal', () => {
     });
-    this.confirmDelete._element.addEventListener('hidden.bs.modal', () => {
+    this.hardDeleteModal._element.addEventListener('hidden.bs.modal', () => {
       this.selectedID = undefined;
     });
-    this.confirmDelete._element.addEventListener('show.bs.modal', () => {
+    this.hardDeleteModal._element.addEventListener('show.bs.modal', () => {
 
     });
-    this.confirmDelete._element.addEventListener('shown.bs.modal', () => {
+    this.hardDeleteModal._element.addEventListener('shown.bs.modal', () => {
     });
   }
   ngAfterViewInit(): void {
@@ -59,7 +59,7 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
   }
   selectDeleteId(id: any) {
     this.selectedID = id;
-    id && this.confirmDelete.show();
+    id && this.hardDeleteModal.show();
   }
   getAllPosts(): void {
     this.PS.getAllSoftDeletedPosts(this.currentPage)
@@ -94,7 +94,7 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
       .subscribe(
         response => {
           console.log('Soft deletion successful:', response);
-          this.confirmDelete.hide();
+          this.hardDeleteModal.hide();
           window.close();
         },
         error => {

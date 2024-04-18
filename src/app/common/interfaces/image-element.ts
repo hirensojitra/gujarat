@@ -136,6 +136,7 @@ export interface PostDetails {
     w: number;
     title: string;
     backgroundurl: string;
+    download_counter:number;
     data: {
         title: string;
         editable: boolean;
@@ -147,4 +148,5 @@ export interface PostDetails {
         text?: TextElement;
         image?: ImageElement;
     }[];
+    msg?: string;
 }

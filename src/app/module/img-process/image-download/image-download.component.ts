@@ -19,9 +19,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   imgParam: any;
   postDetailsDefault: PostDetails | undefined;
   postDetails: PostDetails | undefined;
-  totalDownload: number = 0;
+  postStatus: string | undefined = 'loading';
+  isDeleted: boolean | undefined;
   @ViewChild('imageDraw') imageDraw!: ElementRef<SVGElement | HTMLElement>;
-
   selectedIndex: number | null = null;
   selectedID: string | null = null;
 
@@ -89,35 +89,28 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   getPostById(postId: any): void {
     this.postDetails = undefined;
     this.postDetailsDefault = undefined;
-    this.PS.downloadCounter(postId.toString())
-      .subscribe(
-        post => {
-          if (post) {
-            const p = JSON.parse(JSON.stringify(post));
-            this.totalDownload = p.download_counter;
-          } else {
-
-          }
-        },
-        error => {
-          console.error('Error fetching post:', error);
-        }
-      )
     this.PS.getPostById(postId.toString())
       .subscribe(
         post => {
           if (post) {
             const p = JSON.parse(JSON.stringify(post));
-            this.postDetails = post;
-            this.postDetailsDefault = p;
-            this.drawSVG()
-            this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
-            this.titleService.setTitle(this.postDetails.title);
+            this.isDeleted = post.deleted;
+            if (!post.deleted) {
+              this.postDetails = post;
+              this.postDetailsDefault = p;
+              this.drawSVG()
+              this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
+              this.titleService.setTitle(this.postDetails.title);
+              this.postStatus = 'Total Download: ' + post.download_counter
+            } else if (post.deleted && post.msg) {
+              this.postStatus = post.msg
+            }
           } else {
-
+            this.postStatus = undefined;
           }
         },
         error => {
+          this.postStatus = undefined;
           console.error('Error fetching post:', error);
         }
       );
@@ -277,12 +270,18 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               return rect;
             }
             break;
-          case !!item.circle || !!item.ellipse:
-            if (item.text) {
-
-            }
-            if (item.image) {
-
+          case !!item.circle:
+            if (item.circle) {
+              const c = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
+              const { cx, cy, r, fill, opacity } = item.circle;
+              this.renderer.setAttribute(c, 'cx', String(cx));
+              this.renderer.setAttribute(c, 'cy', String(cy));
+              this.renderer.setAttribute(c, 'r', r.toString());
+              this.renderer.setAttribute(c, 'data-type', 'circle');
+              this.renderer.setAttribute(c, 'fill', fill);
+              this.renderer.setAttribute(c, 'opacity', String(opacity));
+              this.renderer.appendChild(svg, c);
+              return c;
             }
             break;
           case !!item.image:
@@ -559,6 +558,59 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     }
     this.cropperModal.hide();
   }
+  // capturePhoto() {
+  //   // Get the SVG element
+  //   const svgElement = this.imageDraw.nativeElement;
+
+  //   // Extract viewBox dimensions
+  //   const viewBoxAttr = svgElement.getAttribute('viewBox') || '';
+  //   const viewBoxValues = viewBoxAttr.split(' ').map(Number);
+  //   const viewBoxWidth = viewBoxValues[2];
+  //   const viewBoxHeight = viewBoxValues[3];
+
+  //   // Create a new canvas element
+  //   const canvas = document.createElement('canvas');
+  //   const context = canvas.getContext('2d');
+
+  //   // Set canvas dimensions to match the viewBox dimensions
+  //   canvas.width = viewBoxWidth;
+  //   canvas.height = viewBoxHeight;
+
+  //   // Create a new Image object
+  //   const image = new Image();
+
+  //   // Create a new XMLSerializer object to serialize the SVG element
+  //   const serializer = new XMLSerializer();
+  //   const svgString = serializer.serializeToString(svgElement);
+  //   image.onload = () => {
+  //     context?.drawImage(image, 0, 0);
+  //     const dataURL = canvas.toDataURL('image/png');
+  //     const timestamp = new Date().toISOString().replace(/:/g, '-');
+  //     const fileName = `IMG-${timestamp}.png`;
+  //     const link = document.createElement('a');
+  //     link.href = dataURL;
+  //     link.download = fileName;
+  //     !this.downloaded && this.PS.updateDownloadCounter(this.imgParam)
+  //       .subscribe(
+  //         post => {
+  //           if (post) {
+  //             const p = JSON.parse(JSON.stringify(post));
+  //             this.postStatus = p.download_counter;
+  //           } else {
+
+  //           }
+  //         },
+  //         error => {
+  //           console.error('Error fetching post:', error);
+  //         }
+  //       )
+  //     this.downloaded = true;
+  //     link.click();
+  //   };
+
+  //   // Set the source of the image after defining the onload handler
+  //   image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+  // }
   capturePhoto() {
     // Get the SVG element
     const svgElement = this.imageDraw.nativeElement;
@@ -588,30 +640,52 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       const dataURL = canvas.toDataURL('image/png');
       const timestamp = new Date().toISOString().replace(/:/g, '-');
       const fileName = `IMG-${timestamp}.png`;
+
+      // Convert data URL to Blob
+      const byteString = atob(dataURL.split(',')[1]);
+      const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+      const arrayBuffer = new ArrayBuffer(byteString.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < byteString.length; i++) {
+        uint8Array[i] = byteString.charCodeAt(i);
+      }
+      const blob = new Blob([arrayBuffer], { type: mimeString });
+
+      // Create an object URL from the Blob
+      const objectURL = window.URL.createObjectURL(blob);
+
+      // Create a link element and trigger the download
       const link = document.createElement('a');
-      link.href = dataURL;
+      link.href = objectURL;
       link.download = fileName;
-      !this.downloaded && this.PS.updateDownloadCounter(this.imgParam)
-        .subscribe(
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(objectURL);
+
+      // Update download counter
+      if (!this.downloaded) {
+        this.PS.updateDownloadCounter(this.imgParam).subscribe(
           post => {
             if (post) {
               const p = JSON.parse(JSON.stringify(post));
-              this.totalDownload = p.download_counter;
-            } else {
-
+              this.postStatus = p.download_counter;
             }
           },
           error => {
             console.error('Error fetching post:', error);
           }
-        )
-      this.downloaded = true;
-      link.click();
+        );
+        this.downloaded = true;
+      }
     };
 
     // Set the source of the image after defining the onload handler
     image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
   }
+
   async shareToWhatsApp() {
     // URL of the exported image
     try {

@@ -293,7 +293,7 @@
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text b">Font Size</span>
                                                         </div>
-                                                        <input type="range" class="form-control border-0 mx-4 form-range" [attr.min]="postDetailsForm.get('w')?.value/90" [attr.max]="postDetailsForm.get('w')?.value/5" step="0.5" formControlName="fs">
+                                                        <input type="range" class="form-control border-0 mx-4 form-range" [attr.min]="postDetailsForm.get('w')?.value/90" [attr.max]="postDetailsForm.get('w')?.value/2" step="0.5" formControlName="fs">
                                                         <div class="input-group-append w-60-px">
                                                             <span class="input-group-text text-end d-block">{{
                                                                 item.get('text')?.get('fs')?.value | number:

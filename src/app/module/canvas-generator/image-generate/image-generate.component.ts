@@ -168,6 +168,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   postDetails: PostDetails = {
     "id": null,
     "deleted": false,
+    "download_counter": 0,
     "h": 1024,
     "w": 1024,
     "title": "image",
@@ -301,6 +302,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       w: [this.postDetails.w, Validators.required],
       title: [this.postDetails.title, Validators.required],
       backgroundurl: [this.postDetails.backgroundurl, Validators.required],
+      download_counter: [this.postDetails.download_counter, Validators.required],
       info: [this.postDetails.info || '', Validators.required],
       data: this.fb.array([])
     });
