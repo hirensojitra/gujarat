@@ -88,6 +88,9 @@ export class HeaderComponent {
         label:'Image Editor',
         link:'/images/generate'
       },{
+        label:'Upload Images',
+        link:'/images/uploaded-images'
+      },{
         label:'Image Deleted',
         link:'/images/deleted'
       }]

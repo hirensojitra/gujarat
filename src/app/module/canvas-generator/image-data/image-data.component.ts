@@ -9,11 +9,12 @@ declare const bootstrap: any;
   styleUrls: ['./image-data.component.scss']
 })
 export class ImageDataComponent implements OnInit {
+  cacheBuster = Math.random().toString(36).substring(7);
   selected: boolean = false;
   selectedImage: File | null = null;
   images: any[] = [];
   currentPage = 1;
-  pageSize = 2;
+  pageSize = 18;
   totalPages = 0;
   constructor(private imageDataService: ImageDataService, private imageService: ImageService) { }
   imageUrl: string | ArrayBuffer | null = null;

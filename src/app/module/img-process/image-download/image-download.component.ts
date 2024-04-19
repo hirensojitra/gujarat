@@ -2,8 +2,10 @@ import { AfterViewInit, Component, ElementRef, OnInit, Renderer2, ViewChild } fr
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { PostDetails } from 'src/app/common/interfaces/image-element';
+import { PostDetails, TextElement, TextShadow } from 'src/app/common/interfaces/image-element';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
+import * as opentype from 'opentype.js';
+
 declare const bootstrap: any;
 interface data {
   id: string;
@@ -15,6 +17,70 @@ interface data {
   styleUrls: ['./image-download.component.scss']
 })
 export class ImageDownloadComponent implements AfterViewInit, OnInit {
+  fontPaths: { [family: string]: { [weight: string]: string } } = {};
+  fontFamilies = [
+    {
+      "family": "Anek Gujarati",
+      "variables": ["100", "200", "300", "400", "500", "600", "700", "800"],
+      "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black"]
+    },
+    {
+      "family": "Baloo Bhai 2",
+      "variables": ["400", "500", "600", "700", "800"],
+      "names": ["Regular", "Medium", "SemiBold", "Bold", "Black"]
+    },
+    {
+      "family": "Farsan",
+      "variables": [],
+      "names": []
+    },
+    {
+      "family": "Hind Vadodara",
+      "variables": ["300", "400", "500", "600", "700"],
+      "names": ["Light", "Regular", "Medium", "SemiBold", "Bold"]
+    },
+    {
+      "family": "Kumar One",
+      "variables": [],
+      "names": []
+    },
+    {
+      "family": "Kumar One Outline",
+      "variables": [],
+      "names": []
+    },
+    {
+      "family": "Mogra",
+      "variables": [],
+      "names": []
+    },
+    {
+      "family": "Mukta Vaani",
+      "variables": ["200", "300", "400", "500", "600", "700", "800"],
+      "names": ["ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black"]
+    },
+    {
+      "family": "Noto Sans Gujarati",
+      "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black", "Black"]
+    },
+    {
+      "family": "Noto Serif Gujarati",
+      "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black", "Black"]
+    },
+    {
+      "family": "Rasa",
+      "variables": ["0", "300", "400", "500", "600", "700", "1"],
+      "names": ["Thin", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black"]
+    },
+    {
+      "family": "Shrikhand",
+      "variables": [],
+      "names": []
+    }
+  ]
+
   downloaded: boolean = false;
   imgParam: any;
   postDetailsDefault: PostDetails | undefined;
@@ -59,6 +125,15 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     })
   }
   ngOnInit(): void {
+    this.fontFamilies.forEach(fontFamily => {
+      const folder = fontFamily.family.replace(/\s/g, '_');
+      const file = fontFamily.family.replace(/\s/g, '');
+      fontFamily.variables.forEach((weight, index) => {
+        this.fontPaths[fontFamily.family] = this.fontPaths[fontFamily.family] || {};
+        this.fontPaths[fontFamily.family][weight] = `${folder}/${file}-${fontFamily.names[index]}`;
+      });
+    });
+
     this.textModal = new bootstrap.Modal(document.getElementById('textModal')!, { focus: false, keyboard: false, static: false });
     this.textModal._element.addEventListener('hide.bs.modal', () => {
       this.inputTextForm.reset();
@@ -119,6 +194,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     if (this.postDetails) {
       const backgroundurl = await this.getImageDataUrl(this.postDetails.backgroundurl);
       const svg = this.imageDraw.nativeElement;
+      const svgDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs') as SVGDefsElement;
       while (svg.firstChild) {
         svg.removeChild(svg.firstChild);
       }
@@ -130,9 +206,10 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       this.renderer.setAttribute(b, 'height', '100%'); // Set height to 100%
       this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
       this.renderer.setAttribute(b, 'href', backgroundurl);
+      this.renderer.appendChild(svg, svgDefs);
       this.renderer.appendChild(svg, b);
       let s = 0;
-      this.postDetails?.data.forEach((item, i) => {
+      this.postDetails?.data.forEach(async (item, i) => {
         const uniqueId = item.editable ? this.dataset[s]?.id || Math.random().toString(36).substr(2, 9) : Math.random().toString(36).substr(2, 9);
         switch (true) {
           case !!item.text:
@@ -198,7 +275,44 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                   });
                 }
               }
-              this.renderer.appendChild(svg, t);
+
+              // switch (fontFamily) {
+              //   case "Hind Vadodara":
+              //     let f = "Hind_Vadodara/"
+              //     let a: boolean = false;
+              //     switch (fw) {
+              //       case '300':
+              //         f += 'HindVadodara-Light';
+              //         a = true;
+              //         break;
+              //       case '400':
+              //         f += 'HindVadodara-Regular';
+              //         a = true;
+              //         break;
+              //       case '500':
+              //         f += 'HindVadodara-Medium';
+              //         a = true;
+              //         break;
+              //       case '600':
+              //         f += 'HindVadodara-SemiBold';
+              //         a = true;
+              //         break;
+              //       case '700':
+              //         f += 'HindVadodara-Bold';
+              //         a = true;
+              //         break;
+
+              //       default:
+              //         break;
+              //     }
+              //     if (a) { fontLink = f }
+
+              //     break;
+
+              //   default:
+              //     break;
+              // }
+
               let textAttributes: Record<string, string> = {
                 'data-type': 'text',
                 'x': x.toString(),
@@ -228,7 +342,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 'text-transform': textTransformation || 'none'
               };
               if (textShadow.enable) {
-                textStyles['text-shadow'] = `${textShadow.offsetX}px ${textShadow.offsetY}px ${textShadow.blur}px ${textShadow.color}` || 'none'
+                textAttributes['filter'] = `drop-shadow(${textShadow.offsetX}px ${textShadow.offsetY}px ${textShadow.blur}px ${textShadow.color})` || 'none'
               }
               Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(t, key, value));
               Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(t, key, value));
@@ -248,7 +362,13 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 this.selectedID = uniqueId;
                 this.setText();
               });
-              if (item.editable) { s++ }
+              if (item.editable) { s++;
+                
+              this.renderer.appendChild(svg, t);
+               } else {
+                const fontLink = this.getFontPath(fontFamily, fw) || 'Hind_Vadodara/HindVadodara-Regular';
+                this.generateSVGPathData(item.text, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement)
+              }
             }
             break;
           case !!item.rect:
@@ -342,7 +462,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 this.renderer.setAttribute(image, 'y', '0');
                 this.renderer.setAttribute(image, 'width', String(r * 2));
                 this.renderer.setAttribute(image, 'height', String(r * 2));
-                this.renderer.setAttribute(image, 'href', imageUrl);
+                this.renderer.setAttribute(image, 'href', await this.getImageDataUrl(imageUrl));
 
                 this.renderer.appendChild(imagePattern, image);
                 this.renderer.appendChild(svg, imagePattern);
@@ -810,8 +930,79 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     } catch (error) {
       console.error('Error copying address to clipboard:', error);
     } finally {
-      // Remove the input element from the document body
       document.body.removeChild(tempInput);
     }
   }
+  generateSVGPathData(textData: TextElement, fontUrl: string, svgContainer: SVGElement) {
+    opentype.load(fontUrl, (err, font) => {
+      if (err) {
+        console.error('Font loading failed', err);
+        return;
+      }
+
+      const fontSize = textData.fs;
+      const pathData = [];
+      let xOffset = textData.x; // Start x position from the text data
+      let yOffset = textData.y; // Start y position from the text data
+      const svgDefs = this.elementRef.nativeElement.querySelector('defs');
+      if (font) {
+        for (let i = 0; i < textData.text.length; i++) {
+          const char = textData.text[i];
+          const glyph = font.charToGlyph(char);
+          const glyphPath = glyph.getPath(xOffset, yOffset, fontSize);
+          pathData.push(glyphPath.toPathData(5));
+          if (glyph.advanceWidth) {
+            xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
+          }
+        }
+
+        const svgPathData = pathData.join(' ');
+        const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathElement.setAttribute('d', svgPathData);
+        for (const prop in textData) {
+          if (Object.prototype.hasOwnProperty.call(textData, prop) && prop !== 'text') {
+            const propValue = textData[prop as keyof TextElement];
+            if (propValue !== undefined && propValue !== null) {
+              let p: string | null = null;
+              let v: string | null = null
+              switch (prop) {
+                case 'color':
+                  p = 'fill';
+                  v = propValue as string;
+                  break;
+                case 'letterSpacing':
+                  break;
+                case 'lineHeight':
+                  break;
+                case 'textTransform':
+                  break;
+                case 'textShadow':
+                  p = 'filter';
+                  const t = propValue as TextShadow
+                  v = `drop-shadow(${t.offsetX}px ${t.offsetY}px ${t.blur}px ${t.color})` || 'none';
+                  break; // Handle textShadow separately if needed
+                default:
+                  break;
+              }
+              if (p && v) {
+                pathElement.setAttribute(p, v); // Convert propValue to string
+              }
+            }
+          }
+        }
+        svgContainer.appendChild(pathElement);
+      }
+    });
+  }
+
+
+
+
+
+  getFontPath(fontFamily: string, fontWeight: string): string {
+    const family = this.fontPaths[fontFamily];
+    return family ? family[fontWeight] || 'Hind_Vadodara/HindVadodara-Regular' : 'Hind_Vadodara/HindVadodara-Regular';
+  }
+
+
 }

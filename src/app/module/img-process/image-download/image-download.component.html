@@ -4,7 +4,7 @@
         <p class="text-center mb-4 lh-base" *ngIf="this.postDetails.info">{{this.postDetails.info}}</p>
     </ng-container>
     <div class="flex-grow-1 position-relative overflow-hidden">
-        <div class="position-absolute h-100 w-100 text-center d-flex align-items-center justify-content-center overflow-auto" id="canvas-container">
+        <div class="position-absolute h-100 w-100 text-center d-flex align-items-center justify-content-center overflow-auto flex-column" id="canvas-container">
             <svg #imageDraw class="max-w-100 max-h-100" *ngIf="postStatus && !isDeleted"></svg>
             <img class="max-w-100 max-h-100 rounded-4" *ngIf="!postStatus || isDeleted" src="assets/images/svg/no-post.svg" />
         </div>

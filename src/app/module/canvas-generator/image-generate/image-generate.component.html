@@ -260,8 +260,7 @@
                                                     <input type="text" id="stroke" class="form-control" formControlName="stroke">
                                                 </div>
                                                 <div class="form-group col-6">
-                                                    <label for="strokeWidth" class="form-label">Stroke
-                                                        Width</label>
+                                                    <label for="strokeWidth" class="form-label">Stroke Width</label>
                                                     <input type="text" id="strokeWidth" class="form-control" formControlName="strokeWidth">
                                                 </div>
                                                 <div class="form-group col-6">
@@ -595,7 +594,7 @@
                                                         Width</label>
                                                     <input type="number" id="borderWidth" class="form-control" formControlName="borderWidth">
                                                 </div>
-                                                <div class="form-group col-6">
+                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'dimension')">
                                                     <label for="shape" class="form-label">Shape</label>
                                                     <input type="text" id="shape" class="form-control" formControlName="shape">
                                                 </div>
@@ -612,7 +611,7 @@
                                                     <input type="range" [id]="'rotate'+i" class="form-range" min="0" max="360" step="1" formControlName="rotate">
                                                 </div>
                                                 <ng-container formGroupName="svgProperties">
-                                                    <div class="col-6">
+                                                    <div class="col-6 d-none" >
                                                         <div class="form-group">
                                                             <label class="form-label d-block">Fill</label>
                                                             <div class="btn-group rounded-0 d-block" role="group" data-toggle="buttons">
@@ -629,15 +628,14 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-6 d-flex align-items-end">
+                                                    <div class="col-6 d-flex align-items-end d-none">
                                                         <input type="text" class="form-control" [value]="item.get('image')?.get('svgProperties')?.get('fill')?.value" (input)="updateColor($event, item.get('image')?.get('svgProperties')?.get('fill'))">
                                                     </div>
-                                                    <div class="form-group col-6">
-                                                        <label for="stroke" class="form-label">Stroke
-                                                            Color</label>
+                                                    <div class="form-group col-6 d-none">
+                                                        <label for="stroke" class="form-label">Stroke Color</label>
                                                         <input type="text" id="stroke" class="form-control" formControlName="stroke">
                                                     </div>
-                                                    <div class="form-group col-6">
+                                                    <div class="form-group col-6 d-none">
                                                         <label for="strokeWidth" class="form-label">Stroke
                                                             Width</label>
                                                         <input type="number" id="strokeWidth" class="form-control" formControlName="strokeWidth">

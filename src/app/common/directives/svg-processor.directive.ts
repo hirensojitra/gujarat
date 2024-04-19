@@ -263,8 +263,12 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         // if (svgProperties) {
         //   Object.keys(svgProperties).forEach(key => {
         //     const propertyKey = key as keyof SvgProperties;
-        //     const attributeValue = svgProperties[propertyKey];
-        //     this.renderer.setAttribute(element!, propertyKey, String(attributeValue));
+        //     let attributeValue = svgProperties[propertyKey];
+        //     if (propertyKey == 'fill') {
+        //       attributeValue = (attributeValue == 'none' || !attributeValue) ? `url(#${id})` : attributeValue;
+        //     }
+        //     !(propertyKey == 'stroke') && this.renderer.setAttribute(element!, propertyKey, String(attributeValue));
+
         //   });
         // }
         this.renderer.appendChild(svg, element);
@@ -297,7 +301,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         'alignment-baseline': d.text.alignmentBaseline || 'middle',
         'dominant-baseline': 'reset-size',
         'font-family': d.text.fontFamily ? "'" + d.text.fontFamily + "', sans-serif" : "'Hind Vadodara', sans-serif",
-        'font-weight': d.text.fw || 'normal',
+        'font-weight': d.text.fw || '400',
         'text-decoration': d.text.fontStyle.underline ? 'underline' : 'none',
         'font-style': d.text.fontStyle.italic ? 'italic' : 'normal',
         'opacity': d.text.opacity ? d.text.opacity.toString() : '100',
@@ -340,12 +344,12 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       // Apply other text styles
       let textStyles: Record<string, string> = {
         '-webkit-user-select': 'none',
-        'letter-spacing': d.text.letterSpacing ? `${d.text.letterSpacing}px` : 'normal',
-        'line-height': d.text.lineHeight ? `${d.text.lineHeight}` : 'normal',
+        'letter-spacing': d.text.letterSpacing ? `${d.text.letterSpacing}px` : '0',
+        'line-height': d.text.lineHeight ? `${d.text.lineHeight}` : '1.5',
         'text-transform': d.text.textTransformation || 'none'
       };
       if (d.text.textShadow.enable) {
-        textStyles['text-shadow'] = `${d.text.textShadow.offsetX}px ${d.text.textShadow.offsetY}px ${d.text.textShadow.blur}px ${d.text.textShadow.color}` || 'none'
+        textAttributes['filter'] = `drop-shadow(${textShadow.offsetX}px ${textShadow.offsetY}px ${textShadow.blur}px ${textShadow.color})` || 'none'
       }
       Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(t, key, value));
       Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(t, key, value));
