@@ -423,17 +423,20 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         svg.removeChild(child);
       }
     }
-    const elements: SVGSVGElement[] = []
+    const elements: SVGSVGElement| SVGPathElement[] = []
     data.forEach(async (d, i) => {
+      const svg = this.el.nativeElement as SVGSVGElement | null;
       (d.rect) && elements.push(this.createRect(d, i));
       (d.circle) && elements.push(this.createCircle(d, i));
       (d.ellipse) && elements.push(this.createEllipse(d, i));
       (d.line) && elements.push(this.createLine(d, i));
       (d.image) && elements.push(this.createImage(d, i));
       if (d.text) {
-        const svgElement = await this.generateSVGPathData(d, svg);
+        const svgElement = await this.generateSVGPathData(d);
         if (svgElement) {
+          this.renderer.appendChild(svg, svgElement);
           elements.push(svgElement);
+          console.log(svgElement)
         } else {
           console.error('Failed to generate SVG path data for element:', d);
         }
@@ -761,7 +764,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     return registeredEvents;
   }
 
-  async generateSVGPathData(t: { title: string; editable: boolean; boxed: boolean; text?: TextElement; }, svgContainer: SVGElement): Promise<SVGSVGElement> {
+  async generateSVGPathData(t: { title: string; editable: boolean; boxed: boolean; text?: TextElement; }): Promise<SVGPathElement> {
     try {
 
       if (!t.text) {
@@ -816,6 +819,8 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         const svgPathData = pathData.join(' ');
         const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         pathElement.setAttribute('d', svgPathData);
+
+        // Create SVG element
         const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svgElement.appendChild(pathElement);
 
@@ -850,8 +855,8 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
             }
           }
         }
-        this.renderer.appendChild(svgElement, pathElement);
-        return svgElement;
+        this.renderer.setAttribute(pathElement, 'data-type', 'text')
+        return pathElement;
       }
     } catch (error) {
       console.error('Error generating SVG path data:', error);
