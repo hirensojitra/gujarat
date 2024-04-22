@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { PostDetails, TextElement, TextShadow } from 'src/app/common/interfaces/image-element';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
 import * as opentype from 'opentype.js';
+import { FontService } from 'src/app/common/services/fonts.service';
 
 declare const bootstrap: any;
 interface data {
@@ -17,69 +18,7 @@ interface data {
   styleUrls: ['./image-download.component.scss']
 })
 export class ImageDownloadComponent implements AfterViewInit, OnInit {
-  fontPaths: { [family: string]: { [weight: string]: string } } = {};
-  fontFamilies = [
-    {
-      "family": "Anek Gujarati",
-      "variables": ["100", "200", "300", "400", "500", "600", "700", "800"],
-      "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black"]
-    },
-    {
-      "family": "Baloo Bhai 2",
-      "variables": ["400", "500", "600", "700", "800"],
-      "names": ["Regular", "Medium", "SemiBold", "Bold", "Black"]
-    },
-    {
-      "family": "Farsan",
-      "variables": [],
-      "names": []
-    },
-    {
-      "family": "Hind Vadodara",
-      "variables": ["300", "400", "500", "600", "700"],
-      "names": ["Light", "Regular", "Medium", "SemiBold", "Bold"]
-    },
-    {
-      "family": "Kumar One",
-      "variables": [],
-      "names": []
-    },
-    {
-      "family": "Kumar One Outline",
-      "variables": [],
-      "names": []
-    },
-    {
-      "family": "Mogra",
-      "variables": [],
-      "names": []
-    },
-    {
-      "family": "Mukta Vaani",
-      "variables": ["200", "300", "400", "500", "600", "700", "800"],
-      "names": ["ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black"]
-    },
-    {
-      "family": "Noto Sans Gujarati",
-      "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-      "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black", "Black"]
-    },
-    {
-      "family": "Noto Serif Gujarati",
-      "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-      "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black", "Black"]
-    },
-    {
-      "family": "Rasa",
-      "variables": ["0", "300", "400", "500", "600", "700", "1"],
-      "names": ["Thin", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black"]
-    },
-    {
-      "family": "Shrikhand",
-      "variables": [],
-      "names": []
-    }
-  ]
+
 
   downloaded: boolean = false;
   imgParam: any;
@@ -113,7 +52,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     private fb: FormBuilder,
     private elementRef: ElementRef,
     private meta: Meta,
-    private titleService: Title) {
+    private titleService: Title,
+    private fontService: FontService) {
     this.route.queryParams.subscribe(params => {
       this.imgParam = params['img'];
     });
@@ -125,15 +65,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     })
   }
   ngOnInit(): void {
-    this.fontFamilies.forEach(fontFamily => {
-      const folder = fontFamily.family.replace(/\s/g, '_');
-      const file = fontFamily.family.replace(/\s/g, '');
-      fontFamily.variables.forEach((weight, index) => {
-        this.fontPaths[fontFamily.family] = this.fontPaths[fontFamily.family] || {};
-        this.fontPaths[fontFamily.family][weight] = `${folder}/${file}-${fontFamily.names[index]}`;
-      });
-    });
-
     this.textModal = new bootstrap.Modal(document.getElementById('textModal')!, { focus: false, keyboard: false, static: false });
     this.textModal._element.addEventListener('hide.bs.modal', () => {
       this.inputTextForm.reset();
@@ -161,38 +92,45 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.imgParam && this.getPostById(this.imgParam);
   }
 
-  getPostById(postId: any): void {
+  async getPostById(postId: any): Promise<void> {
     this.postDetails = undefined;
     this.postDetailsDefault = undefined;
-    this.PS.getPostById(postId.toString())
-      .subscribe(
-        post => {
-          if (post) {
-            const p = JSON.parse(JSON.stringify(post));
-            this.isDeleted = post.deleted;
-            if (!post.deleted) {
-              this.postDetails = post;
-              this.postDetailsDefault = p;
-              this.drawSVG()
-              this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
-              this.titleService.setTitle(this.postDetails.title);
-              this.postStatus = 'Total Download: ' + post.download_counter
-            } else if (post.deleted && post.msg) {
-              this.postStatus = post.msg
+    try {
+      const post: PostDetails = await this.PS.getPostById(postId.toString()).toPromise() as PostDetails;
+      if (post) {
+        console.log(post)
+        const p = JSON.parse(JSON.stringify(post));
+        this.isDeleted = post.deleted;
+        if (!post.deleted) {
+          const bg = await this.getImageDataUrl(post.backgroundurl);
+          await Promise.all(bg);
+          post.backgroundurl = bg;
+          const imageDataPromises = post.data.map(async (item) => {
+            if (item.image && item.image.imageUrl) {
+              item.image.imageUrl = await this.getImageDataUrl(item.image.imageUrl);
             }
-          } else {
-            this.postStatus = undefined;
-          }
-        },
-        error => {
-          this.postStatus = undefined;
-          console.error('Error fetching post:', error);
+          });
+          await Promise.all(imageDataPromises);
+          this.postDetails = post;
+          this.postDetailsDefault = p;
+          this.drawSVG();
+          this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
+          this.titleService.setTitle(this.postDetails.title);
+          this.postStatus = 'Total Download: ' + post.download_counter;
+        } else if (post.deleted && post.msg) {
+          this.postStatus = post.msg;
         }
-      );
+      } else {
+        this.postStatus = undefined;
+      }
+    } catch (error) {
+      this.postStatus = undefined;
+      console.error('Error fetching post:', error);
+    }
   }
   async drawSVG() {
     if (this.postDetails) {
-      const backgroundurl = await this.getImageDataUrl(this.postDetails.backgroundurl);
+      const backgroundurl = this.postDetails.backgroundurl;
       const svg = this.imageDraw.nativeElement;
       const svgDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs') as SVGDefsElement;
       while (svg.firstChild) {
@@ -357,17 +295,13 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               this.renderer.setAttribute(t, 'data-id', uniqueId);
 
               if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '' }); }
-              item.editable && this.renderer.listen(t, 'click', () => {
-                this.selectedIndex = i;
-                this.selectedID = uniqueId;
-                this.setText();
-              });
-              if (item.editable) { s++;
-                
+
               this.renderer.appendChild(svg, t);
-               } else {
-                const fontLink = this.getFontPath(fontFamily, fw) || 'Hind_Vadodara/HindVadodara-Regular';
-                this.generateSVGPathData(item.text, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement)
+              const fontLink = this.getFontPath(fontFamily, fw) || 'Hind_Vadodara/HindVadodara-Regular';
+              await this.generateSVGPathData(item, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement, uniqueId, s)
+              if (item.editable) {
+                s++;
+              } else {
               }
             }
             break;
@@ -462,7 +396,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 this.renderer.setAttribute(image, 'y', '0');
                 this.renderer.setAttribute(image, 'width', String(r * 2));
                 this.renderer.setAttribute(image, 'height', String(r * 2));
-                this.renderer.setAttribute(image, 'href', await this.getImageDataUrl(imageUrl));
+                this.renderer.setAttribute(image, 'href', imageUrl);
 
                 this.renderer.appendChild(imagePattern, image);
                 this.renderer.appendChild(svg, imagePattern);
@@ -727,150 +661,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       this.downloaded = true;
       link.click();
     };
-
-    // Set the source of the image after defining the onload handler
     image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
-  }
-  // capturePhoto() {
-  //   // Get the SVG element
-  //   const svgElement = this.imageDraw.nativeElement;
-
-  //   // Extract viewBox dimensions
-  //   const viewBoxAttr = svgElement.getAttribute('viewBox') || '';
-  //   const viewBoxValues = viewBoxAttr.split(' ').map(Number);
-  //   const viewBoxWidth = viewBoxValues[2];
-  //   const viewBoxHeight = viewBoxValues[3];
-
-  //   // Create a new canvas element
-  //   const canvas = document.createElement('canvas');
-  //   const context = canvas.getContext('2d');
-
-  //   // Set canvas dimensions to match the viewBox dimensions
-  //   canvas.width = viewBoxWidth;
-  //   canvas.height = viewBoxHeight;
-
-  //   // Create a new Image object
-  //   const image = new Image();
-
-  //   // Create a new XMLSerializer object to serialize the SVG element
-  //   const serializer = new XMLSerializer();
-  //   const svgString = serializer.serializeToString(svgElement);
-  //   image.onload = () => {
-  //     context?.drawImage(image, 0, 0);
-  //     const dataURL = canvas.toDataURL('image/png');
-  //     const timestamp = new Date().toISOString().replace(/:/g, '-');
-  //     const fileName = `IMG-${timestamp}.png`;
-
-  //     // Convert data URL to Blob
-  //     const byteString = atob(dataURL.split(',')[1]);
-  //     const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
-  //     const arrayBuffer = new ArrayBuffer(byteString.length);
-  //     const uint8Array = new Uint8Array(arrayBuffer);
-  //     for (let i = 0; i < byteString.length; i++) {
-  //       uint8Array[i] = byteString.charCodeAt(i);
-  //     }
-  //     const blob = new Blob([arrayBuffer], { type: mimeString });
-
-  //     // Create an object URL from the Blob
-  //     const objectURL = window.URL.createObjectURL(blob);
-
-  //     // Create a link element and trigger the download
-  //     const link = document.createElement('a');
-  //     link.href = objectURL;
-  //     link.download = fileName;
-  //     document.body.appendChild(link);
-  //     link.click();
-
-  //     // Clean up
-  //     document.body.removeChild(link);
-  //     window.URL.revokeObjectURL(objectURL);
-
-  //     // Update download counter
-  //     if (!this.downloaded) {
-  //       this.PS.updateDownloadCounter(this.imgParam).subscribe(
-  //         post => {
-  //           if (post) {
-  //             const p = JSON.parse(JSON.stringify(post));
-  //             this.postStatus = p.download_counter;
-  //           }
-  //         },
-  //         error => {
-  //           console.error('Error fetching post:', error);
-  //         }
-  //       );
-  //       this.downloaded = true;
-  //     }
-  //   };
-
-  //   // Set the source of the image after defining the onload handler
-  //   image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
-  // }
-
-  async shareToWhatsApp() {
-    // URL of the exported image
-    try {
-      const imageUrl = await this.getImageDataURL();
-      if (imageUrl) {
-        // Description to be shared
-        const description = 'Check out this image!';
-
-        // URL of the current window
-        const currentUrl = window.location.href;
-
-        // Construct the WhatsApp message
-        const message = `${description}\n${currentUrl}`;
-
-        // Construct the WhatsApp sharing URL
-        const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}&image=${encodeURIComponent(imageUrl)}`;
-
-        // Open the WhatsApp sharing URL
-        window.open(whatsappUrl, '_blank');
-      } else {
-        console.error('Failed to retrieve image data URL.');
-      }
-    } catch (error) {
-      console.error('Error capturing photo:', error);
-    }
-  }
-  async getImageDataURL(): Promise<string | null> {
-    // Get the SVG element
-    const svgElement = this.imageDraw.nativeElement;
-
-    // Create a new canvas element
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-
-    if (!context) {
-      console.error('Canvas context is not available.');
-      return null;
-    }
-
-    // Extract viewBox dimensions
-    const viewBoxAttr = svgElement.getAttribute('viewBox') || '';
-    const viewBoxValues = viewBoxAttr.split(' ').map(Number);
-    const viewBoxWidth = viewBoxValues[2];
-    const viewBoxHeight = viewBoxValues[3];
-
-    // Set canvas dimensions to match the viewBox dimensions
-    canvas.width = viewBoxWidth;
-    canvas.height = viewBoxHeight;
-
-    // Create a new Image object
-    const image = new Image();
-
-    // Create a new XMLSerializer object to serialize the SVG element
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svgElement);
-
-    // Define a promise to handle image loading
-    return new Promise<string>((resolve, reject) => {
-      image.onload = () => {
-        context.drawImage(image, 0, 0);
-        const dataURL = canvas.toDataURL('image/png');
-        resolve(dataURL);
-      };
-      image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
-    });
   }
 
   textFormat(text: string): string[] {
@@ -933,29 +724,52 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       document.body.removeChild(tempInput);
     }
   }
-  generateSVGPathData(textData: TextElement, fontUrl: string, svgContainer: SVGElement) {
-    opentype.load(fontUrl, (err, font) => {
-      if (err) {
-        console.error('Font loading failed', err);
+  async generateSVGPathData(t: { title: string; editable: boolean; boxed: boolean; text?: TextElement; }, fontUrl: string, svgContainer: SVGElement, elementId: string, i: number) {
+    try {
+      const font = await this.loadFont(fontUrl);
+      if (!font || !t.text) {
+        console.error('Font loading failed');
         return;
-      }
+      } else {
+        const textData = t.text;
+        const fontSize = textData.fs;
+        const pathData = [];
+        const yOffset = textData.y; // Start y position from the text data
+        const lines = textData.text.split('\n');
 
-      const fontSize = textData.fs;
-      const pathData = [];
-      let xOffset = textData.x; // Start x position from the text data
-      let yOffset = textData.y; // Start y position from the text data
-      const svgDefs = this.elementRef.nativeElement.querySelector('defs');
-      if (font) {
-        for (let i = 0; i < textData.text.length; i++) {
-          const char = textData.text[i];
-          const glyph = font.charToGlyph(char);
-          const glyphPath = glyph.getPath(xOffset, yOffset, fontSize);
-          pathData.push(glyphPath.toPathData(5));
-          if (glyph.advanceWidth) {
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+          const line = lines[lineIndex];
+          const lineHeightFactor = textData.lineHeight; // Line height factor (e.g., 1.5 for 1.5 times the font size)
+          const ascent = font.ascender / font.unitsPerEm * fontSize;
+          const descent = font.descender / font.unitsPerEm * fontSize;
+          const lineHeight = (ascent - descent) * lineHeightFactor;
+          let yoff = yOffset + lineHeight * lineIndex; // Calculate y offset with line height
+
+          let xOffset = textData.x;
+
+          // Adjust xOffset based on text alignment
+          switch (textData.textAnchor) {
+            case 'middle':
+              xOffset -= font.getAdvanceWidth(line, fontSize) / 2; // Center align
+              break;
+            case 'end':
+              xOffset -= font.getAdvanceWidth(line, fontSize); // End align
+              break;
+            case 'start':
+            default:
+              break; // Start align (default) does not need adjustment
+          }
+
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const glyph = font.charToGlyph(char);
+            const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
+            pathData.push(glyphPath.toPathData(5));
+
+            // Update xOffset for the next character
             xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
           }
         }
-
         const svgPathData = pathData.join(' ');
         const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         pathElement.setAttribute('d', svgPathData);
@@ -990,19 +804,43 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             }
           }
         }
-        svgContainer.appendChild(pathElement);
+        if (svgContainer) {
+          const existingElement = svgContainer.querySelector(`[data-id="${elementId}"]`)
+          if (existingElement) {
+            svgContainer.replaceChild(pathElement, existingElement);
+            this.renderer.setAttribute(pathElement, 'data-id', elementId);
+            t.editable && this.renderer.listen(pathElement, 'click', () => {
+              this.selectedIndex = i;
+              this.selectedID = elementId;
+              this.setText();
+            });
+          } else {
+            console.error('Text element with ID "xyz" not found in SVG container');
+          }
+        } else {
+          console.error('SVG container with ID', elementId, 'not found');
+        }
       }
+
+
+    } catch (error) {
+      console.error('Error generating SVG path data:', error);
+      throw error; // Propagate the error
+    }
+  }
+
+  loadFont(fontUrl: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      opentype.load(fontUrl, (err, font) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(font);
+        }
+      });
     });
   }
-
-
-
-
-
   getFontPath(fontFamily: string, fontWeight: string): string {
-    const family = this.fontPaths[fontFamily];
-    return family ? family[fontWeight] || 'Hind_Vadodara/HindVadodara-Regular' : 'Hind_Vadodara/HindVadodara-Regular';
+    return this.fontService.getFontPath(fontFamily, fontWeight);
   }
-
-
 }

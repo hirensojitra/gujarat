@@ -12,7 +12,6 @@
                         <input type="checkbox" [value]="image.selected" (change)="onImageSelectionChange(image)" [id]="image.id" class="d-none">
                         <label [for]="image.id" class="h-100 w-100 d-flex flex-column" [title]="image.filename">
                             <div class="flex-grow-1 bg-light">
-                                <!-- Append cache buster parameter to the image URL -->
                                 <img [src]="(image.medium_url || image.thumb_url) + '?v=' + cacheBuster" alt="Image" class="img-fluid m-auto d-block">
                             </div>
                             <div class="d-flex w-100 justify-content-between align-items-center py-1 px-2 bg-dark text-white">
