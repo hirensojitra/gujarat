@@ -7,6 +7,7 @@ import { PostDetailService } from 'src/app/common/services/post-detail.service';
 import * as opentype from 'opentype.js';
 import { FontService } from 'src/app/common/services/fonts.service';
 
+declare var makerjs: any;
 declare const bootstrap: any;
 interface data {
   id: string;
@@ -64,7 +65,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       image: ['']
     })
   }
-  ngOnInit(): void {
+  async ngOnInit(){
     this.textModal = new bootstrap.Modal(document.getElementById('textModal')!, { focus: false, keyboard: false, static: false });
     this.textModal._element.addEventListener('hide.bs.modal', () => {
       this.inputTextForm.reset();
@@ -103,7 +104,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         this.isDeleted = post.deleted;
         if (!post.deleted) {
           const bg = await this.getImageDataUrl(post.backgroundurl);
-          await Promise.all(bg);
           post.backgroundurl = bg;
           const imageDataPromises = post.data.map(async (item) => {
             if (item.image && item.image.imageUrl) {
@@ -734,8 +734,11 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         const textData = t.text;
         const fontSize = textData.fs;
         const pathData = [];
-        const yOffset = textData.y; // Start y position from the text data
+        const yOffset = 0; // Start y position from the text data
         const lines = textData.text.split('\n');
+
+        const groupElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        groupElement.setAttribute('transform', `translate(${textData.x},${textData.y})`);
 
         for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
           const line = lines[lineIndex];
@@ -745,7 +748,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           const lineHeight = (ascent - descent) * lineHeightFactor;
           let yoff = yOffset + lineHeight * lineIndex; // Calculate y offset with line height
 
-          let xOffset = textData.x;
+          let xOffset = 0;
 
           // Adjust xOffset based on text alignment
           switch (textData.textAnchor) {
@@ -764,15 +767,17 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             const char = line[i];
             const glyph = font.charToGlyph(char);
             const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
-            pathData.push(glyphPath.toPathData(5));
+            const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pathElement.setAttribute('d', glyphPath.toPathData(5));
+            pathData.push(pathElement);
 
             // Update xOffset for the next character
             xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
           }
         }
-        const svgPathData = pathData.join(' ');
-        const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pathElement.setAttribute('d', svgPathData);
+
+        pathData.forEach(path => groupElement.appendChild(path));
+
         for (const prop in textData) {
           if (Object.prototype.hasOwnProperty.call(textData, prop) && prop !== 'text') {
             const propValue = textData[prop as keyof TextElement];
@@ -799,17 +804,18 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                   break;
               }
               if (p && v) {
-                pathElement.setAttribute(p, v); // Convert propValue to string
+                groupElement.setAttribute(p, v); // Convert propValue to string
               }
             }
           }
         }
+
         if (svgContainer) {
           const existingElement = svgContainer.querySelector(`[data-id="${elementId}"]`)
           if (existingElement) {
-            svgContainer.replaceChild(pathElement, existingElement);
-            this.renderer.setAttribute(pathElement, 'data-id', elementId);
-            t.editable && this.renderer.listen(pathElement, 'click', () => {
+            svgContainer.replaceChild(groupElement, existingElement);
+            this.renderer.setAttribute(groupElement, 'data-id', elementId);
+            t.editable && this.renderer.listen(groupElement, 'click', () => {
               this.selectedIndex = i;
               this.selectedID = elementId;
               this.setText();
@@ -829,12 +835,17 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     }
   }
 
+
   loadFont(fontUrl: string): Promise<any> {
     return new Promise((resolve, reject) => {
       opentype.load(fontUrl, (err, font) => {
         if (err) {
           reject(err);
         } else {
+          console.log(font)
+          if (font) {
+            font.substitution;
+          }
           resolve(font);
         }
       });
@@ -843,4 +854,5 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   getFontPath(fontFamily: string, fontWeight: string): string {
     return this.fontService.getFontPath(fontFamily, fontWeight);
   }
+  
 }

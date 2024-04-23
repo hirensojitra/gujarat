@@ -9,12 +9,12 @@ export class FontService {
         {
             "family": "Anek Gujarati",
             "variables": ["100", "200", "300", "400", "500", "600", "700", "800"],
-            "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black"]
+            "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold"]
         },
         {
             "family": "Baloo Bhai 2",
             "variables": ["400", "500", "600", "700", "800"],
-            "names": ["Regular", "Medium", "SemiBold", "Bold", "Black"]
+            "names": ["Regular", "Medium", "SemiBold", "Bold", "ExtraBold"]
         },
         {
             "family": "Farsan",
@@ -44,25 +44,30 @@ export class FontService {
         {
             "family": "Mukta Vaani",
             "variables": ["200", "300", "400", "500", "600", "700", "800"],
-            "names": ["ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black"]
+            "names": ["ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold"]
         },
         {
             "family": "Noto Sans Gujarati",
             "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-            "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black", "Black"]
+            "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"]
         },
         {
             "family": "Noto Serif Gujarati",
             "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-            "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black", "Black"]
+            "names": ["Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"]
         },
         {
             "family": "Rasa",
             "variables": ["0", "300", "400", "500", "600", "700", "1"],
-            "names": ["Thin", "Light", "Regular", "Medium", "SemiBold", "Bold", "Black"]
+            "names": ["Thin", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold"]
         },
         {
             "family": "Shrikhand",
+            "variables": [],
+            "names": []
+        },
+        {
+            "family": "Asar",
             "variables": [],
             "names": []
         }
@@ -84,7 +89,8 @@ export class FontService {
     }
 
     getFontPath(fontFamily: string, fontWeight: string): string {
+        const defaultFont = `${fontFamily.replace(/\s/g, '_')}/${fontFamily.replace(/\s/g, '')}-Regular`;
         const family = this.fontPaths[fontFamily];
-        return family ? family[fontWeight] || 'Hind_Vadodara/HindVadodara-Regular' : 'Hind_Vadodara/HindVadodara-Regular';
+        return family ? family[fontWeight] || defaultFont : defaultFont;
     }
 }
