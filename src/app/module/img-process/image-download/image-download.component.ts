@@ -86,7 +86,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.imgParam && this.getPostById(this.imgParam);
   }
 
-  getPostById(postId: any): void {
+  async getPostById(postId: any){
     this.postDetails = undefined;
     this.postDetailsDefault = undefined;
     this.PS.getPostById(postId.toString())
@@ -132,7 +132,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       this.renderer.setAttribute(b, 'href', backgroundurl);
       this.renderer.appendChild(svg, b);
       let s = 0;
-      this.postDetails?.data.forEach((item, i) => {
+      this.postDetails?.data.forEach(async (item, i) => {
         const uniqueId = item.editable ? this.dataset[s]?.id || Math.random().toString(36).substr(2, 9) : Math.random().toString(36).substr(2, 9);
         switch (true) {
           case !!item.text:
@@ -319,8 +319,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               if (element !== null) {
                 // Set common attributes for all shapes
                 const id = uniqueId;
+                !item.editable&&this.renderer.addClass(element, 'pointer-events-none');
                 this.renderer.setAttribute(element, 'fill', 'url(#' + id + ')');
-                this.renderer.setStyle(element, 'cursor', 'pointer');
+                item.editable&&this.renderer.setStyle(element, 'cursor', 'pointer');
                 this.renderer.setStyle(element, 'filter', 'url(#shadow)');
                 const imagePattern = this.renderer.createElement('pattern', 'http://www.w3.org/2000/svg');
                 this.renderer.setAttribute(imagePattern, 'id', id);
@@ -342,7 +343,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 this.renderer.setAttribute(image, 'y', '0');
                 this.renderer.setAttribute(image, 'width', String(r * 2));
                 this.renderer.setAttribute(image, 'height', String(r * 2));
-                this.renderer.setAttribute(image, 'href', imageUrl);
+                const u = await this.getImageDataUrl(imageUrl)||imageUrl;
+                this.renderer.setAttribute(image, 'href', u);
 
                 this.renderer.appendChild(imagePattern, image);
                 this.renderer.appendChild(svg, imagePattern);
