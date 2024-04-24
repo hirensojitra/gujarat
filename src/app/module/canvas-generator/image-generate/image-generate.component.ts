@@ -5,6 +5,7 @@ import { ColorService } from 'src/app/common/services/color.service';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ActivatedRoute } from '@angular/router';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
+import { FontService } from 'src/app/common/services/fonts.service';
 declare const bootstrap: any;
 
 interface Data {
@@ -113,56 +114,8 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     ]
 
   }
-  fontFamilies = [
-    {
-      "family": "Anek Gujarati",
-      "variables": ["100", "200", "300", "400", "500", "600", "700", "800"]
-    },
-    {
-      "family": "Baloo Bhai 2",
-      "variables": ["400", "500", "600", "700", "800"]
-    },
-    {
-      "family": "Farsan",
-      "variables": []
-    },
-    {
-      "family": "Hind Vadodara",
-      "variables": ["300", "400", "500", "600", "700"]
-    },
-    {
-      "family": "Kumar One",
-      "variables": []
-    },
-    {
-      "family": "Kumar One Outline",
-      "variables": []
-    },
-    {
-      "family": "Mogra",
-      "variables": []
-    },
-    {
-      "family": "Mukta Vaani",
-      "variables": ["200", "300", "400", "500", "600", "700", "800"]
-    },
-    {
-      "family": "Noto Sans Gujarati",
-      "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"]
-    },
-    {
-      "family": "Noto Serif Gujarati",
-      "variables": ["100", "200", "300", "400", "500", "600", "700", "800", "900"]
-    },
-    {
-      "family": "Rasa",
-      "variables": ["0", "300", "400", "500", "600", "700", "1"]
-    },
-    {
-      "family": "Shrikhand",
-      "variables": []
-    }
-  ]
+
+  fontFamilies:{ family: string; variables: string[]; names: string[]; }[] = []
   postDetailsForm: FormGroup | undefined = undefined;
   imgParam: any;
   postDetails: PostDetails = {
@@ -192,7 +145,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
           },
           "textAlign": "left",
           "rotate": 0,
-          "fontFamily": "Hind Vadodara",
+          "fontFamily": "Noto Sans Gujarati",
           "textShadow": {
             "enable": false,
             "color": "#FFFFFF",
@@ -237,11 +190,13 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     private fb: FormBuilder,
     private colorService: ColorService,
     private route: ActivatedRoute,
-    private PS: PostDetailService
+    private PS: PostDetailService,
+    private fontService: FontService
   ) {
     this.route.queryParams.subscribe(params => {
       this.imgParam = params['img'];
     });
+    this.fontFamilies = this.fontService.fontFamilies
   }
   async getColors(image: string, colorCounts: number) {
     try {
@@ -517,7 +472,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       },
       textAlign: "left",
       rotate: 0,
-      fontFamily: "Hind Vadodara",
+      fontFamily: "Noto Sans Gujarati",
       textShadow: {
         enable: false,
         color: "#FFFFFF",
@@ -617,7 +572,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     const parentFormGroup = c.parent;
     const f = this.fontFamilies.find(family => family.family === selectedFontFamily);
     if (!f) {
-      selectedFontFamily = ('Hind Vadodara')
+      selectedFontFamily = ('Noto Sans Gujarati')
     }
     if (selectedFontFamily && parentFormGroup) {
       const font = this.fontFamilies.find(f => f.family === selectedFontFamily);

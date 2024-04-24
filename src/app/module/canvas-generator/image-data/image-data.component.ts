@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { ImageDataService } from 'src/app/common/services/image-data.service';
 import { ImageService } from 'src/app/common/services/image.service';
 declare const bootstrap: any;
@@ -9,13 +9,14 @@ declare const bootstrap: any;
   styleUrls: ['./image-data.component.scss']
 })
 export class ImageDataComponent implements OnInit {
+  cacheBuster = Math.random().toString(36).substring(7);
   selected: boolean = false;
   selectedImage: File | null = null;
   images: any[] = [];
   currentPage = 1;
-  pageSize = 2;
+  pageSize = 18;
   totalPages = 0;
-  constructor(private imageDataService: ImageDataService, private imageService: ImageService) { }
+  constructor(private imageDataService: ImageDataService, private imageService: ImageService,private elementRef: ElementRef, private renderer: Renderer2) { }
   imageUrl: string | ArrayBuffer | null = null;
   imageName: string | ArrayBuffer | null = null;
 
@@ -149,6 +150,16 @@ export class ImageDataComponent implements OnInit {
     if (this.currentPage !== this.totalPages) {
       this.currentPage = this.totalPages;
     }
+  }
+  copyHrefToClipboard(event: MouseEvent, href: string): void {
+    event.preventDefault();
+    
+    const el = this.renderer.createElement('textarea');
+    el.value = href;
+    this.renderer.appendChild(this.elementRef.nativeElement, el);
+    el.select();
+    document.execCommand('copy');
+    this.renderer.removeChild(this.elementRef.nativeElement, el);
   }
   formatSize(bytes: number): string {
     const KB = bytes / 1024;

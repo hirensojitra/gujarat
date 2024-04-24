@@ -2,8 +2,12 @@ import { AfterViewInit, Component, ElementRef, OnInit, Renderer2, ViewChild } fr
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { PostDetails } from 'src/app/common/interfaces/image-element';
+import { PostDetails, TextElement, TextShadow } from 'src/app/common/interfaces/image-element';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
+import * as opentype from 'opentype.js';
+import { FontService } from 'src/app/common/services/fonts.service';
+
+declare var makerjs: any;
 declare const bootstrap: any;
 interface data {
   id: string;
@@ -15,6 +19,8 @@ interface data {
   styleUrls: ['./image-download.component.scss']
 })
 export class ImageDownloadComponent implements AfterViewInit, OnInit {
+
+
   downloaded: boolean = false;
   imgParam: any;
   postDetailsDefault: PostDetails | undefined;
@@ -47,7 +53,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     private fb: FormBuilder,
     private elementRef: ElementRef,
     private meta: Meta,
-    private titleService: Title) {
+    private titleService: Title,
+    private fontService: FontService) {
     this.route.queryParams.subscribe(params => {
       this.imgParam = params['img'];
     });
@@ -58,7 +65,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       image: ['']
     })
   }
-  ngOnInit(): void {
+  async ngOnInit(){
     this.textModal = new bootstrap.Modal(document.getElementById('textModal')!, { focus: false, keyboard: false, static: false });
     this.textModal._element.addEventListener('hide.bs.modal', () => {
       this.inputTextForm.reset();
@@ -86,39 +93,46 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.imgParam && this.getPostById(this.imgParam);
   }
 
-  async getPostById(postId: any){
+  async getPostById(postId: any): Promise<void> {
     this.postDetails = undefined;
     this.postDetailsDefault = undefined;
-    this.PS.getPostById(postId.toString())
-      .subscribe(
-        post => {
-          if (post) {
-            const p = JSON.parse(JSON.stringify(post));
-            this.isDeleted = post.deleted;
-            if (!post.deleted) {
-              this.postDetails = post;
-              this.postDetailsDefault = p;
-              this.drawSVG()
-              this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
-              this.titleService.setTitle(this.postDetails.title);
-              this.postStatus = 'Total Download: ' + post.download_counter
-            } else if (post.deleted && post.msg) {
-              this.postStatus = post.msg
+    try {
+      const post: PostDetails = await this.PS.getPostById(postId.toString()).toPromise() as PostDetails;
+      if (post) {
+        console.log(post)
+        const p = JSON.parse(JSON.stringify(post));
+        this.isDeleted = post.deleted;
+        if (!post.deleted) {
+          const bg = await this.getImageDataUrl(post.backgroundurl);
+          post.backgroundurl = bg;
+          const imageDataPromises = post.data.map(async (item) => {
+            if (item.image && item.image.imageUrl) {
+              item.image.imageUrl = await this.getImageDataUrl(item.image.imageUrl);
             }
-          } else {
-            this.postStatus = undefined;
-          }
-        },
-        error => {
-          this.postStatus = undefined;
-          console.error('Error fetching post:', error);
+          });
+          await Promise.all(imageDataPromises);
+          this.postDetails = post;
+          this.postDetailsDefault = p;
+          this.drawSVG();
+          this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
+          this.titleService.setTitle(this.postDetails.title);
+          this.postStatus = 'Total Download: ' + post.download_counter;
+        } else if (post.deleted && post.msg) {
+          this.postStatus = post.msg;
         }
-      );
+      } else {
+        this.postStatus = undefined;
+      }
+    } catch (error) {
+      this.postStatus = undefined;
+      console.error('Error fetching post:', error);
+    }
   }
   async drawSVG() {
     if (this.postDetails) {
-      const backgroundurl = await this.getImageDataUrl(this.postDetails.backgroundurl);
+      const backgroundurl = this.postDetails.backgroundurl;
       const svg = this.imageDraw.nativeElement;
+      const svgDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs') as SVGDefsElement;
       while (svg.firstChild) {
         svg.removeChild(svg.firstChild);
       }
@@ -130,6 +144,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       this.renderer.setAttribute(b, 'height', '100%'); // Set height to 100%
       this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
       this.renderer.setAttribute(b, 'href', backgroundurl);
+      this.renderer.appendChild(svg, svgDefs);
       this.renderer.appendChild(svg, b);
       let s = 0;
       this.postDetails?.data.forEach(async (item, i) => {
@@ -198,7 +213,44 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                   });
                 }
               }
-              this.renderer.appendChild(svg, t);
+
+              // switch (fontFamily) {
+              //   case "Hind Vadodara":
+              //     let f = "Hind_Vadodara/"
+              //     let a: boolean = false;
+              //     switch (fw) {
+              //       case '300':
+              //         f += 'HindVadodara-Light';
+              //         a = true;
+              //         break;
+              //       case '400':
+              //         f += 'HindVadodara-Regular';
+              //         a = true;
+              //         break;
+              //       case '500':
+              //         f += 'HindVadodara-Medium';
+              //         a = true;
+              //         break;
+              //       case '600':
+              //         f += 'HindVadodara-SemiBold';
+              //         a = true;
+              //         break;
+              //       case '700':
+              //         f += 'HindVadodara-Bold';
+              //         a = true;
+              //         break;
+
+              //       default:
+              //         break;
+              //     }
+              //     if (a) { fontLink = f }
+
+              //     break;
+
+              //   default:
+              //     break;
+              // }
+
               let textAttributes: Record<string, string> = {
                 'data-type': 'text',
                 'x': x.toString(),
@@ -228,7 +280,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 'text-transform': textTransformation || 'none'
               };
               if (textShadow.enable) {
-                textStyles['text-shadow'] = `${textShadow.offsetX}px ${textShadow.offsetY}px ${textShadow.blur}px ${textShadow.color}` || 'none'
+                textAttributes['filter'] = `drop-shadow(${textShadow.offsetX}px ${textShadow.offsetY}px ${textShadow.blur}px ${textShadow.color})` || 'none'
               }
               Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(t, key, value));
               Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(t, key, value));
@@ -243,12 +295,14 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               this.renderer.setAttribute(t, 'data-id', uniqueId);
 
               if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '' }); }
-              item.editable && this.renderer.listen(t, 'click', () => {
-                this.selectedIndex = i;
-                this.selectedID = uniqueId;
-                this.setText();
-              });
-              if (item.editable) { s++ }
+
+              this.renderer.appendChild(svg, t);
+              const fontLink = this.getFontPath(fontFamily, fw) || 'Hind_Vadodara/HindVadodara-Regular';
+              await this.generateSVGPathData(item, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement, uniqueId, s)
+              if (item.editable) {
+                s++;
+              } else {
+              }
             }
             break;
           case !!item.rect:
@@ -609,150 +663,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       this.downloaded = true;
       link.click();
     };
-
-    // Set the source of the image after defining the onload handler
     image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
-  }
-  // capturePhoto() {
-  //   // Get the SVG element
-  //   const svgElement = this.imageDraw.nativeElement;
-
-  //   // Extract viewBox dimensions
-  //   const viewBoxAttr = svgElement.getAttribute('viewBox') || '';
-  //   const viewBoxValues = viewBoxAttr.split(' ').map(Number);
-  //   const viewBoxWidth = viewBoxValues[2];
-  //   const viewBoxHeight = viewBoxValues[3];
-
-  //   // Create a new canvas element
-  //   const canvas = document.createElement('canvas');
-  //   const context = canvas.getContext('2d');
-
-  //   // Set canvas dimensions to match the viewBox dimensions
-  //   canvas.width = viewBoxWidth;
-  //   canvas.height = viewBoxHeight;
-
-  //   // Create a new Image object
-  //   const image = new Image();
-
-  //   // Create a new XMLSerializer object to serialize the SVG element
-  //   const serializer = new XMLSerializer();
-  //   const svgString = serializer.serializeToString(svgElement);
-  //   image.onload = () => {
-  //     context?.drawImage(image, 0, 0);
-  //     const dataURL = canvas.toDataURL('image/png');
-  //     const timestamp = new Date().toISOString().replace(/:/g, '-');
-  //     const fileName = `IMG-${timestamp}.png`;
-
-  //     // Convert data URL to Blob
-  //     const byteString = atob(dataURL.split(',')[1]);
-  //     const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
-  //     const arrayBuffer = new ArrayBuffer(byteString.length);
-  //     const uint8Array = new Uint8Array(arrayBuffer);
-  //     for (let i = 0; i < byteString.length; i++) {
-  //       uint8Array[i] = byteString.charCodeAt(i);
-  //     }
-  //     const blob = new Blob([arrayBuffer], { type: mimeString });
-
-  //     // Create an object URL from the Blob
-  //     const objectURL = window.URL.createObjectURL(blob);
-
-  //     // Create a link element and trigger the download
-  //     const link = document.createElement('a');
-  //     link.href = objectURL;
-  //     link.download = fileName;
-  //     document.body.appendChild(link);
-  //     link.click();
-
-  //     // Clean up
-  //     document.body.removeChild(link);
-  //     window.URL.revokeObjectURL(objectURL);
-
-  //     // Update download counter
-  //     if (!this.downloaded) {
-  //       this.PS.updateDownloadCounter(this.imgParam).subscribe(
-  //         post => {
-  //           if (post) {
-  //             const p = JSON.parse(JSON.stringify(post));
-  //             this.postStatus = p.download_counter;
-  //           }
-  //         },
-  //         error => {
-  //           console.error('Error fetching post:', error);
-  //         }
-  //       );
-  //       this.downloaded = true;
-  //     }
-  //   };
-
-  //   // Set the source of the image after defining the onload handler
-  //   image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
-  // }
-
-  async shareToWhatsApp() {
-    // URL of the exported image
-    try {
-      const imageUrl = await this.getImageDataURL();
-      if (imageUrl) {
-        // Description to be shared
-        const description = 'Check out this image!';
-
-        // URL of the current window
-        const currentUrl = window.location.href;
-
-        // Construct the WhatsApp message
-        const message = `${description}\n${currentUrl}`;
-
-        // Construct the WhatsApp sharing URL
-        const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}&image=${encodeURIComponent(imageUrl)}`;
-
-        // Open the WhatsApp sharing URL
-        window.open(whatsappUrl, '_blank');
-      } else {
-        console.error('Failed to retrieve image data URL.');
-      }
-    } catch (error) {
-      console.error('Error capturing photo:', error);
-    }
-  }
-  async getImageDataURL(): Promise<string | null> {
-    // Get the SVG element
-    const svgElement = this.imageDraw.nativeElement;
-
-    // Create a new canvas element
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-
-    if (!context) {
-      console.error('Canvas context is not available.');
-      return null;
-    }
-
-    // Extract viewBox dimensions
-    const viewBoxAttr = svgElement.getAttribute('viewBox') || '';
-    const viewBoxValues = viewBoxAttr.split(' ').map(Number);
-    const viewBoxWidth = viewBoxValues[2];
-    const viewBoxHeight = viewBoxValues[3];
-
-    // Set canvas dimensions to match the viewBox dimensions
-    canvas.width = viewBoxWidth;
-    canvas.height = viewBoxHeight;
-
-    // Create a new Image object
-    const image = new Image();
-
-    // Create a new XMLSerializer object to serialize the SVG element
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svgElement);
-
-    // Define a promise to handle image loading
-    return new Promise<string>((resolve, reject) => {
-      image.onload = () => {
-        context.drawImage(image, 0, 0);
-        const dataURL = canvas.toDataURL('image/png');
-        resolve(dataURL);
-      };
-      image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
-    });
   }
 
   textFormat(text: string): string[] {
@@ -812,8 +723,138 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     } catch (error) {
       console.error('Error copying address to clipboard:', error);
     } finally {
-      // Remove the input element from the document body
       document.body.removeChild(tempInput);
     }
   }
+  async generateSVGPathData(t: { title: string; editable: boolean; boxed: boolean; text?: TextElement; }, fontUrl: string, svgContainer: SVGElement, elementId: string, i: number) {
+    try {
+      const font = await this.loadFont(fontUrl);
+      if (!font || !t.text) {
+        console.error('Font loading failed');
+        return;
+      } else {
+        const textData = t.text;
+        const fontSize = textData.fs;
+        const pathData = [];
+        const yOffset = 0; // Start y position from the text data
+        const lines = textData.text.split('\n');
+
+        const groupElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        groupElement.setAttribute('transform', `translate(${textData.x},${textData.y})`);
+
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+          const line = lines[lineIndex];
+          const lineHeightFactor = textData.lineHeight; // Line height factor (e.g., 1.5 for 1.5 times the font size)
+          const ascent = font.ascender / font.unitsPerEm * fontSize;
+          const descent = font.descender / font.unitsPerEm * fontSize;
+          const lineHeight = (ascent - descent) * lineHeightFactor;
+          let yoff = yOffset + lineHeight * lineIndex; // Calculate y offset with line height
+
+          let xOffset = 0;
+
+          // Adjust xOffset based on text alignment
+          switch (textData.textAnchor) {
+            case 'middle':
+              xOffset -= font.getAdvanceWidth(line, fontSize) / 2; // Center align
+              break;
+            case 'end':
+              xOffset -= font.getAdvanceWidth(line, fontSize); // End align
+              break;
+            case 'start':
+            default:
+              break; // Start align (default) does not need adjustment
+          }
+
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const glyph = font.charToGlyph(char);
+            const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
+            const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pathElement.setAttribute('d', glyphPath.toPathData(5));
+            pathData.push(pathElement);
+
+            // Update xOffset for the next character
+            xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
+          }
+        }
+
+        pathData.forEach(path => groupElement.appendChild(path));
+
+        for (const prop in textData) {
+          if (Object.prototype.hasOwnProperty.call(textData, prop) && prop !== 'text') {
+            const propValue = textData[prop as keyof TextElement];
+            if (propValue !== undefined && propValue !== null) {
+              let p: string | null = null;
+              let v: string | null = null
+              switch (prop) {
+                case 'color':
+                  p = 'fill';
+                  v = propValue as string;
+                  break;
+                case 'letterSpacing':
+                  break;
+                case 'lineHeight':
+                  break;
+                case 'textTransform':
+                  break;
+                case 'textShadow':
+                  p = 'filter';
+                  const t = propValue as TextShadow
+                  v = `drop-shadow(${t.offsetX}px ${t.offsetY}px ${t.blur}px ${t.color})` || 'none';
+                  break; // Handle textShadow separately if needed
+                default:
+                  break;
+              }
+              if (p && v) {
+                groupElement.setAttribute(p, v); // Convert propValue to string
+              }
+            }
+          }
+        }
+
+        if (svgContainer) {
+          const existingElement = svgContainer.querySelector(`[data-id="${elementId}"]`)
+          if (existingElement) {
+            svgContainer.replaceChild(groupElement, existingElement);
+            this.renderer.setAttribute(groupElement, 'data-id', elementId);
+            t.editable && this.renderer.listen(groupElement, 'click', () => {
+              this.selectedIndex = i;
+              this.selectedID = elementId;
+              this.setText();
+            });
+          } else {
+            console.error('Text element with ID "xyz" not found in SVG container');
+          }
+        } else {
+          console.error('SVG container with ID', elementId, 'not found');
+        }
+      }
+
+
+    } catch (error) {
+      console.error('Error generating SVG path data:', error);
+      throw error; // Propagate the error
+    }
+  }
+
+
+  loadFont(fontUrl: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      opentype.load(fontUrl, (err, font) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log(font)
+          if (font) {
+            font.substitution;
+          }
+          resolve(font);
+        }
+      });
+    });
+  }
+  getFontPath(fontFamily: string, fontWeight: string): string {
+    return this.fontService.getFontPath(fontFamily, fontWeight);
+  }
+  
 }

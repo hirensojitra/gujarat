@@ -9,21 +9,25 @@
             <div class="row g-3">
                 <div *ngFor="let image of images;" class="col-lg-2 col-md-3 col-sm-4 col-6">
                     <div class="border rounded-2 p-2 h-100" [class.border-primary]="image.selected" [class.bg-primary]="image.selected">
-                        <input type="checkbox" [value]="image.selected" (change)="onImageSelectionChange(image)" [id]="image.id" class="d-none">
-                        <label [for]="image.id" class="h-100 w-100 d-flex flex-column" [title]="image.filename">
-                            <div class="flex-grow-1 bg-light">
-                                <img [src]="image.medium_url||image.thumb_url" alt="Image" class="img-fluid m-auto d-block">
-                            </div>
-                            <div class="d-flex w-100 justify-content-between align-items-center py-1 px-2 bg-dark text-white">
-                                <span class="text-truncate text-nowrap">{{image.filename}}</span>
-                                <small class="ps-3 text-end text-nowrap"><b>{{formatSize(image.size)}}</b></small>
-                            </div>
-                        </label>
+                        <div class="h-100 w-100 d-flex flex-column">
+                            <input type="checkbox" [value]="image.selected" (change)="onImageSelectionChange(image)" [id]="image.id" class="d-none">
+                            <label [for]="image.id" class="flex-grow-1 bg-light d-flex flex-column" [title]="image.filename">
+                                <div class="flex-grow-1 bg-light">
+                                    <img [src]="(image.medium_url || image.thumb_url) + '?v=' + cacheBuster" alt="Image" class="img-fluid m-auto d-block">
+                                </div>
+                                <div class="d-flex w-100 justify-content-between align-items-center py-1 px-2 bg-dark text-white">
+                                    <span class="text-truncate text-nowrap">{{image.filename}}</span>
+                                    <small class="ps-3 text-end text-nowrap"><b>{{formatSize(image.size)}}</b></small>
+                                </div>
+                            </label>
+                            <a href="{{image.url}}" class="btn btn-outline-dark mt-2" (click)="copyHrefToClipboard($event, image.url)"><i class="fa fa-copy"></i> Copy</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
     <div *ngIf="totalPages > 1">
         <div class="btn-group">
             <button class="btn btn-secondary" [disabled]="currentPage === 1" (click)="onFirstPage()">First</button>

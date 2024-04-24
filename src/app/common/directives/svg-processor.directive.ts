@@ -1,5 +1,7 @@
 import { Directive, Input, ElementRef, OnInit, Renderer2, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { Subject, takeUntil, timer } from 'rxjs';
+import * as opentype from 'opentype.js';
+
 import {
   PostDetails,
   RectProperties,
@@ -8,9 +10,11 @@ import {
   LineProperties,
   TextElement,
   ImageElement,
-  SvgProperties
+  SvgProperties,
+  TextShadow
 } from '../interfaces/image-element';
 import ColorThief from 'colorthief';
+import { FontService } from '../services/fonts.service';
 
 interface Data {
   title: string;
@@ -49,13 +53,16 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   dataLoaded: boolean = false;
   firstLoad: boolean = true;
   private eventListeners: (() => void)[] = [];
-  constructor(private el: ElementRef<SVGSVGElement>, private renderer: Renderer2) {
+  constructor(private el: ElementRef<SVGSVGElement>, private renderer: Renderer2, private fontService: FontService) {
 
   }
   get dataArray(): Data[] {
     return this.data;
   }
 
+  getFontPath(fontFamily: string, fontWeight: string): string {
+    return this.fontService.getFontPath(fontFamily, fontWeight);
+  }
   async updateBackGround(backgroundurl: string) {
     if (backgroundurl) {
       const svg = this.el.nativeElement;
@@ -263,8 +270,12 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         // if (svgProperties) {
         //   Object.keys(svgProperties).forEach(key => {
         //     const propertyKey = key as keyof SvgProperties;
-        //     const attributeValue = svgProperties[propertyKey];
-        //     this.renderer.setAttribute(element!, propertyKey, String(attributeValue));
+        //     let attributeValue = svgProperties[propertyKey];
+        //     if (propertyKey == 'fill') {
+        //       attributeValue = (attributeValue == 'none' || !attributeValue) ? `url(#${id})` : attributeValue;
+        //     }
+        //     !(propertyKey == 'stroke') && this.renderer.setAttribute(element!, propertyKey, String(attributeValue));
+
         //   });
         // }
         this.renderer.appendChild(svg, element);
@@ -297,7 +308,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         'alignment-baseline': d.text.alignmentBaseline || 'middle',
         'dominant-baseline': 'reset-size',
         'font-family': d.text.fontFamily ? "'" + d.text.fontFamily + "', sans-serif" : "'Hind Vadodara', sans-serif",
-        'font-weight': d.text.fw || 'normal',
+        'font-weight': d.text.fw || '400',
         'text-decoration': d.text.fontStyle.underline ? 'underline' : 'none',
         'font-style': d.text.fontStyle.italic ? 'italic' : 'normal',
         'opacity': d.text.opacity ? d.text.opacity.toString() : '100',
@@ -310,42 +321,19 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       if (d.text.backgroundColor) {
         textAttributes['background-color'] = d.text.backgroundColor;
       }
-
-      // Apply text effects if available
       if (d.text.textEffects) {
-        // Apply gradient if available
-        // if (d.text.textEffects.gradient) {
-        //   const gradient = `linear-gradient(to right, ${d.text.textEffects.gradient.startColor}, ${d.text.textEffects.gradient.endColor})`;
-        //   textAttributes['fill'] = gradient; // Change fill to apply gradient
-        // }
 
-        // Apply outline if available
-        // if (d.text.textEffects.outline) {
-        //   const strokeColor = d.text.textEffects.outline.color || '#000000'; // Default stroke color to black if not provided
-        //   const strokeWidth = `${d.text.textEffects.outline.width}px`; // Convert width to string with 'px' unit
-        //   this.renderer.setStyle(text, 'stroke', strokeColor); // Apply stroke color
-        //   this.renderer.setStyle(text, 'stroke-width', strokeWidth); // Apply stroke width
-        // }
-
-        // Apply glow if available
-        // if (d.text.textEffects.glow) {
-        //   const glowColor = d.text.textEffects.glow.color || '#FFFFFF'; // Default glow color to white if not provided
-        //   const glowBlur = `${d.text.textEffects.glow.blur}px`; // Convert blur to string with 'px' unit
-        //   const glowShadow = `${glowColor} ${glowBlur}`; // Create glow shadow string
-        //   let existingTextShadow = textAttributes['text-shadow'] || ''; // Get existing text shadow
-        //   textAttributes['text-shadow'] = existingTextShadow ? `${existingTextShadow}, ${glowShadow}` : glowShadow; // Append or set glow shadow
-        // }
       }
 
       // Apply other text styles
       let textStyles: Record<string, string> = {
         '-webkit-user-select': 'none',
-        'letter-spacing': d.text.letterSpacing ? `${d.text.letterSpacing}px` : 'normal',
-        'line-height': d.text.lineHeight ? `${d.text.lineHeight}` : 'normal',
+        'letter-spacing': d.text.letterSpacing ? `${d.text.letterSpacing}px` : '0',
+        'line-height': d.text.lineHeight ? `${d.text.lineHeight}` : '1.5',
         'text-transform': d.text.textTransformation || 'none'
       };
       if (d.text.textShadow.enable) {
-        textStyles['text-shadow'] = `${d.text.textShadow.offsetX}px ${d.text.textShadow.offsetY}px ${d.text.textShadow.blur}px ${d.text.textShadow.color}` || 'none'
+        textAttributes['filter'] = `drop-shadow(${textShadow.offsetX}px ${textShadow.offsetY}px ${textShadow.blur}px ${textShadow.color})` || 'none'
       }
       Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(t, key, value));
       Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(t, key, value));
@@ -425,7 +413,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
     return null;
   }
-  updateElements(data: Data[]) {
+  async updateElements(data: Data[]) {
     const svg = this.el.nativeElement;
     const children = svg.childNodes;
     for (let i = children.length - 1; i >= 0; i--) {
@@ -435,18 +423,31 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         svg.removeChild(child);
       }
     }
-    const elements: SVGSVGElement[] = []
-    data.forEach((d, i) => {
-      (d.rect) && elements.push(this.createRect(d, i));
-      (d.circle) && elements.push(this.createCircle(d, i));
-      (d.ellipse) && elements.push(this.createEllipse(d, i));
-      (d.line) && elements.push(this.createLine(d, i));
-      (d.image) && elements.push(this.createImage(d, i));
-      (d.text) && elements.push(this.createText(d, i))
-    })
+    const elements: SVGSVGElement | SVGGElement[] = [];
+    for (const [i, d] of data.entries()) {
+      if (d.rect) elements.push(this.createRect(d, i));
+      if (d.circle) elements.push(this.createCircle(d, i));
+      if (d.ellipse) elements.push(this.createEllipse(d, i));
+      if (d.line) elements.push(this.createLine(d, i));
+      if (d.image) elements.push(this.createImage(d, i));
+      if (d.text) {
+        try {
+          const svgElement = await this.generateSVGPathData(d);
+          if (svgElement) {
+            this.renderer.appendChild(svg, svgElement);
+            elements.push(svgElement);
+          } else {
+            console.error('Failed to generate SVG path data for element:', d);
+          }
+        } catch (error) {
+          console.error('Error generating SVG path data:', error);
+        }
+      }
+    }
     this.removeEventListeners();
     this.addDraggableBehavior(elements);
   }
+
   getTextWidth(text: string, fontSize: number, fontFamily: string): number {
     const svgText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     svgText.setAttribute('font-size', `${fontSize}px`);
@@ -500,36 +501,46 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
           const svgPoint = this.getMousePosition(event, svg);
           const clickedX = svgPoint.x;
           const clickedY = svgPoint.y;
-          let elementX;
-          let elementY;
+          let elementX = 0;
+          let elementY = 0;
           if (['circle'].includes(elementType)) {
-            elementX = parseFloat(element.getAttribute('cx') || '0');
-            elementY = parseFloat(element.getAttribute('cy') || '0');
           } else {
-            elementX = parseFloat(element.getAttribute('x') || '0');
-            elementY = parseFloat(element.getAttribute('y') || '0');
           }
-          this.offsetX = elementX - clickedX;
-          this.offsetY = elementY - clickedY;
           this.renderer.setAttribute(element, 'cursor', 'grabbing');
 
           switch (elementType) {
             case 'circle':
-
+              elementX = parseFloat(element.getAttribute('cx') || '0');
+              elementY = parseFloat(element.getAttribute('cy') || '0');
               break;
             case 'rectangle':
 
               break;
-            case 'text':
-
+            case 'svg':
+              const pathBoundingBox = element.getBBox(); // Get the bounding box of the path
+              elementX = pathBoundingBox.x;
+              elementY = pathBoundingBox.y;
               break;
             case 'image':
               // Logic for handling image elements
               break;
+            case 'g':
+              const transformAttribute = element.getAttribute('transform');
+              if (transformAttribute) {
+                const match = transformAttribute.match(/translate\(([^,]+),([^)]+)\)/);
+                if (match && match.length === 3) {
+                  elementX = parseFloat(match[1]);
+                  elementY = parseFloat(match[2]);
+                }
+              }
+              break;
             default:
-              // Default case
+              elementX = parseFloat(element.getAttribute('x') || '0');
+              elementY = parseFloat(element.getAttribute('y') || '0');
               break;
           }
+          this.offsetX = elementX - clickedX;
+          this.offsetY = elementY - clickedY;
           this.getSelected.emit({ index: index })
         };
         const onMouseMove = (event: MouseEvent) => {
@@ -540,15 +551,27 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
             if (element) {
               let x, y;
               let r = 0;
-              if (['circle'].includes(elementType)) {
-                x = parseFloat(element.getAttribute('cx') || '0');
-                y = parseFloat(element.getAttribute('cy') || '0');
-                r = parseFloat(element.getAttribute('r') || '0');
-              } else {
-                x = parseFloat(element.getAttribute('x') || '0');
-                y = parseFloat(element.getAttribute('y') || '0');
+              switch (elementType) {
+                case 'circle':
+                  x = parseFloat(element.getAttribute('cx') || '0');
+                  y = parseFloat(element.getAttribute('cy') || '0');
+                  r = parseFloat(element.getAttribute('r') || '0');
+                  break;
+                case 'g':
+                  const transformAttribute = element.getAttribute('transform');
+                  if (transformAttribute) {
+                    const match = transformAttribute.match(/translate\(([^,]+),([^)]+)\)/);
+                    if (match && match.length === 3) {
+                      x = parseFloat(match[1]);
+                      y = parseFloat(match[2]);
+                    }
+                  }
+                  break;
+                default:
+                  x = parseFloat(element.getAttribute('x') || '0');
+                  y = parseFloat(element.getAttribute('y') || '0');
+                  break;
               }
-              console.log(this.width, this.height);
               if (x !== undefined && y !== undefined) {
                 const oX = svgPoint.x - x + this.offsetX;
                 const oY = svgPoint.y - y + this.offsetY;
@@ -602,7 +625,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                       const bbox = element.getBBox();
                       const width = bbox.width;
                       const height = bbox.height;
-                      console.log(adjustedX + width / 2);
                       const transformValue = `rotate(${eleData.text.rotate || 0} ${adjustedX + width / 2} ${adjustedY + height / 2})`;
                       const tspanElements = element.getElementsByTagName('tspan');
                       if (tspanElements.length > 0) {
@@ -624,13 +646,30 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                     console.log('Element data not found');
                     break;
                 }
-                if (['circle'].includes(elementType)) {
-                  this.renderer.setAttribute(element, 'cx', adjustedX.toString());
-                  this.renderer.setAttribute(element, 'cy', adjustedY.toString());
-                } else {
-                  this.renderer.setAttribute(element, 'x', adjustedX.toString());
-                  this.renderer.setAttribute(element, 'y', adjustedY.toString());
+                switch (elementType) {
+                  case 'circle':
+                    this.renderer.setAttribute(element, 'cx', adjustedX.toString());
+                    this.renderer.setAttribute(element, 'cy', adjustedY.toString());
+                    break;
+                  case 'rect':
+                    this.renderer.setAttribute(element, 'x', adjustedX.toString());
+                    this.renderer.setAttribute(element, 'y', adjustedY.toString());
+                    break;
+                  case 'svg':
+                    // Logic for handling SVG elements
+                    break;
+                  case 'image':
+                    // Logic for handling image elements
+                    break;
+                  case 'g':
+                    this.renderer.setAttribute(element, 'transform', `translate(${adjustedX},${adjustedY})`);
+                    break;
+                  default:
+                    this.renderer.setAttribute(element, 'x', adjustedX.toString());
+                    this.renderer.setAttribute(element, 'y', adjustedY.toString());
+                    break;
                 }
+                
 
               }
             }
@@ -738,6 +777,139 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     this.removeEventListeners();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+  getEventListeners(element: HTMLElement): { [event: string]: EventListener[] } {
+    const eventListeners: { [event: string]: EventListener[] } = {};
+    const registeredEvents = this.getRegisteredEvents(element);
+    for (const event in registeredEvents) {
+      if (registeredEvents.hasOwnProperty(event)) {
+        const listeners: EventListener[] = [];
+        registeredEvents[event].forEach((listener: EventListener) => { // Specify EventListener type
+          listeners.push(listener);
+        });
+        eventListeners[event] = listeners;
+      }
+    }
+    return eventListeners;
+  }
+  private getRegisteredEvents(element: HTMLElement): { [event: string]: EventListener[] } {
+    const registeredEvents: { [event: string]: EventListener[] } = {};
+    const listeners = this.renderer.data['get'](element);
+    if (listeners) {
+      Object.keys(listeners).forEach(eventName => {
+        const eventListeners = listeners[eventName].map((listener: EventListenerObject) => listener.handleEvent);
+        registeredEvents[eventName] = eventListeners;
+      });
+    }
+    return registeredEvents;
+  }
+
+  async generateSVGPathData(t: { title: string; editable: boolean; boxed: boolean; text?: TextElement; }): Promise<SVGGElement> {
+    try {
+      if (!t.text) {
+        console.error('Font loading failed');
+        throw new Error('Font loading failed');
+      } else {
+        const fontUrl = this.getFontPath(t.text?.fontFamily, t.text?.fw)
+        const font = await this.loadFont(`assets/fonts/${fontUrl}.ttf`);
+        if (!font || !t.text) {
+          console.error('Font loading failed');
+          throw new Error('Font loading failed');
+        }
+        const textData = t.text;
+        const fontSize = textData.fs;
+        const pathData = [];
+        const yOffset = 0; // Start y position from the text data
+        const lines = textData.text.split('\n');
+
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+          const line = lines[lineIndex];
+          const lineHeightFactor = textData.lineHeight; // Line height factor (e.g., 1.5 for 1.5 times the font size)
+          const ascent = font.ascender / font.unitsPerEm * fontSize;
+          const descent = font.descender / font.unitsPerEm * fontSize;
+          const lineHeight = (ascent - descent) * lineHeightFactor;
+          let yoff = yOffset + lineHeight * lineIndex;
+          let xOffset = 0;
+          switch (textData.textAnchor) {
+            case 'middle':
+              xOffset -= font.getAdvanceWidth(line, fontSize) / 2; // Center align
+              break;
+            case 'end':
+              xOffset -= font.getAdvanceWidth(line, fontSize); // End align
+              break;
+            case 'start':
+            default:
+              break;
+          }
+          
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            console.log(char)
+            const glyph = font.charToGlyph(char);
+            const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
+            pathData.push(glyphPath.toPathData(5));
+            xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
+          }
+        }
+        const svgPathData = pathData.join(' ');
+        const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathElement.setAttribute('d', svgPathData);
+
+        // Create SVG element
+        const lineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        lineGroup.setAttribute('transform', `translate(${textData.x},${textData.y})`);
+
+        for (const prop in textData) {
+          if (Object.prototype.hasOwnProperty.call(textData, prop) && prop !== 'text') {
+            const propValue = textData[prop as keyof TextElement];
+            if (propValue !== undefined && propValue !== null) {
+              let p: string | null = null;
+              let v: string | null = null
+              switch (prop) {
+                case 'color':
+                  p = 'fill';
+                  v = propValue as string;
+                  break;
+                case 'letterSpacing':
+                  break;
+                case 'lineHeight':
+                  break;
+                case 'textTransform':
+                  break;
+                case 'textShadow':
+                  p = 'filter';
+                  const t = propValue as TextShadow;
+                  v = `drop-shadow(${t.offsetX}px ${t.offsetY}px ${t.blur}px ${t.color})` || 'none';
+                  break; // Handle textShadow separately if needed
+                default:
+                  break;
+              }
+              if (p && v) {
+                pathElement.setAttribute(p, v); // Convert propValue to string
+              }
+            }
+          }
+        }
+        this.renderer.setAttribute(lineGroup, 'data-type', 'g')
+        lineGroup.appendChild(pathElement);
+        return lineGroup;
+      }
+    } catch (error) {
+      console.error('Error generating SVG path data:', error);
+      throw error; // Propagate the error
+    }
+  }
+  
+  loadFont(fontUrl: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      opentype.load(fontUrl, (err, font) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(font);
+        }
+      });
+    });
   }
 
 }
