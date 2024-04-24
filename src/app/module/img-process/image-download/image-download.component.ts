@@ -298,7 +298,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
 
               this.renderer.appendChild(svg, t);
               const fontLink = this.getFontPath(fontFamily, fw) || 'Hind_Vadodara/HindVadodara-Regular';
-              await this.generateSVGPathData(item, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement, uniqueId, s)
+              // await this.generateSVGPathData(item, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement, uniqueId, s)
               if (item.editable) {
                 s++;
               } else {

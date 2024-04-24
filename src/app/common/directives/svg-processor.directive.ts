@@ -430,19 +430,20 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       if (d.ellipse) elements.push(this.createEllipse(d, i));
       if (d.line) elements.push(this.createLine(d, i));
       if (d.image) elements.push(this.createImage(d, i));
-      if (d.text) {
-        try {
-          const svgElement = await this.generateSVGPathData(d);
-          if (svgElement) {
-            this.renderer.appendChild(svg, svgElement);
-            elements.push(svgElement);
-          } else {
-            console.error('Failed to generate SVG path data for element:', d);
-          }
-        } catch (error) {
-          console.error('Error generating SVG path data:', error);
-        }
-      }
+      if (d.text) elements.push(this.createText(d, i));
+      // if (d.text) {
+      //   try {
+      //     const svgElement = await this.generateSVGPathData(d);
+      //     if (svgElement) {
+      //       this.renderer.appendChild(svg, svgElement);
+      //       elements.push(svgElement);
+      //     } else {
+      //       console.error('Failed to generate SVG path data for element:', d);
+      //     }
+      //   } catch (error) {
+      //     console.error('Error generating SVG path data:', error);
+      //   }
+      // }
     }
     this.removeEventListeners();
     this.addDraggableBehavior(elements);
