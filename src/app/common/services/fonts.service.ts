@@ -5,6 +5,116 @@ import { Injectable } from '@angular/core';
 })
 export class FontService {
     fontPaths: { [family: string]: { [weight: string]: string } } = {};
+    rkrf: any = {
+        "gjK_RA": {
+            "Components": "ક્ર",
+            "Name": "gjK_RA"
+        },
+        "gjKH_RA": {
+            "Components": "ખ્ર",
+            "Name": "gjKH_RA"
+        },
+        "gjG_RA": {
+            "Components": "ગ્ર",
+            "Name": "gjG_RA"
+        },
+        "gjGH_RA": {
+            "Components": "ઘ્ર",
+            "Name": "gjGH_RA"
+        },
+        "gjC_RA": {
+            "Components": "ચ્ર",
+            "Name": "gjC_RA"
+        },
+        "gjCH_RA": {
+            "Components": "છ્ર",
+            "Name": "gjCH_RA"
+        },
+        "gjJ_RA": {
+            "Components": "જ્ર",
+            "Name": "gjJ_RA"
+        },
+        "gjJH_RA": {
+            "Components": "ઝ્ર",
+            "Name": "gjJH_RA"
+        },
+        "gjTT_RA": {
+            "Components": "ટ્ર",
+            "Name": "gjTT_RA"
+        },
+        "gjTTH_RA": {
+            "Components": "ઠ્ર",
+            "Name": "gjTTH_RA"
+        },
+        "gjDD_RA": {
+            "Components": "ડ્ર",
+            "Name": "gjDD_RA"
+        },
+        "gjDDH_RA": {
+            "Components": "ઢ્ર",
+            "Name": "gjDDH_RA"
+        },
+        "gjT_RA": {
+            "Components": "ત્ર",
+            "Name": "gjT_RA"
+        },
+        "gjTH_RA": {
+            "Components": "થ્ર",
+            "Name": "gjTH_RA"
+        },
+        "gjD_RA": {
+            "Components": "દ્ર",
+            "Name": "gjD_RA"
+        },
+        "gjDH_RA": {
+            "Components": "ધ્ર",
+            "Name": "gjDH_RA"
+        },
+        "gjN_RA": {
+            "Components": "ન્ર",
+            "Name": "gjN_RA"
+        },
+        "gjP_RA": {
+            "Components": "પ્ર",
+            "Name": "gjP_RA"
+        },
+        "gjPH_RA": {
+            "Components": "ફ્ર",
+            "Name": "gjPH_RA"
+        },
+        "gjB_RA": {
+            "Components": "બ્ર",
+            "Name": "gjB_RA"
+        },
+        "gjBH_RA": {
+            "Components": "ભ્ર",
+            "Name": "gjBH_RA"
+        },
+        "gjM_RA": {
+            "Components": "મ્ર",
+            "Name": "gjM_RA"
+        },
+        "gjY_RA": {
+            "Components": "ય્ર",
+            "Name": "gjY_RA"
+        },
+        "gjV_RA": {
+            "Components": "વ્ર",
+            "Name": "gjV_RA"
+        },
+        "gjSH_RA": {
+            "Components": "શ્ર",
+            "Name": "gjSH_RA"
+        },
+        "gjS_RA": {
+            "Components": "સ્ર",
+            "Name": "gjS_RA"
+        },
+        "gjH_RA": {
+            "Components": "હ્ર",
+            "Name": "gjH_RA"
+        }
+    };
     fontFamilies = [
         {
             "family": "Anek Gujarati",

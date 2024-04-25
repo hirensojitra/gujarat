@@ -6,7 +6,13 @@ import { PostDetails, TextElement, TextShadow } from 'src/app/common/interfaces/
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
 import * as opentype from 'opentype.js';
 import { FontService } from 'src/app/common/services/fonts.service';
-
+interface MatchObject {
+  components: string;
+}
+interface Subtable {
+  substitutions: { [key: string]: boolean };
+  match: MatchObject[];
+}
 declare var makerjs: any;
 declare const bootstrap: any;
 interface data {
@@ -65,7 +71,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       image: ['']
     })
   }
-  async ngOnInit(){
+  async ngOnInit() {
     this.textModal = new bootstrap.Modal(document.getElementById('textModal')!, { focus: false, keyboard: false, static: false });
     this.textModal._element.addEventListener('hide.bs.modal', () => {
       this.inputTextForm.reset();
@@ -733,10 +739,16 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       } else {
         const textData = t.text;
         const fontSize = textData.fs;
-        const pathData = [];
-        const yOffset = 0; // Start y position from the text data
-        const lines = textData.text.split('\n');
+        let processedText = textData.text;
 
+        // Preprocess text with "ભ્ર" ligature if it exists
+        const ligatureExists = font.charToGlyph("ભ્ર").unicode !== undefined;
+        if (ligatureExists) {
+          processedText = processedText.replace(/ભ્ર/g, String.fromCharCode(0x0AB5, 0x0ACD, 0x0AB0)); // Replace "ભ્ર" with "ભ્ર" ligature
+        }
+        const pathData: SVGPathElement[] = [];
+        const yOffset = 0; // Start y position from the text data
+        const lines = processedText.split('\n');
         const groupElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         groupElement.setAttribute('transform', `translate(${textData.x},${textData.y})`);
 
@@ -762,18 +774,236 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             default:
               break; // Start align (default) does not need adjustment
           }
+          // Define the ligature mapping
+          const ligatureMapping: any = {
+            "gjK_RA": {
+              "Components": "ક્ર",
+              "Name": "gjK_RA"
+            },
+            "gjKH_RA": {
+              "Components": "ખ્ર",
+              "Name": "gjKH_RA"
+            },
+            "gjG_RA": {
+              "Components": "ગ્ર",
+              "Name": "gjG_RA"
+            },
+            "gjGH_RA": {
+              "Components": "ઘ્ર",
+              "Name": "gjGH_RA"
+            },
+            "gjC_RA": {
+              "Components": "ચ્ર",
+              "Name": "gjC_RA"
+            },
+            "gjCH_RA": {
+              "Components": "છ્ર",
+              "Name": "gjCH_RA"
+            },
+            "gjJ_RA": {
+              "Components": "જ્ર",
+              "Name": "gjJ_RA"
+            },
+            "gjJH_RA": {
+              "Components": "ઝ્ર",
+              "Name": "gjJH_RA"
+            },
+            "gjTT_RA": {
+              "Components": "ટ્ર",
+              "Name": "gjTT_RA"
+            },
+            "gjTTH_RA": {
+              "Components": "ઠ્ર",
+              "Name": "gjTTH_RA"
+            },
+            "gjDD_RA": {
+              "Components": "ડ્ર",
+              "Name": "gjDD_RA"
+            },
+            "gjDDH_RA": {
+              "Components": "ઢ્ર",
+              "Name": "gjDDH_RA"
+            },
+            "gjT_RA": {
+              "Components": "ત્ર",
+              "Name": "gjT_RA"
+            },
+            "gjTH_RA": {
+              "Components": "થ્ર",
+              "Name": "gjTH_RA"
+            },
+            "gjD_RA": {
+              "Components": "દ્ર",
+              "Name": "gjD_RA"
+            },
+            "gjDH_RA": {
+              "Components": "ધ્ર",
+              "Name": "gjDH_RA"
+            },
+            "gjN_RA": {
+              "Components": "ન્ર",
+              "Name": "gjN_RA"
+            },
+            "gjP_RA": {
+              "Components": "પ્ર",
+              "Name": "gjP_RA"
+            },
+            "gjPH_RA": {
+              "Components": "ફ્ર",
+              "Name": "gjPH_RA"
+            },
+            "gjB_RA": {
+              "Components": "બ્ર",
+              "Name": "gjB_RA"
+            },
+            "gjBH_RA": {
+              "Components": "ભ્ર",
+              "Name": "gjBH_RA"
+            },
+            "gjM_RA": {
+              "Components": "મ્ર",
+              "Name": "gjM_RA"
+            },
+            "gjY_RA": {
+              "Components": "ય્ર",
+              "Name": "gjY_RA"
+            },
+            "gjV_RA": {
+              "Components": "વ્ર",
+              "Name": "gjV_RA"
+            },
+            "gjSH_RA": {
+              "Components": "શ્ર",
+              "Name": "gjSH_RA"
+            },
+            "gjS_RA": {
+              "Components": "સ્ર",
+              "Name": "gjS_RA"
+            },
+            "gjH_RA": {
+              "Components": "હ્ર",
+              "Name": "gjH_RA"
+            }
+          };
 
-          for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            const glyph = font.charToGlyph(char);
-            const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
-            const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            pathElement.setAttribute('d', glyphPath.toPathData(5));
-            pathData.push(pathElement);
+          // Define the text to search within
+          const text = "સોજીત્રા";
 
-            // Update xOffset for the next character
-            xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
+          // Define an array to store the filtered results
+          const filteredResults = [];
+
+          // Iterate through each character of the text
+          for (let i = 0; i < text.length; i++) {
+            // Check if the current character and the next two characters form the ligature "ત્ર"
+            const potentialLigature = text.substring(i, i + 3);
+            for (const key in ligatureMapping) {
+              if (ligatureMapping[key].Components === potentialLigature) {
+                // If a match is found, add it to the filtered results
+                filteredResults.push({
+                  Name: ligatureMapping[key].Name,
+                  Components: ligatureMapping[key].Components
+                });
+              }
+            }
           }
+
+          // Print or use the filtered results
+          console.log(filteredResults);
+          // Assuming you've loaded the font file and have access to the font object
+
+          // Check if the font defines ligature substitution rules for a specific ligature
+          // Assuming you've loaded the font file and have access to the font object
+
+          // Check if the font defines ligature substitution rules for a specific ligature
+          console.log(font.tables.gsub.features)
+          if (font.tables.gsub && font.tables.gsub.features && font.tables.gsub.features.liga) {
+            // Check if ligature substitution rules exist for the ligature "ત્ર"
+            const ligatureRules = font.tables.gsub.features.liga;
+            const ligatureExists = ligatureRules.some((rule: any) => {
+              return rule.lookupListIndexes.some((index: any) => {
+                const lookupTable = ligatureRules.lookupList[index];
+                return lookupTable && lookupTable.ligatures.some((ligature: any) => {
+                  return ligature.components.join('') === 'ત્ર';
+                });
+              });
+            });
+
+            if (ligatureExists) {
+              console.log("Ligature substitution rules exist for the ligature 'ત્ર'");
+            } else {
+              console.log("No ligature substitution rules found for the ligature 'ત્ર'");
+            }
+          } else {
+            console.log("The font does not support ligature substitution.");
+          }
+
+
+          const gsubTable = font.tables['gsub']['features'][11].feature;
+          console.log(font)
+          console.log(gsubTable)
+          let ll = line;
+          // for (let i = 0; i < ll.length; i++) {
+          //   // Replace the glyph at index i with its substitute based on gsubTable
+          //   let substitutedGlyph = gsubTable.substitute(ll[i]);
+
+          //   // Update the text with substituted glyph
+          //   if (substitutedGlyph !== undefined) {
+          //     ll = text.substring(0, i) + substitutedGlyph + text.substring(i + 1);
+          //   }
+          // }
+
+
+          console.log(ll);
+          const wordArray = line.split(/\s+/);
+          const transformedArray = wordArray.map((word, i) => {
+            const wordGlyphs = Array.from(word, char => {
+              // console.log(font.charToGlyphIndex(char))
+              return font.charToGlyphIndex(char);
+            });
+            const index = wordGlyphs.indexOf(348);
+            if (index !== -1 && index > 0) {
+              const temp = wordGlyphs[index];
+              wordGlyphs[index] = wordGlyphs[index - 1];
+              wordGlyphs[index - 1] = temp;
+            }
+            if (i < wordArray.length - 1) {
+              wordGlyphs.push(3)
+            }
+            return wordGlyphs;
+          });
+          const transformedPaths = transformedArray.map(wordGlyphs => {
+            // Map each glyph index to its corresponding path data
+            const wordPaths = wordGlyphs.map(glyphIndex => {
+              // Get the glyph object for the glyph index
+              const glyph = font.glyphs.get(glyphIndex);
+              // Check if glyph exists
+              if (glyph) {
+                // Get the path data for the glyph
+                const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
+                const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                pathElement.setAttribute('d', glyphPath.toPathData(5));
+                pathData.push(pathElement);
+                xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm;
+                return glyphPath.toPathData(5);
+              } else {
+                // Return empty string or handle missing glyph
+                return '';
+              }
+            });
+
+            return wordPaths.join(" ");
+          });
+          // for (let i = 0; i < line.length; i++) {
+          //   const char = line[i];
+          //   const glyph = font.charToGlyph(char);
+          //   const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
+          //   const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          //   pathElement.setAttribute('d', glyphPath.toPathData(5));
+          //   pathData.push(pathElement);
+
+          //   // Update xOffset for the next character
+          //   xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
+          // }
         }
 
         pathData.forEach(path => groupElement.appendChild(path));
@@ -842,10 +1072,20 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         if (err) {
           reject(err);
         } else {
-          console.log(font)
           if (font) {
-            font.substitution;
+            // const substitutedText = font.substitution.substitute(text, 'liga');
+            
+            const substitutedGlyphs: opentype.Glyph[] = [];
+            const text = "સોજીત્રા";
+
+          
+            // Convert substituted glyphs back to text
+            const substitutedText = substitutedGlyphs.map(glyph => glyph.unicode).join('');
+          
+            // Render the substituted text
+            console.log(substitutedText); 
           }
+
           resolve(font);
         }
       });
@@ -854,5 +1094,5 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   getFontPath(fontFamily: string, fontWeight: string): string {
     return this.fontService.getFontPath(fontFamily, fontWeight);
   }
-  
+
 }
