@@ -304,7 +304,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
 
               this.renderer.appendChild(svg, t);
               const fontLink = this.getFontPath(fontFamily, fw) || 'Hind_Vadodara/HindVadodara-Regular';
-              await this.generateSVGPathData(item, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement, uniqueId, s)
+              // await this.generateSVGPathData(item, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement, uniqueId, s)
               if (item.editable) {
                 s++;
               } else {
@@ -379,8 +379,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               if (element !== null) {
                 // Set common attributes for all shapes
                 const id = uniqueId;
+                !item.editable&&this.renderer.addClass(element, 'pointer-events-none');
                 this.renderer.setAttribute(element, 'fill', 'url(#' + id + ')');
-                this.renderer.setStyle(element, 'cursor', 'pointer');
+                item.editable&&this.renderer.setStyle(element, 'cursor', 'pointer');
                 this.renderer.setStyle(element, 'filter', 'url(#shadow)');
                 const imagePattern = this.renderer.createElement('pattern', 'http://www.w3.org/2000/svg');
                 this.renderer.setAttribute(imagePattern, 'id', id);
@@ -402,7 +403,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 this.renderer.setAttribute(image, 'y', '0');
                 this.renderer.setAttribute(image, 'width', String(r * 2));
                 this.renderer.setAttribute(image, 'height', String(r * 2));
-                this.renderer.setAttribute(image, 'href', imageUrl);
+                const u = await this.getImageDataUrl(imageUrl)||imageUrl;
+                this.renderer.setAttribute(image, 'href', u);
 
                 this.renderer.appendChild(imagePattern, image);
                 this.renderer.appendChild(svg, imagePattern);
