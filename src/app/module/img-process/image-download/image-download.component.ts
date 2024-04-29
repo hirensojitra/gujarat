@@ -94,9 +94,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
 
     });
   }
-  ngAfterViewInit(): void {
+  async ngAfterViewInit(): Promise<void> {
     this.imgParam ??= '5';
-    this.imgParam && this.getPostById(this.imgParam);
+    this.imgParam && await this.getPostById(this.imgParam);
   }
 
   async getPostById(postId: any): Promise<void> {
@@ -105,21 +105,19 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     try {
       const post: PostDetails = await this.PS.getPostById(postId.toString()).toPromise() as PostDetails;
       if (post) {
-        console.log(post)
         const p = JSON.parse(JSON.stringify(post));
         this.isDeleted = post.deleted;
         if (!post.deleted) {
           const bg = await this.getImageDataUrl(post.backgroundurl);
           post.backgroundurl = bg;
-          const imageDataPromises = post.data.map(async (item) => {
+          post.data.map(async (item) => {
             if (item.image && item.image.imageUrl) {
               item.image.imageUrl = await this.getImageDataUrl(item.image.imageUrl);
             }
           });
-          await Promise.all(imageDataPromises);
           this.postDetails = post;
-          this.postDetailsDefault = p;
-          this.drawSVG();
+          this.postDetailsDefault = post;
+          await this.drawSVG();
           this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
           this.titleService.setTitle(this.postDetails.title);
           this.postStatus = 'Total Download: ' + post.download_counter;
@@ -161,8 +159,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               const t = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
               let { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = item.text;
               if (text) {
-
                 const lines = this.textFormat(text);
+                item.editable && this.renderer.setStyle(t, 'cursor', 'pointer');
                 if (lines.length === 1) {
                   // If there's only one line of text, create a single tspan element
                   this.renderer.appendChild(t, this.renderer.createText(text));
@@ -187,7 +185,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                       break;
                     // For start alignment, dxOffset remains 0
                   }
-
                   // Iterate over each line of text
                   lines.forEach((line, index) => {
                     // Create a tspan element for each line
@@ -291,6 +288,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               Object.entries(textAttributes).forEach(([key, value]) => this.renderer.setAttribute(t, key, value));
               Object.entries(textStyles).forEach(([key, value]) => this.renderer.setStyle(t, key, value));
 
+              this.renderer.setAttribute(t, 'data-id', uniqueId);
               if (rotate || (originX !== undefined && originY !== undefined)) {
                 const bbox = t.getBBox();
                 const width = bbox.width;
@@ -298,12 +296,14 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
                 this.renderer.setAttribute(t, 'transform', transformValue);
               }
-              this.renderer.setAttribute(t, 'data-id', uniqueId);
-
               if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '' }); }
-
               this.renderer.appendChild(svg, t);
-              const fontLink = this.getFontPath(fontFamily, fw) || 'Hind_Vadodara/HindVadodara-Regular';
+              item.editable && this.renderer.listen(t, 'click', () => {
+                this.selectedIndex = i;
+                this.selectedID = uniqueId;
+                this.setText();
+              });
+              // const fontLink = this.getFontPath(fontFamily, fw) || 'Hind_Vadodara/HindVadodara-Regular';
               // await this.generateSVGPathData(item, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement, uniqueId, s)
               if (item.editable) {
                 s++;
@@ -379,9 +379,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               if (element !== null) {
                 // Set common attributes for all shapes
                 const id = uniqueId;
-                !item.editable&&this.renderer.addClass(element, 'pointer-events-none');
+                !item.editable && this.renderer.addClass(element, 'pointer-events-none');
                 this.renderer.setAttribute(element, 'fill', 'url(#' + id + ')');
-                item.editable&&this.renderer.setStyle(element, 'cursor', 'pointer');
+                item.editable && this.renderer.setStyle(element, 'cursor', 'pointer');
                 this.renderer.setStyle(element, 'filter', 'url(#shadow)');
                 const imagePattern = this.renderer.createElement('pattern', 'http://www.w3.org/2000/svg');
                 this.renderer.setAttribute(imagePattern, 'id', id);
@@ -397,15 +397,12 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                   this.selectedID = uniqueId;
                   this.setImage();
                 });
-                if (item.editable) { s++ }
                 const image = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
                 this.renderer.setAttribute(image, 'x', '0');
                 this.renderer.setAttribute(image, 'y', '0');
                 this.renderer.setAttribute(image, 'width', String(r * 2));
                 this.renderer.setAttribute(image, 'height', String(r * 2));
-                const u = await this.getImageDataUrl(imageUrl)||imageUrl;
-                this.renderer.setAttribute(image, 'href', u);
-
+                this.renderer.setAttribute(image, 'href', imageUrl);
                 this.renderer.appendChild(imagePattern, image);
                 this.renderer.appendChild(svg, imagePattern);
 
@@ -431,9 +428,12 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                   const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
                   this.renderer.setAttribute(element, 'transform', transformValue);
                 }
+                if (item.editable) {
+                  s++;
+                } else {
+                }
                 return element as any;
               }
-
             }
             break;
           default:
@@ -489,13 +489,14 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     }
   }
 
-  onTextSubmit() {
+  async onTextSubmit() {
     if (this.selectedIndex !== null && this.postDetails?.data) {
       this.postDetails.data = this.postDetails.data.map((item, index) => {
         if (index === this.selectedIndex && item.text) {
           let v = this.inputTextForm.get('text')?.value;
           if (this.selectedID) {
             const elementToChange = this.elementRef.nativeElement.querySelector(`[data-id="${this.selectedID}"]`);
+            console
             if (elementToChange) {
               const filteredItems = this.dataset.filter(item => item.id === this.selectedID);
               if (filteredItems[0]) {
@@ -508,7 +509,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         return item;
       });
     }
-    this.drawSVG();
+    await this.drawSVG();
     this.textModal.hide();
   }
 
@@ -691,9 +692,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     return width;
   }
   copyAddressToClipboard(): void {
-    // Check if the Clipboard API is supported
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
-      // If not supported, fallback to older method (e.g., document.execCommand for older browsers)
       this.copyAddressFallback();
       return;
     }
@@ -1076,16 +1075,16 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         } else {
           if (font) {
             // const substitutedText = font.substitution.substitute(text, 'liga');
-            
+
             const substitutedGlyphs: opentype.Glyph[] = [];
             const text = "સોજીત્રા";
 
-          
+
             // Convert substituted glyphs back to text
             const substitutedText = substitutedGlyphs.map(glyph => glyph.unicode).join('');
-          
+
             // Render the substituted text
-            console.log(substitutedText); 
+            console.log(substitutedText);
           }
 
           resolve(font);

@@ -126,6 +126,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     "w": 1024,
     "title": "image",
     "info": "",
+    "info_show": true,
     "backgroundurl": "https://images.unsplash.com/photo-1564053489984-317bbd824340?q=80&w=2096&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "data": [
       {
@@ -259,6 +260,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       backgroundurl: [this.postDetails.backgroundurl, Validators.required],
       download_counter: [this.postDetails.download_counter, Validators.required],
       info: [this.postDetails.info || '', Validators.required],
+      info_show: [this.postDetails.info_show || '', Validators.required],
       data: this.fb.array([])
     });
     this.postDetailsForm?.get('backgroundurl')?.valueChanges.subscribe((value: PostDetails) => {

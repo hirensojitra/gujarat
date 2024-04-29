@@ -1,4 +1,4 @@
-<div class="h-95-vh d-flex flex-column p-3">
+<div class="h-100 d-flex flex-column p-3">
     <ng-container *ngIf="this.postDetails">
         <h3 class="text-center my-4 fw-b" *ngIf="this.postDetails.title">{{this.postDetails.title}}</h3>
         <p class="text-center mb-4 lh-base" *ngIf="this.postDetails.info">{{this.postDetails.info}}</p>
@@ -21,7 +21,7 @@
     </ng-container>
     <ng-container *ngIf="postStatus && isDeleted==false">
         <hr>
-        <span class="w-auto mx-auto">Created by <a href="https://www.facebook.com/SOJITRAHIREN" class="text-danger fw-bold" target="_blank" (click)="myInfo.show();false">Hiren Sojitra</a></span>
+        <span class="w-auto mx-auto" *ngIf="this.postDetails?.info_show">Created by <a href="https://www.facebook.com/SOJITRAHIREN" class="text-danger fw-bold" target="_blank" (click)="myInfo.show();false">Hiren Sojitra</a></span>
         <div class="mt-3 d-flex">
             <button class="btn btn-lg btn-primary mx-auto" (click)="checkDownload('download')">
                 <i class="fa fa-download me-2"></i>Download
@@ -30,6 +30,7 @@
                 <i class="fa fa-whatsapp me-2"></i> Share To WhatsApp
             </button> -->
         </div>
+        <span class="w-auto mx-auto" *ngIf="!this.postDetails?.info_show"><a href="" class="text-danger fw-bold">More Info</a></span>
     </ng-container>
     <ng-container *ngIf="!postStatus || isDeleted">
         <span class="w-auto mx-auto"><a href="" class="text-danger fw-bold">More Info</a></span>

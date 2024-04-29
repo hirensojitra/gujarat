@@ -132,6 +132,7 @@ export interface PostDetails {
     id: string | null;
     deleted: boolean;
     info: string,
+    info_show:boolean,
     h: number;
     w: number;
     title: string;
