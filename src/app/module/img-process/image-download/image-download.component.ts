@@ -836,7 +836,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           post => {
             if (post) {
               const p = JSON.parse(JSON.stringify(post));
-              this.postStatus = p.download_counter;
+              this.postStatus = 'Total Download: ' + post.download_counter;
             } else {
 
             }
