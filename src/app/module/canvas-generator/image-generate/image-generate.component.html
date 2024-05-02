@@ -20,7 +20,7 @@
                 <div class="col-md-6 col-lg-5 py-3 d-flex flex-column">
                     <div class="flex-grow-1 position-relative">
                         <div class="position-absolute w-100 p-3 overflow-auto">
-                            <div class="row g-3">
+                            <div class="row g-3">{{postDetailsForm.get('id')?.value}}
                                 <input type="hidden" id="id" class="form-control" formControlName="id">
                                 <input type="hidden" id="deleted" class="form-control" formControlName="deleted">
                                 <div class="form-group col-12" [class.d-none]="selectedElement!==-1">
@@ -153,6 +153,7 @@
                                                     <label for="r" class="form-label">Size</label>
                                                     <input type="range" class="form-range" min="0" max="1024" step="0.5" formControlName="r">
                                                 </div>
+
 
                                                 <div class="col-12" [class.d-none]="!getActiveControl(i,'fill')">
                                                     <div class="form-group">

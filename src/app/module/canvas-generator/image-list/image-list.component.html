@@ -9,13 +9,17 @@
                     <ng-container *ngIf="posts.length">
                         <div class="col-lg-2 col-md-3 col-sm-4 col-6" *ngFor="let post of posts">
                             <div class="position-relative">
-                                <svg svgProcessor class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [postDataSet]="post" [loadOnly]="post"></svg>
+                                <svg svgProcessor class="svg-content max-w-100-p max-h-100-p img-fluid m-auto d-block" preserveAspectRatio="xMidYMid meet" [postDataSet]="post" [loadOnly]="post"></svg>
                                 <div class="d-flex flex-column position-absolute start-0 top-0 h-100 w-100 p-3 ">
                                     <div class="d-flex mb-auto">
                                         <a class="btn btn-secondary btn-sm me-auto" href="#" (click)="window.open('/images/generate?img=' + post.id, '_blank');false"><i class="fa fa-edit"></i>Edit</a>
                                         <a class="btn btn-secondary btn-sm ms-auto" href="#" (click)="window.open('/img/download?img=' + post.id, '_blank');false"><i class="fa fa-eye"></i>View</a>
                                     </div>
                                 </div>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{post.download_counter}}
+                                    <span class="visually-hidden">unread messages</span>
+                                </span>
                             </div>
                         </div>
                         <div class="col-12">

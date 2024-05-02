@@ -6,6 +6,8 @@ import { PostDetails, TextElement, TextShadow } from 'src/app/common/interfaces/
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
 import * as opentype from 'opentype.js';
 import { FontService } from 'src/app/common/services/fonts.service';
+import { DevelopmentService } from 'src/app/common/services/development.service';
+import { ToastService } from 'src/app/common/services/toast.service';
 interface MatchObject {
   components: string;
 }
@@ -13,11 +15,18 @@ interface Subtable {
   substitutions: { [key: string]: boolean };
   match: MatchObject[];
 }
-declare var makerjs: any;
+interface FontStyles {
+  [fontFamily: string]: Set<string>;
+}
+
+
 declare const bootstrap: any;
 interface data {
   id: string;
   value: string;
+  index: string;
+  type: string;
+  title: string;
 }
 @Component({
   selector: 'app-image-download',
@@ -25,9 +34,14 @@ interface data {
   styleUrls: ['./image-download.component.scss']
 })
 export class ImageDownloadComponent implements AfterViewInit, OnInit {
+  resetForm() {
+    this.canDownload = false;
+    this.formData.reset();
+  }
 
 
   downloaded: boolean = false;
+  canDownload: boolean = false;
   imgParam: any;
   postDetailsDefault: PostDetails | undefined;
   postDetails: PostDetails | undefined;
@@ -45,6 +59,10 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   myInfo: any;
   encodedText = encodeURIComponent("Hello, Hiren!\nI'm interested to create Poster Generate Link");
   cropperModal: any;
+  imageCropper: any;
+  selectedImage: string = '';
+
+
   imgModalTitle: string = '';
   cropper!: Cropper;
   cropperModalTitle: string | undefined = '';
@@ -52,6 +70,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   @ViewChild('imageInput') imageInput!: ElementRef;
 
   dataset: data[] = [];
+  formData: FormGroup;
   constructor(
     private route: ActivatedRoute,
     private PS: PostDetailService,
@@ -60,7 +79,10 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     private elementRef: ElementRef,
     private meta: Meta,
     private titleService: Title,
-    private fontService: FontService) {
+    private fontService: FontService,
+    private commonService: DevelopmentService,
+    private toastService: ToastService
+  ) {
     this.route.queryParams.subscribe(params => {
       this.imgParam = params['img'];
     });
@@ -69,7 +91,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     });
     this.inputImageForm = this.fb.group({
       image: ['']
-    })
+    });
+    this.formData = this.fb.group({});
   }
   async ngOnInit() {
     this.textModal = new bootstrap.Modal(document.getElementById('textModal')!, { focus: false, keyboard: false, static: false });
@@ -93,10 +116,21 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.cropperModal._element.addEventListener('show.bs.modal', () => {
 
     });
+    this.imageCropper = new bootstrap.Modal(document.getElementById('imageCropper')!, { focus: false, keyboard: false, static: false });
+    this.imageCropper._element.addEventListener('hide.bs.modal', () => {
+      if (this.cropper) {
+        this.cropper.destroy();
+      }
+    });
+    this.imageCropper._element.addEventListener('show.bs.modal', () => {
+
+    });
   }
   async ngAfterViewInit(): Promise<void> {
     this.imgParam ??= '5';
     this.imgParam && await this.getPostById(this.imgParam);
+    console.log(this.postDetailsDefault);
+    console.log(this.postDetails);
   }
 
   async getPostById(postId: any): Promise<void> {
@@ -118,6 +152,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           this.postDetails = post;
           this.postDetailsDefault = post;
           await this.drawSVG();
+          this.buildForm();
           this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
           this.titleService.setTitle(this.postDetails.title);
           this.postStatus = 'Total Download: ' + post.download_counter;
@@ -140,6 +175,13 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       while (svg.firstChild) {
         svg.removeChild(svg.firstChild);
       }
+      const linkElement = document.createElementNS('http://www.w3.org/2000/svg', 'link');
+      linkElement.setAttribute('rel', 'stylesheet');
+      linkElement.setAttribute('href', 'https://fonts.googleapis.com/css2?family=Anek+Gujarati:wght@100..800&family=Baloo+Bhai+2:wght@400..800&family=Farsan&family=Hind+Vadodara:wght@300;400;500;600;700&family=Kumar+One&family=Kumar+One+Outline&family=Mogra&family=Mukta+Vaani:wght@200;300;400;500;600;700;800&family=Noto+Sans+Gujarati:wght@100..900&family=Noto+Serif+Gujarati:wght@100..900&family=Rasa:ital,wght@0,300..700;1,300..700&family=Shrikhand&display=swap');
+
+      // Append the <link> element to the SVG's <defs> element
+      svgDefs.appendChild(linkElement);
+      svg.appendChild(svgDefs);
       this.renderer.setAttribute(svg, 'viewBox', "0 0 " + (this.postDetails.w || 0) + " " + (this.postDetails.h || 0));
       const b = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
       this.renderer.setAttribute(b, 'x', '0');
@@ -160,7 +202,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               let { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = item.text;
               if (text) {
                 const lines = this.textFormat(text);
-                item.editable && this.renderer.setStyle(t, 'cursor', 'pointer');
+                item.editable && this.renderer.setStyle(t, 'pointer-events', 'none');
                 if (lines.length === 1) {
                   // If there's only one line of text, create a single tspan element
                   this.renderer.appendChild(t, this.renderer.createText(text));
@@ -296,15 +338,16 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
                 this.renderer.setAttribute(t, 'transform', transformValue);
               }
-              if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '' }); }
+              if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '', index: i.toString(), type: 'text', title: item.title }); }
               this.renderer.appendChild(svg, t);
+              this.renderer.addClass(t, 'pointer-events-none');
               item.editable && this.renderer.listen(t, 'click', () => {
                 this.selectedIndex = i;
                 this.selectedID = uniqueId;
                 this.setText();
               });
               // const fontLink = this.getFontPath(fontFamily, fw) || 'Hind_Vadodara/HindVadodara-Regular';
-              // await this.generateSVGPathData(item, `assets/fonts/${fontLink}.ttf`, svg as SVGAElement, uniqueId, s)
+              // await this.loadFont(`assets/fonts/${fontLink}.ttf`)
               if (item.editable) {
                 s++;
               } else {
@@ -315,6 +358,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             if (item.rect) {
               const rect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
               const { x, y, width, height, fill, opacity, originX, originY, rotate } = item.rect;
+              this.renderer.addClass(rect, 'pointer-events-none');
               this.renderer.setAttribute(rect, 'x', String(x));
               this.renderer.setAttribute(rect, 'y', String(y));
               this.renderer.setAttribute(rect, 'width', String(width));
@@ -334,6 +378,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             if (item.circle) {
               const c = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
               const { cx, cy, r, fill, opacity } = item.circle;
+              this.renderer.addClass(c, 'pointer-events-none');
               this.renderer.setAttribute(c, 'cx', String(cx));
               this.renderer.setAttribute(c, 'cy', String(cy));
               this.renderer.setAttribute(c, 'r', r.toString());
@@ -379,9 +424,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               if (element !== null) {
                 // Set common attributes for all shapes
                 const id = uniqueId;
-                !item.editable && this.renderer.addClass(element, 'pointer-events-none');
+                this.renderer.addClass(element, 'pointer-events-none');
                 this.renderer.setAttribute(element, 'fill', 'url(#' + id + ')');
-                item.editable && this.renderer.setStyle(element, 'cursor', 'pointer');
+                item.editable && this.renderer.setStyle(element, 'pointer-events', 'none');
                 this.renderer.setStyle(element, 'filter', 'url(#shadow)');
                 const imagePattern = this.renderer.createElement('pattern', 'http://www.w3.org/2000/svg');
                 this.renderer.setAttribute(imagePattern, 'id', id);
@@ -391,7 +436,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 this.renderer.setAttribute(imagePattern, 'width', '100%');
                 this.renderer.setAttribute(imagePattern, 'viewBox', '0 0 ' + String(r * 2) + ' ' + String(r * 2));
                 this.renderer.setAttribute(element, 'data-id', uniqueId);
-                if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '' }); }
+                if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '', index: i.toString(), type: 'image', title: item.title }); }
                 item.editable && this.renderer.listen(element, 'click', () => {
                   this.selectedIndex = i;
                   this.selectedID = uniqueId;
@@ -441,9 +486,10 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             break;
         }
       })
-
     }
     this.downloaded = false;
+    this.canDownload = false;
+    this.formData.reset();
   }
   async getImageDataUrl(imageUrl: string): Promise<string> {
     try {
@@ -488,7 +534,106 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       this.cropperModal.show();
     }
   }
+  buildForm() {
+    Object.keys(this.formData.controls).forEach(key => {
+      this.formData.get(key) && this.formData.removeControl(key);
+    });
+    this.dataset.forEach(field => {
+      const index = parseInt(field.index, 10);
+      if (!isNaN(index) && this.postDetails?.data) {
+        if (field.type === 'text') {
+          const textData = this.postDetails.data.filter((_, i) => i === index)[0]?.text;
+          if (textData) {
+            this.formData.addControl(field.id, this.fb.control('', Validators.required));
+            this.formData.get(field.id)?.valueChanges.subscribe((v) => {
+              textData.text = v;
+              field.value = v;
+            });
+          }
+        } else if (field.type === 'image') {
+          const textData = this.postDetails.data.filter((_, i) => i === index)[0]?.image;
+          if (textData) {
+            this.formData.addControl(field.id, this.fb.control('', Validators.required));
+            this.formData.addControl(field.id + '-file', this.fb.control('', Validators.required));
+            this.formData.get(field.id)?.valueChanges.subscribe((v) => {
+              textData.imageUrl = v;
+              field.value = v;
+            });
+          }
+        }
+      }
+    });
+  }
+  onFileChange(event: any, fieldName: string, index: number): void {
+    if (event.target.files.length > 0) {
+      const file = event.target.files[0];
+      const fileType = file.type;
+      if (fileType.startsWith('image/')) {
+        if (fileType === 'image/jpeg' || fileType === 'image/png' || fileType === 'image/gif' || fileType === 'image/bmp' || fileType === 'image/webp' || fileType === 'image/svg+xml' || fileType === 'image/tiff') {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const imageSrc = e.target?.result as string;
+            this.imageCropper.show();
+            // Initialize Cropper
+            const cropperElement = document.getElementById('imageToCropped') as HTMLImageElement;
+            this.cropper = new Cropper(cropperElement, {
+              aspectRatio: 1,
+              scalable: true,
+              viewMode: 3, // Ensure the crop box is always within the container
+              crop: (event) => {
 
+              },
+              autoCropArea: 1, // Ensure the initial crop area covers the entire image
+              dragMode: 'move', // Allow dragging to move the image within the container
+              responsive: true, // Update crop box on resize
+              cropBoxResizable: false, // Disable resizing the crop box
+              minCropBoxWidth: 320,
+              minCropBoxHeight: 320,
+              minContainerWidth: 320,
+              minContainerHeight: 320
+            });
+            this.cropper.replace(imageSrc);
+            this.selectedImage = fieldName;
+          };
+          reader.readAsDataURL(file);
+
+        } else {
+          this.toastService.show('Please select image type.', { class: 'bg-danger', title: 'Invalid Image Type' });
+        }
+      } else {
+        this.toastService.show('Please select valid file format.', { class: 'bg-danger', title: 'Invalid File Format' });
+      }
+
+
+    }
+  }
+
+  onSubmitFormData() {
+    this.commonService.markFormGroupTouched(this.formData);
+    if (this.formData.valid) {
+      this.dataset.forEach(field => {
+        const index = parseInt(field.index, 10);
+        if (!isNaN(index) && this.postDetails?.data) {
+          if (field.type === 'text') {
+            const textData = this.postDetails.data.filter((_, i) => i === index)[0]?.text;
+            if (textData) {
+              textData.text = field.value;
+              this.canDownload = false;
+            }
+          } else if (field.type === 'image') {
+            const imageData = this.postDetails.data.filter((_, i) => i === index)[0]?.image;
+            if (imageData) {
+              imageData.imageUrl = field.value;
+              this.canDownload = false;
+            }
+          }
+        }
+      });
+      this.drawSVG();
+      this.canDownload = true;
+      this.formData.reset();
+    }
+  }
   async onTextSubmit() {
     if (this.selectedIndex !== null && this.postDetails?.data) {
       this.postDetails.data = this.postDetails.data.map((item, index) => {
@@ -568,37 +713,51 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   handleImageInputChange(event: Event): void {
     const inputElement = event.target as HTMLInputElement;
     const file = inputElement.files?.[0];
-    if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageSrc = e.target?.result as string;
-        // Open Bootstrap modal dialog with Cropper
+    if (file) {
+      const fileType = file.type;
+      if (fileType.startsWith('image/')) {
+        // The file is an image
+        if (fileType === 'image/jpeg' || fileType === 'image/png' || fileType === 'image/gif' || fileType === 'image/bmp' || fileType === 'image/webp' || fileType === 'image/svg+xml' || fileType === 'image/tiff') {
 
-        this.cropperModal.show();
-        // Initialize Cropper
-        const cropperElement = document.getElementById('cropper') as HTMLImageElement;
-        this.cropper = new Cropper(cropperElement, {
-          aspectRatio: 1,
-          scalable: true,
-          viewMode: 3, // Ensure the crop box is always within the container
-          crop: (event) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const imageSrc = e.target?.result as string;
+            // Open Bootstrap modal dialog with Cropper
 
-          },
-          autoCropArea: 1, // Ensure the initial crop area covers the entire image
-          dragMode: 'move', // Allow dragging to move the image within the container
-          responsive: true, // Update crop box on resize
-          cropBoxResizable: false, // Disable resizing the crop box
-          minCropBoxWidth: 320,
-          minCropBoxHeight: 320,
-          minContainerWidth: 320,
-          minContainerHeight: 320
-        });
+            this.cropperModal.show();
+            // Initialize Cropper
+            const cropperElement = document.getElementById('cropper') as HTMLImageElement;
+            this.cropper = new Cropper(cropperElement, {
+              aspectRatio: 1,
+              scalable: true,
+              viewMode: 3, // Ensure the crop box is always within the container
+              crop: (event) => {
 
-        // Set image source for Cropper
-        this.cropper.replace(imageSrc);
-      };
-      reader.readAsDataURL(file);
-    } else {
+              },
+              autoCropArea: 1, // Ensure the initial crop area covers the entire image
+              dragMode: 'move', // Allow dragging to move the image within the container
+              responsive: true, // Update crop box on resize
+              cropBoxResizable: false, // Disable resizing the crop box
+              minCropBoxWidth: 320,
+              minCropBoxHeight: 320,
+              minContainerWidth: 320,
+              minContainerHeight: 320
+            });
+
+            // Set image source for Cropper
+            this.cropper.replace(imageSrc);
+          };
+          reader.readAsDataURL(file);
+
+        } else {
+          this.toastService.show('Please select image type.', { class: 'bg-danger', title: 'Invalid Image Type' });
+        }
+      } else {
+        this.toastService.show('Please select valid file format.', { class: 'bg-danger', title: 'Invalid File Format' });
+      }
+    }
+
+    if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) { } else {
     }
   }
   handleCropEvent(): void {
@@ -613,6 +772,25 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       this.inputImageForm.get('image')?.setValue(resizedImageData);
     }
   }
+  handleSelectedEvent(): void {
+    if (this.cropper) {
+      const croppedCanvas = this.cropper.getCroppedCanvas();
+      const resizedCanvas = document.createElement('canvas');
+      const resizedContext = resizedCanvas.getContext('2d')!;
+      resizedCanvas.width = 800;
+      resizedCanvas.height = 800;
+      resizedContext.drawImage(croppedCanvas, 0, 0, 800, 800);
+      const resizedImageData = resizedCanvas.toDataURL('image/png');
+      const selectedItem = this.dataset.find(item => item.id === this.selectedImage);
+      if (selectedItem) {
+        const index = parseInt(selectedItem.index, 10); // Parse index to integer
+        if (!isNaN(index) && this.postDetails?.data) {
+          this.formData.get(this.selectedImage)?.setValue(resizedImageData);
+          this.imageCropper.hide();
+        }
+      }
+    }
+  }
   openImageCropperDialog(): void {
     const inputElement = this.imageInput.nativeElement;
     if (inputElement) {
@@ -621,11 +799,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     }
     this.cropperModal.hide();
   }
-  capturePhoto() {
-    // Get the SVG element
+  async capturePhoto() {
     const svgElement = this.imageDraw.nativeElement;
-
-    // Extract viewBox dimensions
     const viewBoxAttr = svgElement.getAttribute('viewBox') || '';
     const viewBoxValues = viewBoxAttr.split(' ').map(Number);
     const viewBoxWidth = viewBoxValues[2];
@@ -638,14 +813,17 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     // Set canvas dimensions to match the viewBox dimensions
     canvas.width = viewBoxWidth;
     canvas.height = viewBoxHeight;
-
-    // Create a new Image object
     const image = new Image();
 
     // Create a new XMLSerializer object to serialize the SVG element
     const serializer = new XMLSerializer();
+
+    const fontFamilies = this.getFontStylesFromSVG(svgElement);
+    console.log(fontFamilies)
+    await this.loadFonts(fontFamilies);
     const svgString = serializer.serializeToString(svgElement);
-    image.onload = () => {
+    image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+    image.onload = async () => {
       context?.drawImage(image, 0, 0);
       const dataURL = canvas.toDataURL('image/png');
       const timestamp = new Date().toISOString().replace(/:/g, '-');
@@ -653,7 +831,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       const link = document.createElement('a');
       link.href = dataURL;
       link.download = fileName;
-      !this.downloaded && this.PS.updateDownloadCounter(this.imgParam)
+      !this.downloaded && await this.PS.updateDownloadCounter(this.imgParam)
         .subscribe(
           post => {
             if (post) {
@@ -667,11 +845,77 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             console.error('Error fetching post:', error);
           }
         )
+      const textElements = svgElement.querySelectorAll('text');
+      context && textElements.forEach(text => {
+        const fontFamily = text.getAttribute('font-family') || 'Arial'; // Default to Arial if font-family is not specified
+        const fontSize = parseFloat(text.getAttribute('font-size') || '16'); // Default font size to 16 if not specified
+        context.font = `${fontSize}px ${fontFamily}`;
+      });
       this.downloaded = true;
       link.click();
     };
-    image.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
   }
+  getFontStylesFromSVG(svgElement: SVGElement | HTMLElement): FontStyles {
+    const textElements = svgElement.querySelectorAll('text');
+    const fontStyles: FontStyles = {}; // Initialize as an empty object
+    textElements.forEach(text => {
+      const fontFamily = text.getAttribute('font-family');
+      const fontWeight = text.getAttribute('font-weight') || 'normal'; // Default to 'normal' if font-weight is not specified
+      if (fontFamily) {
+        // Extract font family name from the attribute value
+        const fontFamilyName = fontFamily.split(',')[0].replace(/['"]/g, '').trim(); // Remove single or double quotes and extra spaces
+        if (!fontStyles[fontFamilyName]) {
+          fontStyles[fontFamilyName] = new Set<string>();
+        }
+        fontStyles[fontFamilyName].add(fontWeight);
+      }
+    });
+    return fontStyles;
+  }
+
+  async loadFonts(fontStyles: FontStyles) {
+    const svg = this.imageDraw.nativeElement;
+    let svgDefs = svg.querySelector('defs') as SVGDefsElement || svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'defs'));
+
+    let styleElement = svgDefs.querySelector('style') as SVGStyleElement | null;
+    if (!styleElement) {
+      styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      svgDefs.appendChild(styleElement);
+    }
+
+    const addedRules = new Set<string>();
+
+    for (const [fontFamily, fontWeights] of Object.entries(fontStyles)) {
+      for (const fontWeight of fontWeights) {
+        const fontPath = this.fontService.getFontPath(fontFamily, fontWeight);
+        const fontData = await this.loadFontAsBase64(`assets/fonts/${fontPath}.ttf`);
+        const fontFaceRule = `@font-face {
+          font-family: '${fontFamily}';
+          font-style: normal;
+          font-weight: ${fontWeight};
+          font-stretch: 100%;
+          font-display: swap;
+          src: url(data:font/truetype;base64,${fontData}) format('truetype');
+        }`;
+
+        if (!addedRules.has(fontFaceRule)) {
+          styleElement.textContent += fontFaceRule;
+          addedRules.add(fontFaceRule);
+        }
+      }
+    }
+  }
+
+
+
+  async loadFontAsBase64(fontUrl: string): Promise<string> {
+    const response = await fetch(fontUrl);
+    const fontData = await response.arrayBuffer();
+    return btoa(new Uint8Array(fontData).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+  }
+
+
+
 
   textFormat(text: string): string[] {
     const formattedText = text.replace(/\n/g, '\n').replace(/\n(?!\*{3})/g, '***\n');
@@ -684,7 +928,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   getTextWidth(text: string, fontSize: number, fontFamily: string): number {
     const svgText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     svgText.setAttribute('font-size', `${fontSize}px`);
-    svgText.setAttribute('font-family', fontFamily);
+    svgText.setAttribute('font-family', `fontFamily`);
     svgText.textContent = text;
     document.body.appendChild(svgText);
     const width = svgText.getBBox().width;
