@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -8,6 +8,10 @@ import * as opentype from 'opentype.js';
 import { FontService } from 'src/app/common/services/fonts.service';
 import { DevelopmentService } from 'src/app/common/services/development.service';
 import { ToastService } from 'src/app/common/services/toast.service';
+import { OpenGraphService } from 'src/app/common/services/open-graph.service';
+import { DOCUMENT } from '@angular/common';
+import { BaseUrlService } from 'src/app/common/services/baseuri.service';
+import { LoaderService } from 'src/app/common/services/loader';
 interface MatchObject {
   components: string;
 }
@@ -38,8 +42,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.canDownload = false;
     this.formData.reset();
   }
-
-
+  baseUrl: string;
+  finalImage: any;
+  pageLink: string = '';
   downloaded: boolean = false;
   canDownload: boolean = false;
   imgParam: any;
@@ -81,7 +86,10 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     private titleService: Title,
     private fontService: FontService,
     private commonService: DevelopmentService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private ogService: OpenGraphService,
+    private baseUrlService: BaseUrlService,
+    private loaderService: LoaderService,
   ) {
     this.route.queryParams.subscribe(params => {
       this.imgParam = params['img'];
@@ -93,6 +101,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       image: ['']
     });
     this.formData = this.fb.group({});
+    this.baseUrl = this.baseUrlService.getBaseUrl();
   }
   async ngOnInit() {
     this.textModal = new bootstrap.Modal(document.getElementById('textModal')!, { focus: false, keyboard: false, static: false });
@@ -149,6 +158,13 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               item.image.imageUrl = await this.getImageDataUrl(item.image.imageUrl);
             }
           });
+          this.ogService.setMetadata(
+            post.title,
+            post.info,
+            this.baseUrl + 'img/download?img=' + post.id,
+            post.backgroundurl
+          );
+          this.pageLink = this.baseUrl + 'img/download?img=' + post.id;
           this.postDetails = post;
           this.postDetailsDefault = post;
           await this.drawSVG();
@@ -682,27 +698,37 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.cropperModal.hide();
   }
 
-  checkDownload(t: string): boolean {
-    for (const item of this.dataset) {
-      if (item.value == '') {
-        const elementToClick = this.elementRef.nativeElement.querySelector(`[data-id="${item.id}"]`);
-        if (elementToClick) {
-          const clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window
-          });
-          elementToClick.dispatchEvent(clickEvent);
-        }
-        return false;
-      }
-    }
+  async checkDownload(t: string): Promise<boolean> {
+    // for (const item of this.dataset) {
+    //   if (item.value == '') {
+    //     const elementToClick = this.elementRef.nativeElement.querySelector(`[data-id="${item.id}"]`);
+    //     if (elementToClick) {
+    //       const clickEvent = new MouseEvent('click', {
+    //         bubbles: true,
+    //         cancelable: true,
+    //         view: window
+    //       });
+    //       elementToClick.dispatchEvent(clickEvent);
+    //     }
+    //     return false;
+    //   }
+    // }
+
+    const baseUrl = `${this.baseUrl}img/download?img=${this.postDetails?.id}`;
+    const title = this.postDetails?.title.trim();
+    const info = this.postDetails?.info.trim();
     switch (t) {
       case 'download':
         this.capturePhoto();
         break;
       case 'whatsapp':
-        this.capturePhoto();
+        const whatsappUrl = `*${baseUrl}*\n\n*${title}*\n*_${info}_*\n\nપોસ્ટર બનાવવા ઉપરની લિંક ક્લિક કરો\nઅન્ય સબંધિત વ્યક્તિ ને પણ શેર કરો.`;
+        window.location.href = `whatsapp://send?text=${encodeURIComponent(whatsappUrl)}`;
+        break;
+      case 'facebook':
+        const facebookUrl = `${baseUrl}\n\n${this.postDetails?.title}\n${this.postDetails?.info}`;
+    const shareDialogUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(facebookUrl)}`;
+    window.open(shareDialogUrl, '_blank');
         break;
       default:
         this.capturePhoto();
@@ -799,7 +825,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     }
     this.cropperModal.hide();
   }
-  async capturePhoto() {
+  async capturePhoto(share?: boolean) {
+    this.loaderService.show(0);
     const svgElement = this.imageDraw.nativeElement;
     const viewBoxAttr = svgElement.getAttribute('viewBox') || '';
     const viewBoxValues = viewBoxAttr.split(' ').map(Number);
@@ -830,6 +857,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       const fileName = `IMG-${timestamp}.png`;
       const link = document.createElement('a');
       link.href = dataURL;
+      this.finalImage = dataURL;
       link.download = fileName;
       !this.downloaded && await this.PS.updateDownloadCounter(this.imgParam)
         .subscribe(
@@ -837,6 +865,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             if (post) {
               const p = JSON.parse(JSON.stringify(post));
               this.postStatus = 'Total Download: ' + post.download_counter;
+
             } else {
 
             }
@@ -852,7 +881,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         context.font = `${fontSize}px ${fontFamily}`;
       });
       this.downloaded = true;
-      link.click();
+      !share && link.click();
+      this.loaderService.hide();
     };
   }
   getFontStylesFromSVG(svgElement: SVGElement | HTMLElement): FontStyles {

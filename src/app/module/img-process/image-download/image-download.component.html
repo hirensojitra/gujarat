@@ -3,28 +3,51 @@
         <h3 class="text-center my-4 fw-b" *ngIf="this.postDetails.title">{{this.postDetails.title}}</h3>
         <p class="text-center mb-4 lh-base" *ngIf="this.postDetails.info">{{this.postDetails.info}}</p>
     </ng-container>
-    <div class="flex-grow-1 position-relative overflow-hidden mb-4">
-        <div class="position-absolute h-100 w-100 text-center d-flex align-items-center justify-content-center overflow-auto flex-column" id="canvas-container">
+    <!-- <div class="d-flex align-items-center justify-content-center p-2 mb-3 bg-light" *ngIf="postStatus && !isDeleted">
+        <div class="fb-share-button mb-2" [attr.data-href]="pageLink" data-layout="" data-size=""></div>
+    </div> -->
+    <div class="flex-grow-1 position-relative overflow-hidden mb-4 min-h-600-px">
+        <div class="position-absolute h-100 w-100 text-center d-flex align-items-center justify-content-center overflow-auto flex-column"
+            id="canvas-container">
             <svg #imageDraw class="max-w-100 max-h-100" *ngIf="postStatus && !isDeleted"></svg>
-            <img class="max-w-100 max-h-100 rounded-4" *ngIf="!postStatus || isDeleted" src="assets/images/svg/no-post.svg" />
+            <img class="max-w-100 max-h-100 rounded-4" *ngIf="!postStatus || isDeleted"
+                src="assets/images/svg/no-post.svg" />
             <div *ngIf="postStatus=='loading'">Loading </div>
         </div>
     </div>
     <form [formGroup]="formData" (ngSubmit)="onSubmitFormData()" *ngIf="!canDownload && dataset.length" class="row g-4">
-        <div *ngFor="let field of dataset;let i=index" class="form-group col-lg-4 offset-lg-4  col-sm-6 offset-sm-6 col-12 offset-0">
+        <div *ngFor="let field of dataset;let i=index"
+            class="form-group col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0">
             <ng-container *ngIf="field.type === 'text'">
                 <label class="form-label" for="{{field.id}}">{{field.title}}</label>
-                <input class="form-control" type="text" id="{{field.id}}" name="{{field.id}}" formControlName="{{field.id}}" [placeholder]="field.title">
+                <input class="form-control" type="text" id="{{field.id}}" name="{{field.id}}"
+                    formControlName="{{field.id}}" [placeholder]="field.title">
             </ng-container>
             <ng-container *ngIf="field.type === 'image'">
                 <label class="form-label">{{field.title}}</label>
-                <input type="hidden" class="form-control" id="{{field.id}}" name="{{field.id}}" formControlName="{{field.id}}">
-                <input type="file" class="form-control" id="{{field.id}}-file" name="{{field.id}}-file" formControlName="{{field.id}}-file" (change)="onFileChange($event, field.id,i)" accept="image/*">
+                <input type="hidden" class="form-control" id="{{field.id}}" name="{{field.id}}"
+                    formControlName="{{field.id}}">
+                <input type="file" class="form-control" id="{{field.id}}-file" name="{{field.id}}-file"
+                    formControlName="{{field.id}}-file" (change)="onFileChange($event, field.id,i)" accept="image/*">
             </ng-container>
         </div>
-        <div class="form-group col-lg-4 offset-lg-4  col-sm-6 offset-sm-6 col-12 offset-0">
+        <hr>
+        <div class="col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0 d-flex">
             <!-- <button type="submit" class="btn btn-success w-100" [disabled]="!formData.valid"><i class="fa fa-gear me-2"></i> Generate Image</button> -->
-            <button type="submit" class="btn btn-success w-100"><i class="fa fa-gear me-2"></i> Generate Image</button>
+            <button class="btn btn-success btn-lg text-nowrap" (click)="checkDownload('whatsapp')" type="button">
+                <i class="fa fa-whatsapp me-2"></i><span class="d-none-sm">WhatsApp</span>
+            </button>
+            <button type="submit" class="btn btn-primary btn-lg w-100 mx-3 text-nowrap"><i class="fa fa-gears me-2"></i>
+                Generate
+                Poster</button>
+            <button class="btn btn-danger mx-auto btn-lg text-nowrap" (click)="resetForm()" type="button">
+                <i class="fa fa-refresh me-2"></i>Reset
+            </button>
+        </div>
+        <div class="form-group col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0 d-flex">
+            <button class="btn btn-success btn-lg text-nowrap w-100" (click)="checkDownload('facebook')" type="button">
+                <i class="fa fa-facebook me-2"></i>Facebook
+            </button>
         </div>
     </form>
 
@@ -40,28 +63,39 @@
     </ng-container>
     <ng-container *ngIf="postStatus && isDeleted==false">
         <hr>
-        <span class="w-auto mx-auto" *ngIf="this.postDetails?.info_show">Created by <a href="https://www.facebook.com/SOJITRAHIREN" class="text-danger fw-bold" target="_blank" (click)="myInfo.show();false">Hiren Sojitra</a></span>
+        <span class="w-auto mx-auto py-3 d-flex align-items-center" *ngIf="this.postDetails?.info_show">Created by <a
+                href="https://www.facebook.com/SOJITRAHIREN" class="fw-bold btn btn-outline-danger ms-3" target="_blank"
+                (click)="myInfo.show();false">Hiren Sojitra</a></span>
         <div class="row" *ngIf="canDownload">
-            <div class="form-group col-lg-4 offset-lg-4  col-sm-6 offset-sm-6 col-12 offset-0">
-                <div class="mt-3 d-flex">
-                    <button class="btn btn-primary mx-auto" (click)="checkDownload('download')">
+            <div class="form-group col-lg-4 offset-lg-4 col-sm-8 offset-sm-2 col-12 offset-0">
+                <div class="my-3 d-flex">
+                    <button class="btn btn-success btn-lg text-nowrap" (click)="checkDownload('whatsapp')"
+                        type="button">
+                        <i class="fa fa-whatsapp me-2"></i><span class="d-none-sm">WhatsApp</span>
+                    </button>
+                    <button class="btn btn-primary btn-lg mx-3 w-100" (click)="checkDownload('download')">
                         <i class="fa fa-download me-2"></i>Download
                     </button>
-                    <button class="btn btn-danger mx-auto" (click)="resetForm()">
+                    <button class="btn btn-danger mx-auto btn-lg text-nowrap" (click)="resetForm()">
                         <i class="fa fa-refresh me-2"></i>Reset
                     </button>
-                    <!-- <button class="btn btn-primary mx-auto" (click)="checkDownload('whatsapp')">
-                        <i class="fa fa-whatsapp me-2"></i> Share To WhatsApp
-                    </button> -->
                 </div>
             </div>
+            <div class="form-group col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0 d-flex">
+                <button class="btn btn-success btn-lg text-nowrap w-100 mb-3" (click)="checkDownload('facebook')"
+                    type="button">
+                    <i class="fa fa-facebook me-2"></i>Facebook
+                </button>
+            </div>
         </div>
-        <span class="w-auto mx-auto" *ngIf="!this.postDetails?.info_show"><a href="" class="text-danger fw-bold">More Info</a></span>
+        <span class="w-auto mx-auto" *ngIf="!this.postDetails?.info_show"><a href="" class="text-danger fw-bold">More
+                Info</a></span>
     </ng-container>
     <ng-container *ngIf="!postStatus || isDeleted">
         <span class="w-auto mx-auto"><a href="" class="text-danger fw-bold">More Info</a></span>
         <div class="mt-3 d-flex">
-            <div class="btn btn-lg btn-danger mx-auto" (click)="myInfo.show()"><i class="fa fa-user me-2"></i>Contact Us</div>
+            <div class="btn btn-lg btn-danger mx-auto" (click)="myInfo.show()"><i class="fa fa-user me-2"></i>Contact Us
+            </div>
         </div>
     </ng-container>
 </div>
@@ -76,7 +110,8 @@
                 <form [formGroup]="inputTextForm" (ngSubmit)="onTextSubmit()">
                     <input type="text" formControlName="text" class="form-control form-control-lg fw-bold" #textInput>
                     <div class="d-flex mt-4">
-                        <button class="btn btn-primary mx-auto" [disabled]="inputTextForm.invalid" type="submit"><i class="fa fa-save"></i> Save</button>
+                        <button class="btn btn-primary mx-auto" [disabled]="inputTextForm.invalid" type="submit"><i
+                                class="fa fa-save"></i> Save</button>
                     </div>
                 </form>
             </div>
@@ -96,8 +131,10 @@
                 <form [formGroup]="inputImageForm" (ngSubmit)="onImageSubmit()">
                     <input type="hidden" formControlName="image">
                     <div class="d-flex mt-4">
-                        <button class="btn btn-success mx-auto" (click)="openImageCropperDialog()" type="button"><i class="fa fa-refresh"></i> Change Photo</button>
-                        <button class="btn btn-primary mx-auto" [disabled]="inputImageForm.invalid"><i class="fa fa-save"></i> Save</button>
+                        <button class="btn btn-success mx-auto" (click)="openImageCropperDialog()" type="button"><i
+                                class="fa fa-refresh"></i> Change Photo</button>
+                        <button class="btn btn-primary mx-auto" [disabled]="inputImageForm.invalid"><i
+                                class="fa fa-save"></i> Save</button>
                     </div>
                 </form>
             </div>
@@ -116,8 +153,11 @@
             </div>
             <div class="modal-footer">
                 <div class="d-flex mt-4">
-                    <button class="btn btn-success ms-3" (click)="handleSelectedEvent()" type="button"><i class="fa fa-save"></i> Save</button>
-                    <button class="btn btn-primary ms-3" (click)="imageCropper.hide();formData.get(selectedImage+'-file')?.reset()"><i class="fa fa-save"></i> Cancel</button>
+                    <button class="btn btn-success ms-3" (click)="handleSelectedEvent()" type="button"><i
+                            class="fa fa-save"></i> Save</button>
+                    <button class="btn btn-primary ms-3"
+                        (click)="imageCropper.hide();formData.get(selectedImage+'-file')?.reset()"><i
+                            class="fa fa-save"></i> Cancel</button>
                 </div>
             </div>
         </div>
@@ -134,7 +174,8 @@
                 <h5>Hiren Sojitra</h5>
                 <div class="mb-3">
                     <label for="email" class="form-label">Email:</label>
-                    <a href="mailto:hirensojitra007@gmail.com" class="form-control text-decoration-none fw-bold">hirensojitra007@gmail.com</a>
+                    <a href="mailto:hirensojitra007@gmail.com"
+                        class="form-control text-decoration-none fw-bold">hirensojitra007@gmail.com</a>
                 </div>
                 <div class="mb-3">
                     <label for="mobile" class="form-label">Mobile:</label>
@@ -142,9 +183,12 @@
                 </div>
                 <div class="mb-3">
                     <label for="social" class="form-label">Social Links:</label><br>
-                    <a href="http://www.facebook.com/SOJITRAHIREN" class="btn btn-primary m-2 text-decoration-none" target="_blank"><i class="fa fa-facebook me-2"></i>Facebook</a>
-                    <a href="http://www.instagram.com/HIREN_SOJITRA" class="btn btn-danger m-2 text-decoration-none" target="_blank"><i class="fa fa-instagram me-2"></i>Instagram</a>
-                    <a href="http://www.twitter.com/SOJITRA_HIREN" class="btn btn-dark m-2 text-decoration-none" target="_blank"><i class="fa fa-twitter me-2"></i>Twitter</a>
+                    <a href="http://www.facebook.com/SOJITRAHIREN" class="btn btn-primary m-2 text-decoration-none"
+                        target="_blank"><i class="fa fa-facebook me-2"></i>Facebook</a>
+                    <a href="http://www.instagram.com/HIREN_SOJITRA" class="btn btn-danger m-2 text-decoration-none"
+                        target="_blank"><i class="fa fa-instagram me-2"></i>Instagram</a>
+                    <a href="http://www.twitter.com/SOJITRA_HIREN" class="btn btn-dark m-2 text-decoration-none"
+                        target="_blank"><i class="fa fa-twitter me-2"></i>Twitter</a>
                 </div>
             </div>
         </div>
