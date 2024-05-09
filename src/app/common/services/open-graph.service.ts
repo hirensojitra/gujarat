@@ -16,13 +16,13 @@ export class OpenGraphService {
     this.meta.removeTag('property="og:description"');
     this.meta.removeTag('property="og:image"');
     this.meta.removeTag('property="og:type"');
-
+    
     // Set new Open Graph meta tags
     this.meta.addTag({ property: 'og:title', content: title });
     this.meta.addTag({ property: 'og:type', content: "website" });
-    this.meta.addTag({ name: 'description', content: description });
+    this.meta.addTag({ name: 'description', content: title+'\n'+description });
     this.meta.addTag({ property: 'og:url', content: url });
-    this.meta.addTag({ property: 'og:description', content: description });
+    this.meta.addTag({ property: 'og:description', content: title+'\n'+description });
     this.meta.addTag({ property: 'og:image', content: imageUrl });
   }
 }

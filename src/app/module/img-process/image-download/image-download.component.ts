@@ -12,6 +12,7 @@ import { OpenGraphService } from 'src/app/common/services/open-graph.service';
 import { DOCUMENT } from '@angular/common';
 import { BaseUrlService } from 'src/app/common/services/baseuri.service';
 import { LoaderService } from 'src/app/common/services/loader';
+declare var FB: any;
 interface MatchObject {
   components: string;
 }
@@ -91,8 +92,10 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     private baseUrlService: BaseUrlService,
     private loaderService: LoaderService,
   ) {
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe(async params => {
       this.imgParam = params['img'];
+      this.imgParam ??= '5';
+      this.imgParam && await this.getPostById(this.imgParam);
     });
     this.inputTextForm = this.fb.group({
       text: ['', Validators.required]
@@ -104,6 +107,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.baseUrl = this.baseUrlService.getBaseUrl();
   }
   async ngOnInit() {
+
     this.textModal = new bootstrap.Modal(document.getElementById('textModal')!, { focus: false, keyboard: false, static: false });
     this.textModal._element.addEventListener('hide.bs.modal', () => {
       this.inputTextForm.reset();
@@ -135,11 +139,15 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
 
     });
   }
+  shareOnFacebook(): void {
+    // Call FB.ui to trigger the Feed Dialog
+    (window as any).FB.ui({
+      method: 'feed',
+      link: this.pageLink
+    });
+  }
   async ngAfterViewInit(): Promise<void> {
-    this.imgParam ??= '5';
-    this.imgParam && await this.getPostById(this.imgParam);
-    console.log(this.postDetailsDefault);
-    console.log(this.postDetails);
+
   }
 
   async getPostById(postId: any): Promise<void> {
@@ -151,6 +159,12 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         const p = JSON.parse(JSON.stringify(post));
         this.isDeleted = post.deleted;
         if (!post.deleted) {
+          await this.ogService.setMetadata(
+            post.title,
+            post.info,
+            this.baseUrl + 'img/download?img=' + post.id,
+            post.backgroundurl
+          );
           const bg = await this.getImageDataUrl(post.backgroundurl);
           post.backgroundurl = bg;
           post.data.map(async (item) => {
@@ -162,16 +176,17 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             post.title,
             post.info,
             this.baseUrl + 'img/download?img=' + post.id,
-            post.backgroundurl
+            this.baseUrl + 'assets/images/svg/gujarat-info.svg'
           );
           this.pageLink = this.baseUrl + 'img/download?img=' + post.id;
           this.postDetails = post;
           this.postDetailsDefault = post;
-          await this.drawSVG();
-          this.buildForm();
           this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
           this.titleService.setTitle(this.postDetails.title);
           this.postStatus = 'Total Download: ' + post.download_counter;
+          await this.drawSVG();
+          this.buildForm();
+
         } else if (post.deleted && post.msg) {
           this.postStatus = post.msg;
         }
@@ -726,9 +741,10 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         window.location.href = `whatsapp://send?text=${encodeURIComponent(whatsappUrl)}`;
         break;
       case 'facebook':
-        const facebookUrl = `${baseUrl}\n\n${this.postDetails?.title}\n${this.postDetails?.info}`;
-    const shareDialogUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(facebookUrl)}`;
-    window.open(shareDialogUrl, '_blank');
+        const q = this.postDetails?.title + " " + this.postDetails?.info;
+        const shareDialogUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(baseUrl)}&quote=${encodeURIComponent(q)}`;
+        console.log(shareDialogUrl)
+        window.open(shareDialogUrl, '_blank');
         break;
       default:
         this.capturePhoto();
