@@ -3,7 +3,7 @@ import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Valida
 import { CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, SvgProperties, TextElement } from 'src/app/common/interfaces/image-element';
 import { ColorService } from 'src/app/common/services/color.service';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
 import { FontService } from 'src/app/common/services/fonts.service';
 declare const bootstrap: any;
@@ -192,7 +192,8 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     private colorService: ColorService,
     private route: ActivatedRoute,
     private PS: PostDetailService,
-    private fontService: FontService
+    private fontService: FontService,
+    private router: Router
   ) {
     this.route.queryParams.subscribe(params => {
       this.imgParam = params['img'];
@@ -808,7 +809,8 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
           const addedDataId = response.id;
           console.log('Added data ID:', addedDataId);
           this.postDetailsForm?.get('id')?.setValue(addedDataId);
-          this.postDetails.id = addedDataId
+          this.postDetails.id = addedDataId;
+          this.router.navigate([], { queryParams: { img: addedDataId }, queryParamsHandling: 'merge' });
         },
         error => {
           console.error(error); // Handle error appropriately

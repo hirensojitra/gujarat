@@ -19,8 +19,8 @@
                 </div>
                 <div class="col-md-6 col-lg-5 py-3 d-flex flex-column">
                     <div class="flex-grow-1 position-relative">
-                        <div class="position-absolute w-100 p-3 overflow-auto">{{postDetailsForm.value|json}}
-                            <div class="row g-3">{{postDetailsForm.get('id')?.value}}
+                        <div class="position-absolute w-100 p-3 overflow-auto">
+                            <div class="row g-3">
                                 <input type="hidden" id="id" class="form-control" formControlName="id">
                                 <input type="hidden" id="deleted" class="form-control" formControlName="deleted">
                                 <div class="form-group col-12" [class.d-none]="selectedElement!==-1">
