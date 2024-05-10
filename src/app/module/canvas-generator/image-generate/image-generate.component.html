@@ -19,7 +19,7 @@
                 </div>
                 <div class="col-md-6 col-lg-5 py-3 d-flex flex-column">
                     <div class="flex-grow-1 position-relative">
-                        <div class="position-absolute w-100 p-3 overflow-auto">
+                        <div class="position-absolute w-100 p-3 overflow-auto">{{postDetailsForm.value|json}}
                             <div class="row g-3">{{postDetailsForm.get('id')?.value}}
                                 <input type="hidden" id="id" class="form-control" formControlName="id">
                                 <input type="hidden" id="deleted" class="form-control" formControlName="deleted">
@@ -567,7 +567,7 @@
                                                 </div>
                                             </ng-container>
                                             <ng-container formGroupName="image" *ngIf="item.get('image')">
-                                                <div class="form-group col-12" [class.d-none]="!getActiveControl(i,'dimension')">
+                                                <div class="form-group col-12" [class.d-none]="!getActiveControl(i,'dimension')" *ngIf="item.get('image')?.get('r')">
                                                     <label for="r" class="form-label">Radius (r)</label>
                                                     <input type="range" class="form-range" [attr.min]="postDetailsForm.get('w')?.value/20||80" [attr.max]="postDetailsForm.get('w')?.value/2-30" step="0.5" formControlName="r">
                                                 </div>
@@ -601,7 +601,20 @@
                                                 </div>
                                                 <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'dimension')">
                                                     <label for="shape" class="form-label">Shape</label>
-                                                    <input type="text" id="shape" class="form-control" formControlName="shape">
+                                                    <select class="form-select" formControlName="shape">
+                                                        <option value="circle">Circle</option>
+                                                        <option value="rect_1_1">1:1</option>
+                                                        <option value="rect_3_2">3:2</option>
+                                                        <option value="rect_2_3">2:3</option>
+                                                        <option value="rect_4_3">4:3</option>
+                                                        <option value="rect_3_4">3:4</option>
+                                                        <option value="rect_16_9">16:9</option>
+                                                        <option value="rect_9_16">9:16</option>
+                                                        <option value="rect_5_4">5:4</option>
+                                                        <option value="rect_4_5">4:5</option>
+                                                        <option value="rect_7_5">7:5</option>
+                                                        <option value="rect_5_7">5:7</option>
+                                                    </select>
                                                 </div>
                                                 <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'origin')">
                                                     <label for="origin" class="form-label">Origin</label>

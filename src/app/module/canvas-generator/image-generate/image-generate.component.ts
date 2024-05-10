@@ -115,7 +115,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
 
   }
 
-  fontFamilies:{ family: string; variables: string[]; names: string[]; }[] = []
+  fontFamilies: { family: string; variables: string[]; names: string[]; }[] = []
   postDetailsForm: FormGroup | undefined = undefined;
   imgParam: any;
   postDetails: PostDetails = {
@@ -263,8 +263,9 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       info_show: [this.postDetails.info_show || '', Validators.required],
       data: this.fb.array([])
     });
-    this.postDetailsForm?.get('backgroundurl')?.valueChanges.subscribe((value: PostDetails) => {
-      this.getColors(this.postDetails.backgroundurl, 10);
+    this.postDetailsForm?.get('backgroundurl')?.valueChanges.subscribe(async (v) => {
+      this.postDetails.backgroundurl = v;
+      await this.getColors(v, 20);
     });
     this.getColors(this.postDetails.backgroundurl, 10);
     this.postDetails.data.forEach((d) => {

@@ -151,3 +151,11 @@ export interface PostDetails {
     }[];
     msg?: string;
 }
+export interface AspectRatio {
+    ratio: number;
+    divisor: number;
+  }
+  
+ export interface AspectRatios {
+    [key: string]: AspectRatio;
+  }

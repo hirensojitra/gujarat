@@ -11,7 +11,8 @@ import {
   TextElement,
   ImageElement,
   SvgProperties,
-  TextShadow
+  TextShadow,
+  AspectRatios
 } from '../interfaces/image-element';
 import ColorThief from 'colorthief';
 import { FontService } from '../services/fonts.service';
@@ -200,18 +201,57 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
     return null;
   }
+  calculateWH(image: ImageElement): { w: number, h: number } {
+    let w = 320;
+    let h = 320;
+    const shape = image.shape;
+    const aspectRatios: AspectRatios = {
+      'circle': { ratio: 1, divisor: 1 },
+      'ellipse': { ratio: 1, divisor: 1 },
+      'rect_3_2': { ratio: 3, divisor: 2 },
+      'rect_4_3': { ratio: 4, divisor: 3 },
+      'rect_16_9': { ratio: 16, divisor: 9 },
+      'rect_1_1': { ratio: 1, divisor: 1 },
+      'rect_5_4': { ratio: 5, divisor: 4 },
+      'rect_3_1': { ratio: 3, divisor: 1 },
+      'rect_7_5': { ratio: 7, divisor: 5 },
+      'rect_2_3': { ratio: 2, divisor: 3 },
+      'rect_3_4': { ratio: 3, divisor: 4 },
+      'rect_9_16': { ratio: 9, divisor: 16 },
+      'rect_4_5': { ratio: 4, divisor: 5 },
+      'rect_5_7': { ratio: 5, divisor: 7 }
+    };
+
+
+    // Find the closest match for the shape's aspect ratio from the defined list
+    const closestMatch = aspectRatios[shape];
+
+    // If the shape is found in the list, calculate width and height
+    if (closestMatch) {
+      const r = image.r; // Assuming r is the radius
+      w = r * 2;
+      h = (w * closestMatch.ratio) / closestMatch.divisor;
+    } else {
+      console.error('Aspect ratio not defined for shape:', shape);
+    }
+
+    return { w, h };
+  }
   createImage(d: Data, i: number) {
     if (this.el.nativeElement && d.image) {
       const svg = this.el.nativeElement as SVGSVGElement | null;
       const { x, y, r, imageUrl, borderColor, borderWidth, shape, origin, placeholder, svgProperties, rotate } = d.image;
       let element: any; // Initialize as null
-
+      const newWH = this.calculateWH(d.image);
+      const w = newWH.w;
+      const h = newWH.h;
       switch (shape) {
         case 'circle':
           element = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
           this.renderer.setAttribute(element, 'cx', String(x));
           this.renderer.setAttribute(element, 'cy', String(y));
           this.renderer.setAttribute(element, 'r', String(r));
+          this.renderer.setAttribute(element, 'fill', '#FFF');
           this.renderer.setAttribute(element, 'data-type', 'circle');
           break;
         case 'ellipse':
@@ -222,12 +262,23 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
           this.renderer.setAttribute(element, 'ry', String(r));
           this.renderer.setAttribute(element, 'data-type', 'ellipse');
           break;
-        case 'rect':
+        case 'rect_3_2':
+        case 'rect_4_3':
+        case 'rect_16_9':
+        case 'rect_1_1':
+        case 'rect_5_4':
+        case 'rect_3_1':
+        case 'rect_7_5':
+        case 'rect_2_3':
+        case 'rect_3_4':
+        case 'rect_9_16':
+        case 'rect_4_5':
+        case 'rect_5_7':
           element = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
           this.renderer.setAttribute(element, 'x', String(x)); // X coordinate
           this.renderer.setAttribute(element, 'y', String(y)); // Y coordinate
-          this.renderer.setAttribute(element, 'width', String(r * 2)); // Width
-          this.renderer.setAttribute(element, 'height', String(r * 2)); // Height
+          this.renderer.setAttribute(element, 'width', String(w)); // Width
+          this.renderer.setAttribute(element, 'height', String(h)); // Height
           this.renderer.setAttribute(element, 'data-type', 'rect');
           break;
         default:
@@ -247,16 +298,24 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         this.renderer.setAttribute(imagePattern, 'y', '0');
         this.renderer.setAttribute(imagePattern, 'height', '100%');
         this.renderer.setAttribute(imagePattern, 'width', '100%');
-        this.renderer.setAttribute(imagePattern, 'viewBox', '0 0 ' + String(r * 2) + ' ' + String(r * 2));
+        this.renderer.setAttribute(imagePattern, 'viewBox', '0 0 ' + String(w) + ' ' + String(h));
 
 
         const image = this.renderer.createElement('image', 'http://www.w3.org/2000/svg');
         this.renderer.setAttribute(image, 'x', '0');
         this.renderer.setAttribute(image, 'y', '0');
-        this.renderer.setAttribute(image, 'width', String(r * 2));
-        this.renderer.setAttribute(image, 'height', String(r * 2));
+        this.renderer.setAttribute(image, 'width', String(w));
+        this.renderer.setAttribute(image, 'height', String(h));
         this.renderer.setAttribute(image, 'href', imageUrl);
 
+        const extraRect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
+        this.renderer.setAttribute(extraRect, 'x', '0'); // X coordinate
+        this.renderer.setAttribute(extraRect, 'y', '0'); // Y coordinate
+        this.renderer.setAttribute(extraRect, 'width', String(w)); // Width
+        this.renderer.setAttribute(extraRect, 'height', String(h)); // Height
+        this.renderer.setAttribute(extraRect, 'fill', '#FFFFFF');
+
+        this.renderer.appendChild(imagePattern, extraRect);
         this.renderer.appendChild(imagePattern, image);
         this.renderer.appendChild(svg, imagePattern);
 
@@ -670,7 +729,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                     this.renderer.setAttribute(element, 'y', adjustedY.toString());
                     break;
                 }
-                
+
 
               }
             }
@@ -842,7 +901,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
             default:
               break;
           }
-          
+
           for (let i = 0; i < line.length; i++) {
             const char = line[i];
             console.log(char)
@@ -900,7 +959,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       throw error; // Propagate the error
     }
   }
-  
+
   loadFont(fontUrl: string): Promise<any> {
     return new Promise((resolve, reject) => {
       opentype.load(fontUrl, (err, font) => {
