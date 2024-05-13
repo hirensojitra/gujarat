@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { AspectRatios, ImageElement } from '../interfaces/image-element';
 
 @Injectable({
   providedIn: 'root'
@@ -64,4 +65,44 @@ export class DevelopmentService {
       intValue.toString() !== filteredValue && control?.setValue(intValue); // Set the filtered and converted value
     }
   };
+  calculateWH(image: ImageElement): { w: number, h: number, cW: number, cH: number } {
+    let cW = 320;
+    let cH = 320;
+    let w = 320;
+    let h = 320;
+    const shape = image.shape;
+    const aspectRatios: AspectRatios = {
+      'circle': { ratio: 1, divisor: 1 },
+      'rect': { ratio: 1, divisor: 1 },
+      'ellipse': { ratio: 1, divisor: 1 },
+      'rect_3_2': { ratio: 3, divisor: 2 },
+      'rect_4_3': { ratio: 4, divisor: 3 },
+      'rect_16_9': { ratio: 16, divisor: 9 },
+      'rect_1_1': { ratio: 1, divisor: 1 },
+      'rect_5_4': { ratio: 5, divisor: 4 },
+      'rect_3_1': { ratio: 3, divisor: 1 },
+      'rect_7_5': { ratio: 7, divisor: 5 },
+      'rect_2_3': { ratio: 2, divisor: 3 },
+      'rect_3_4': { ratio: 3, divisor: 4 },
+      'rect_9_16': { ratio: 9, divisor: 16 },
+      'rect_4_5': { ratio: 4, divisor: 5 },
+      'rect_5_7': { ratio: 5, divisor: 7 }
+    };
+
+    // Find the closest match for the shape's aspect ratio from the defined list
+    const closestMatch = aspectRatios[shape];
+
+    // If the shape is found in the list, calculate width and height
+    if (closestMatch) {
+      const r = image.r; // Assuming r is the radius
+      cW = w;
+      cH = (cW * closestMatch.ratio) / closestMatch.divisor;
+      w = r * 2;
+      h = (w * closestMatch.ratio) / closestMatch.divisor;
+    } else {
+      console.error('Aspect ratio not defined for shape:', shape);
+    }
+
+    return { w, h, cW, cH };
+  }
 }

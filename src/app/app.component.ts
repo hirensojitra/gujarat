@@ -34,7 +34,7 @@ export class AppComponent implements OnInit{
     if (this.breadcrumbs.length > 0) {
       this.title = this.breadcrumbs.map(breadcrumb => breadcrumb.label).join(' - ')+` | Village Server` ;
     } else {
-      this.title = 'ભગવાન પરશુરામજી - સહિયારી શોભાયાત્રા'; // Default title when there are no breadcrumbs
+      this.title = 'Revolutionize Your Campaigns: Introducing Our Poster Generation Service'; // Default title when there are no breadcrumbs
     }
   }
   ngOnInit(): void {

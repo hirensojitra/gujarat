@@ -4,7 +4,7 @@
             <div class="container h-100 w-100">
                 <div class="row g-3" *ngIf="posts.length">
                     <div class="col-lg-2 col-md-3 col-sm-4 col-6" *ngFor="let post of posts">
-                        <div class="position-relative">
+                        <div class="position-relative mt-3">
                             <!-- <img [src]="post.backgroundurl" alt="" class="img w-100"> -->
                             <svg svgProcessor class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [postDataSet]="post" [loadOnly]="post"></svg>
                             <div class="d-flex flex-column position-absolute start-0 top-0 h-100 w-100 p-3 ">
@@ -13,6 +13,10 @@
                                     <a class="btn btn-danger btn-sm ms-auto" href="#" (click)="selectDeleteId(post.id);false"><i class="fa fa-trash"></i></a>
                                 </div>
                             </div>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{post.download_counter}}
+                                <span class="visually-hidden">unread messages</span>
+                            </span>
                         </div>
                     </div>
                     <div class="col-12">

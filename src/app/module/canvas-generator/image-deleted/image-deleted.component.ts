@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PostDetails } from 'src/app/common/interfaces/image-element';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
 declare const bootstrap: any;
@@ -16,17 +17,23 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
   totalLength: number = 0;
   window!: Window & typeof globalThis;
 
-
   confirmRecover: any;
   hardDeleteModal: any;
   selectedID: string | undefined;
-  constructor(private PS: PostDetailService) {
 
-  }
+  constructor(
+    private PS: PostDetailService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) { }
+
   ngOnInit(): void {
     this.window = window;
-    this.getAllPosts();
-    this.getTotalPostLength();
+    this.route.queryParams.subscribe(params => {
+      this.currentPage = +params['page'] || 1;
+      this.getAllPosts();
+      this.getTotalPostLength();
+    });
     this.confirmRecover = new bootstrap.Modal(document.getElementById('confirmRecover')!, { focus: false, keyboard: false, static: false });
     this.confirmRecover._element.addEventListener('hide.bs.modal', () => {
     });
@@ -50,17 +57,18 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
     this.hardDeleteModal._element.addEventListener('shown.bs.modal', () => {
     });
   }
-  ngAfterViewInit(): void {
+  ngAfterViewInit(): void { }
 
-  }
   selectRecoverId(id: any) {
     this.selectedID = id;
     id && this.confirmRecover.show();
   }
+
   selectDeleteId(id: any) {
     this.selectedID = id;
     id && this.hardDeleteModal.show();
   }
+
   getAllPosts(): void {
     this.PS.getAllSoftDeletedPosts(this.currentPage)
       .subscribe(posts => {
@@ -68,6 +76,7 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
         console.log(this.posts)
       });
   }
+
   getTotalPostLength(): void {
     this.PS.getTotalPostLength()
       .subscribe(data => {
@@ -75,11 +84,12 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
         this.calculateTotalPages();
       });
   }
+
   recoverPost(): void {
     this.selectedID && this.PS.recoverPost(this.selectedID)
       .subscribe(
         response => {
-          console.log('Resored successful:', response);
+          console.log('Restored successful:', response);
           this.confirmRecover.hide();
           this.getAllPosts();
         },
@@ -87,31 +97,42 @@ export class ImageDeletedComponent implements OnInit, AfterViewInit {
           console.error('Error during Restore:', error);
         }
       );
-    this.confirmRecover.hide();
   }
+
   hardDelete(): void {
-    this.selectedID &&  this.PS.hardDeletePost(this.selectedID)
+    this.selectedID && this.PS.hardDeletePost(this.selectedID)
       .subscribe(
         response => {
-          console.log('Soft deletion successful:', response);
+          console.log('Hard deletion successful:', response);
           this.hardDeleteModal.hide();
           window.close();
         },
         error => {
-          console.error('Error during soft deletion:', error);
+          console.error('Error during hard deletion:', error);
         }
       );
   }
+
   calculateTotalPages(): void {
     const postLimitPerPage = 12;
     this.totalPages = Math.ceil(this.totalLength / postLimitPerPage);
   }
+
   onPageChange(pageNumber: number): void {
     if (this.currentPage == pageNumber) { return }
     this.currentPage = pageNumber;
-    this.getAllPosts();
+    this.updateUrlParams();
   }
+
   getPaginationControls(): number[] {
     return Array.from({ length: this.totalPages }, (_, index) => index + 1);
+  }
+
+  updateUrlParams(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: this.currentPage },
+      queryParamsHandling: 'merge'
+    });
   }
 }

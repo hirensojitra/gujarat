@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router'; // Import Router
 import { PostDetails } from 'src/app/common/interfaces/image-element';
 import { MetadataService } from 'src/app/common/services/metadata.service';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
@@ -15,17 +16,30 @@ export class ImageListComponent implements OnInit, AfterViewInit {
   totalPages: number = 0;
   totalLength: number = 0;
   window!: Window & typeof globalThis;
-  constructor(private PS: PostDetailService,private metadataService: MetadataService) {
+  
+  constructor(
+    private PS: PostDetailService,
+    private metadataService: MetadataService,
+    private route: ActivatedRoute,
+    private router: Router // Inject Router
+  ) {
     this.metadataService.setMetadata();
   }
+  
   ngOnInit(): void {
     this.window = window;
-    this.getAllPosts();
-    this.getTotalPostLength();
+    this.route.queryParams.subscribe(params => {
+      // Update current page based on query parameter
+      this.currentPage = +params['page'] || 1;
+      this.getAllPosts();
+      this.getTotalPostLength();
+    });
   }
+  
   ngAfterViewInit(): void {
-
+    // Any initialization after view initialization
   }
+  
   getAllPosts(): void {
     this.PS.getAllPosts(this.currentPage)
       .subscribe(posts => {
@@ -33,6 +47,7 @@ export class ImageListComponent implements OnInit, AfterViewInit {
         console.log(this.posts)
       });
   }
+  
   getTotalPostLength(): void {
     this.PS.getTotalPostLength()
       .subscribe(data => {
@@ -40,16 +55,27 @@ export class ImageListComponent implements OnInit, AfterViewInit {
         this.calculateTotalPages();
       });
   }
+  
   calculateTotalPages(): void {
     const postLimitPerPage = 12;
     this.totalPages = Math.ceil(this.totalLength / postLimitPerPage);
   }
+  
   onPageChange(pageNumber: number): void {
-    if (this.currentPage == pageNumber) { return }
+    if (this.currentPage === pageNumber) { return }
     this.currentPage = pageNumber;
-    this.getAllPosts();
+    this.updateUrlParams();
   }
+  
   getPaginationControls(): number[] {
     return Array.from({ length: this.totalPages }, (_, index) => index + 1);
+  }
+  
+  updateUrlParams(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: this.currentPage },
+      queryParamsHandling: 'merge' // Merge with existing query params
+    });
   }
 }

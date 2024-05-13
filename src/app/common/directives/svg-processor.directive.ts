@@ -2,18 +2,7 @@ import { Directive, Input, ElementRef, OnInit, Renderer2, Output, EventEmitter, 
 import { Subject, takeUntil, timer } from 'rxjs';
 import * as opentype from 'opentype.js';
 
-import {
-  PostDetails,
-  RectProperties,
-  CircleProperties,
-  EllipseProperties,
-  LineProperties,
-  TextElement,
-  ImageElement,
-  SvgProperties,
-  TextShadow,
-  AspectRatios
-} from '../interfaces/image-element';
+import { PostDetails, RectProperties, CircleProperties, EllipseProperties, LineProperties, TextElement, ImageElement, SvgProperties, TextShadow, AspectRatios } from '../interfaces/image-element';
 import ColorThief from 'colorthief';
 import { FontService } from '../services/fonts.service';
 
@@ -208,6 +197,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     const aspectRatios: AspectRatios = {
       'circle': { ratio: 1, divisor: 1 },
       'ellipse': { ratio: 1, divisor: 1 },
+      'rect': { ratio: 1, divisor: 1 },
       'rect_3_2': { ratio: 3, divisor: 2 },
       'rect_4_3': { ratio: 4, divisor: 3 },
       'rect_16_9': { ratio: 16, divisor: 9 },
@@ -221,12 +211,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       'rect_4_5': { ratio: 4, divisor: 5 },
       'rect_5_7': { ratio: 5, divisor: 7 }
     };
-
-
-    // Find the closest match for the shape's aspect ratio from the defined list
     const closestMatch = aspectRatios[shape];
-
-    // If the shape is found in the list, calculate width and height
     if (closestMatch) {
       const r = image.r; // Assuming r is the radius
       w = r * 2;
@@ -263,6 +248,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
           this.renderer.setAttribute(element, 'data-type', 'ellipse');
           break;
         case 'rect_3_2':
+        case 'rect':
         case 'rect_4_3':
         case 'rect_16_9':
         case 'rect_1_1':
@@ -315,7 +301,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         this.renderer.setAttribute(extraRect, 'height', String(h)); // Height
         this.renderer.setAttribute(extraRect, 'fill', '#FFFFFF');
 
-        this.renderer.appendChild(imagePattern, extraRect);
+        d.editable && this.renderer.appendChild(imagePattern, extraRect);
         this.renderer.appendChild(imagePattern, image);
         this.renderer.appendChild(svg, imagePattern);
 

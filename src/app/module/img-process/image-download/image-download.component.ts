@@ -423,7 +423,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           case !!item.image:
             if (item.image) {
               const { x, y, r, imageUrl, borderColor, borderWidth, shape, origin, placeholder, svgProperties, rotate } = item.image;
-              const { w, h } = this.calculateWH(item.image)
+              const { w, h } = this.commonService.calculateWH(item.image)
               let element: any;
               switch (shape) {
                 case 'circle':
@@ -441,6 +441,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                   this.renderer.setAttribute(element, 'ry', String(r));
                   this.renderer.setAttribute(element, 'data-type', 'ellipse');
                   break;
+                case 'rect':
                 case 'rect_3_2':
                 case 'rect_4_3':
                 case 'rect_16_9':
@@ -500,7 +501,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 this.renderer.setAttribute(extraRect, 'height', String(h)); // Height
                 this.renderer.setAttribute(extraRect, 'fill', '#FFFFFF');
 
-                this.renderer.appendChild(imagePattern, extraRect);
+                item.editable && this.renderer.appendChild(imagePattern, extraRect);
 
                 this.renderer.appendChild(imagePattern, image);
                 this.renderer.appendChild(svg, imagePattern);
@@ -545,44 +546,6 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.canDownload = false;
     this.formData.reset();
   }
-  calculateWH(image: ImageElement): { w: number, h: number } {
-    let w = 320;
-    let h = 320;
-    const shape = image.shape;
-    const aspectRatios: AspectRatios = {
-      'circle': { ratio: 1, divisor: 1 },
-      'ellipse': { ratio: 1, divisor: 1 },
-      'rect_3_2': { ratio: 3, divisor: 2 },
-      'rect_4_3': { ratio: 4, divisor: 3 },
-      'rect_16_9': { ratio: 16, divisor: 9 },
-      'rect_1_1': { ratio: 1, divisor: 1 },
-      'rect_5_4': { ratio: 5, divisor: 4 },
-      'rect_3_1': { ratio: 3, divisor: 1 },
-      'rect_7_5': { ratio: 7, divisor: 5 },
-      'rect_2_3': { ratio: 2, divisor: 3 },
-      'rect_3_4': { ratio: 3, divisor: 4 },
-      'rect_9_16': { ratio: 9, divisor: 16 },
-      'rect_4_5': { ratio: 4, divisor: 5 },
-      'rect_5_7': { ratio: 5, divisor: 7 }
-    };
-
-    // Find the closest match for the shape's aspect ratio from the defined list
-    const closestMatch = aspectRatios[shape];
-
-    // If the shape is found in the list, calculate width and height
-    if (closestMatch) {
-      const r = image.r; // Assuming r is the radius
-      w = r * 2;
-      h = (w * closestMatch.ratio) / closestMatch.divisor;
-    } else {
-      console.error('Aspect ratio not defined for shape:', shape);
-    }
-
-    return { w, h };
-  }
-
-
-
   async getImageDataUrl(imageUrl: string): Promise<string> {
     try {
       // Fetch the image
@@ -656,7 +619,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       }
     });
   }
-  onFileChange(event: any, fieldName: string, index: number): void {
+  onFileChange(event: any, fieldName: string, index: string): void {
+    const i = parseInt(index, 10)
     if (event.target.files.length > 0) {
 
       const file = event.target.files[0];
@@ -668,11 +632,14 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             const imageSrc = e.target?.result as string;
             this.imageCropper.show();
             // Initialize Cropper
-            const imageData = this.postDetails?.data[index].image;
+            const imageData = this.postDetails?.data[i].image;
             let h = 320;
             let w = 320;
-            if (this.postDetails?.data[index].image) {
-              const newWH = this.calculateWH(imageData as ImageElement)
+            let cH = 320;
+            let cW = 320;
+            console.log(this.postDetails?.data, index)
+            if (this.postDetails?.data[i].image) {
+              const newWH = this.commonService.calculateWH(imageData as ImageElement)
               w = newWH.w;
               h = newWH.h;
             }
@@ -680,7 +647,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             this.cropper = new Cropper(cropperElement, {
 
               scalable: true,
-              viewMode: 3, // Ensure the crop box is always within the container
+              viewMode: 3,
               crop: (event) => {
 
               },
@@ -688,10 +655,11 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               dragMode: 'move', // Allow dragging to move the image within the container
               responsive: true, // Update crop box on resize
               cropBoxResizable: false, // Disable resizing the crop box
-              minCropBoxWidth: w * 2,
-              minCropBoxHeight: h * 2,
-              minContainerWidth: w * 2,
-              minContainerHeight: h * 2
+              minCropBoxWidth: cW,
+              minCropBoxHeight: cH,
+              minContainerWidth: 320,
+              minContainerHeight: 320,
+              aspectRatio: w / h
             });
             this.cropper.replace(imageSrc);
             this.selectedImage = fieldName;
@@ -835,14 +803,16 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             const imageSrc = e.target?.result as string;
             // Open Bootstrap modal dialog with Cropper
             const selectedItem = this.dataset.find(item => item.id === this.selectedImage);
-            let w = 800;
-            let h = 800;
+            let w = 320;
+            let h = 320;
+            let cW = 320;
+            let cH = 320;
             if (selectedItem) {
               const index = parseInt(selectedItem.index, 10);
               if (this.postDetails?.data[index].image) {
-                const newWH = this.calculateWH(this.postDetails?.data[index].image as ImageElement)
-                w = newWH.w * 2;
-                h = newWH.h * 2;
+                const newWH = this.commonService.calculateWH(this.postDetails?.data[index].image as ImageElement)
+                w = newWH.w;
+                h = newWH.h;
               }
             }
             this.cropperModal.show();
@@ -859,13 +829,12 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               dragMode: 'move', // Allow dragging to move the image within the container
               responsive: true, // Update crop box on resize
               cropBoxResizable: false, // Disable resizing the crop box
-              minCropBoxWidth: w,
-              minCropBoxHeight: h,
-              minContainerWidth: w,
-              minContainerHeight: h
+              minCropBoxWidth: cW,
+              minCropBoxHeight: cH,
+              minContainerWidth: 320,
+              minContainerHeight: 320,
+              aspectRatio: w / h
             });
-
-            // Set image source for Cropper
             this.cropper.replace(imageSrc);
           };
           reader.readAsDataURL(file);
@@ -889,9 +858,9 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       if (selectedItem) {
         const index = parseInt(selectedItem.index, 10);
         if (this.postDetails?.data[index].image) {
-          const newWH = this.calculateWH(this.postDetails?.data[index].image as ImageElement)
-          w = newWH.w * 2;
-          h = newWH.h * 2;
+          const newWH = this.commonService.calculateWH(this.postDetails?.data[index].image as ImageElement)
+          w = newWH.w;
+          h = newWH.h;
         }
       }
       const croppedCanvas = this.cropper.getCroppedCanvas();
@@ -907,14 +876,14 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
   handleSelectedEvent(): void {
     if (this.cropper) {
       const selectedItem = this.dataset.find(item => item.id === this.selectedImage);
-      let w = 450;
+      let w = 800;
       let h = 800;
       if (selectedItem) {
         const index = parseInt(selectedItem.index, 10);
         if (this.postDetails?.data[index].image) {
-          const newWH = this.calculateWH(this.postDetails?.data[index].image as ImageElement)
-          w = newWH.w * 2;
-          h = newWH.h * 2;
+          const newWH = this.commonService.calculateWH(this.postDetails?.data[index].image as ImageElement)
+          w = newWH.w;
+          h = newWH.h;
         }
       }
       const croppedCanvas = this.cropper.getCroppedCanvas();
