@@ -11,6 +11,9 @@
             <svg #imageDraw class="max-w-100 max-h-100 border" *ngIf="postStatus && !isDeleted"></svg>
             <img class="max-w-100 max-h-100 rounded-4" *ngIf="!postStatus || isDeleted" src="assets/images/svg/no-post.svg" />
             <div *ngIf="postStatus=='loading'">Loading </div>
+            <a class="btn btn-success btn-md w-auto m-3" href="https://whatsapp.com/channel/0029VaePspU1iUxd0HOsMA1d" target="_blank">
+                <i class="fa fa-whatsapp me-2"></i>Join Gujarat Info Channel
+            </a>
         </div>
     </div>
     <div class="container">
@@ -29,17 +32,20 @@
             <div class="col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0">
                 <hr>
             </div>
-            <div class="form-group col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0 d-flex">
+            <div class="col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0 d-flex">
                 <!-- <button type="submit" class="btn btn-success w-100" [disabled]="!formData.valid"><i class="fa fa-gear me-2"></i> Generate Image</button> -->
 
-                <button type="submit" class="btn btn-primary btn-lg w-100 me-2 text-nowrap"><i class="fa fa-gears me-2"></i>Generate Poster</button>
-                <button class="btn btn-danger mx-auto btn-lg text-nowrap" (click)="resetForm()" type="button"><i class="fa fa-refresh me-2"></i>Reset</button>
+                <button type="submit" class="btn btn-primary btn-md w-100 me-2 text-nowrap"><i class="fa fa-gears me-2"></i>Generate Poster</button>
+                <button class="btn btn-danger mx-auto btn-md text-nowrap" (click)="resetForm()" type="button"><i class="fa fa-refresh me-2"></i></button>
             </div>
-            <div class="form-group col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0 d-flex">
-                <button class="btn btn-success btn-lg text-nowrap w-100 me-1" (click)="checkDownload('whatsapp')" type="button">
+            <div class="col-lg-4 offset-lg-4 col-sm-8 offset-sm-2 col-12 offset-0">
+                <hr>
+            </div>
+            <div class="col-lg-4 offset-lg-4 col-sm-8 offset-sm-2 col-12 offset-0 d-flex justify-content-center">
+                <button class="btn btn-success btn-md text-nowrap me-1" (click)="checkDownload('whatsapp')" type="button">
                     <i class="fa fa-whatsapp me-2"></i><span class="d-none-sm">WhatsApp</span>
                 </button>
-                <button class="btn btn-success btn-lg text-nowrap w-100 ms-1" (click)="shareOnFacebook()" type="button">
+                <button class="btn btn-primary btn-md text-nowrap ms-1" (click)="shareOnFacebook()" type="button">
                     <i class="fa fa-facebook me-2"></i>Facebook
                 </button>
             </div>
@@ -59,21 +65,24 @@
                 Sojitra</a></span>
         <div class="container">
             <div class="row g-2" *ngIf="canDownload">
-                <div class="form-group col-lg-4 offset-lg-4 col-sm-8 offset-sm-2 col-12 offset-0">
+                <div class="col-lg-4 offset-lg-4 col-sm-8 offset-sm-2 col-12 offset-0">
                     <div class="d-flex">
-                        <button class="btn btn-primary btn-lg me-1 w-100" (click)="checkDownload('download')">
+                        <button class="btn btn-primary btn-md me-1 w-100" (click)="checkDownload('download')">
                             <i class="fa fa-download me-2"></i>Download
                         </button>
-                        <button class="btn btn-danger ms-1 btn-lg text-nowrap" (click)="resetForm()">
+                        <button class="btn btn-danger ms-1 btn-md text-nowrap" (click)="resetForm()">
                             <i class="fa fa-refresh me-2"></i>Reset
                         </button>
                     </div>
                 </div>
-                <div class="form-group col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0 d-flex pb-3">
-                    <button class="btn btn-success btn-lg text-nowrap w-100 me-1" (click)="checkDownload('whatsapp')" type="button">
+                <div class="col-lg-4 offset-lg-4 col-sm-8 offset-sm-2 col-12 offset-0">
+                    <hr>
+                </div>
+                <div class="col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0 d-flex pb-3">
+                    <button class="btn btn-success btn-md text-nowrap w-100 me-1" (click)="checkDownload('whatsapp')" type="button">
                         <i class="fa fa-whatsapp me-2"></i><span class="d-none-sm">WhatsApp</span>
                     </button>
-                    <button class="btn btn-success btn-lg text-nowrap w-100 ms-1" (click)="checkDownload('facebook')" type="button">
+                    <button class="btn btn-primary btn-md text-nowrap w-100 ms-1" (click)="checkDownload('facebook')" type="button">
                         <i class="fa fa-facebook me-2"></i>Facebook
                     </button>
                 </div>
@@ -84,7 +93,7 @@
     <ng-container *ngIf="!postStatus || isDeleted">
         <span class="w-auto mx-auto"><a href="" class="text-danger fw-bold">More Info</a></span>
         <div class="mt-3 d-flex">
-            <div class="btn btn-lg btn-danger mx-auto" (click)="myInfo.show()"><i class="fa fa-user me-2"></i>Contact Us</div>
+            <div class="btn btn-md btn-danger mx-auto" (click)="myInfo.show()"><i class="fa fa-user me-2"></i>Contact Us</div>
         </div>
     </ng-container>
 </div>
