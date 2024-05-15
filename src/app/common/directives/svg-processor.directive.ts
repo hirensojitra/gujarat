@@ -5,6 +5,8 @@ import * as opentype from 'opentype.js';
 import { PostDetails, RectProperties, CircleProperties, EllipseProperties, LineProperties, TextElement, ImageElement, SvgProperties, TextShadow, AspectRatios } from '../interfaces/image-element';
 import ColorThief from 'colorthief';
 import { FontService } from '../services/fonts.service';
+import { SvgRectService } from '../services/svg-rect.service';
+import { SvgCircleService } from '../services/svg-circle.service';
 
 interface Data {
   title: string;
@@ -43,7 +45,12 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   dataLoaded: boolean = false;
   firstLoad: boolean = true;
   private eventListeners: (() => void)[] = [];
-  constructor(private el: ElementRef<SVGSVGElement>, private renderer: Renderer2, private fontService: FontService) {
+  constructor(
+    private el: ElementRef<SVGSVGElement>,
+    private renderer: Renderer2,
+    private fontService: FontService,
+    private Rect: SvgRectService,
+    private Circle: SvgCircleService) {
 
   }
   get dataArray(): Data[] {
@@ -112,25 +119,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (this.el.nativeElement && d.rect) {
       const svg = this.el.nativeElement;
       const rect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
-      const { x, y, width, height, fill, opacity, originX, originY, rotate } = d.rect;
-
-      // Set attributes using an object
-      this.renderer.setAttribute(rect, 'x', String(x));
-      this.renderer.setAttribute(rect, 'y', String(y));
-      this.renderer.setAttribute(rect, 'width', String(width));
-      this.renderer.setAttribute(rect, 'height', String(height));
-      this.renderer.setAttribute(rect, 'fill', fill);
-      this.renderer.setAttribute(rect, 'opacity', String(opacity));
-
-      // Apply rotate and origin if specified
-      if (rotate || (originX !== undefined && originY !== undefined)) {
-        const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
-        this.renderer.setAttribute(rect, 'transform', transformValue);
-      }
-
-      // Set additional attributes if needed
-
-      this.renderer.setAttribute(rect, 'data-type', 'rect');
+      this.Rect.createRect(rect, d.rect)
       this.renderer.appendChild(svg, rect);
       return rect;
     }
@@ -141,13 +130,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (this.el.nativeElement && d.circle) {
       const svg = this.el.nativeElement;
       const c = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
-      const { cx, cy, r, fill, opacity } = d.circle; // Assuming cx, cy, r, and fill are properties of the circle
-      this.renderer.setAttribute(c, 'cx', String(cx));
-      this.renderer.setAttribute(c, 'cy', String(cy));
-      this.renderer.setAttribute(c, 'r', r.toString());
-      this.renderer.setAttribute(c, 'data-type', 'circle');
-      this.renderer.setAttribute(c, 'fill', fill);
-      this.renderer.setAttribute(c, 'opacity', String(opacity));
+      this.Circle.createCircle(c, d.circle)
       this.renderer.appendChild(svg, c);
       return c;
     }
@@ -342,21 +325,21 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (this.el.nativeElement && d.text) {
       const svg = this.el.nativeElement;
       const t = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
-      const { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = d.text;
+      const { x, y, fs, fw, text, color, fontStyle, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = d.text;
       let textAttributes: Record<string, string> = {
         'data-type': 'text',
-        'x': d.text.x.toString(),
-        'y': d.text.y.toString(),
-        'font-size': d.text.fs.toString(),
-        'fill': d.text.color || '#000000', // Set default fill color to black if not provided
-        'text-anchor': d.text.textAnchor || 'start',
-        'alignment-baseline': d.text.alignmentBaseline || 'middle',
+        'x': x.toString(),
+        'y': y.toString(),
+        'font-size': fs.toString(),
+        'fill': color || '#000000', // Set default fill color to black if not provided
+        'text-anchor': textAnchor || 'start',
+        'alignment-baseline': alignmentBaseline || 'middle',
         'dominant-baseline': 'reset-size',
-        'font-family': d.text.fontFamily ? "'" + d.text.fontFamily + "', sans-serif" : "'Hind Vadodara', sans-serif",
-        'font-weight': d.text.fw || '400',
-        'text-decoration': d.text.fontStyle.underline ? 'underline' : 'none',
-        'font-style': d.text.fontStyle.italic ? 'italic' : 'normal',
-        'opacity': d.text.opacity ? d.text.opacity.toString() : '100',
+        'font-family': fontFamily ? "'" + fontFamily + "', sans-serif" : "'Hind Vadodara', sans-serif",
+        'font-weight': fw || '400',
+        'text-decoration': fontStyle.underline ? 'underline' : 'none',
+        'font-style': fontStyle.italic ? 'italic' : 'normal',
+        'opacity': opacity ? opacity.toString() : '100',
       };
 
       // Apply text shadow if available
@@ -364,18 +347,18 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
 
       // Apply background color if available
       if (d.text.backgroundColor) {
-        textAttributes['background-color'] = d.text.backgroundColor;
+        textAttributes['background-color'] = backgroundColor;
       }
-      if (d.text.textEffects) {
+      if (textEffects) {
 
       }
 
       // Apply other text styles
       let textStyles: Record<string, string> = {
         '-webkit-user-select': 'none',
-        'letter-spacing': d.text.letterSpacing ? `${d.text.letterSpacing}px` : '0',
+        'letter-spacing': letterSpacing ? `${letterSpacing}px` : '0',
         'line-height': d.text.lineHeight ? `${d.text.lineHeight}` : '1.5',
-        'text-transform': d.text.textTransformation || 'none'
+        'text-transform': textTransformation || 'none'
       };
       if (d.text.textShadow.enable) {
         textAttributes['filter'] = `drop-shadow(${textShadow.offsetX}px ${textShadow.offsetY}px ${textShadow.blur}px ${textShadow.color})` || 'none'
@@ -418,7 +401,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
             const tspanElement = this.renderer.createElement('tspan', 'http://www.w3.org/2000/svg');
 
             // Set text content
-            this.renderer.appendChild(tspanElement, this.renderer.createText(line));
+            this.renderer.appendChild(tspanElement, this.renderer.createText(line.trim()));
 
             // Apply dy offset
             if (index > 0 || (index === 0 && line.trim() === '')) {
@@ -444,7 +427,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         }
       }
 
-
+      
       this.renderer.appendChild(svg, t);
       if (rotate || (originX !== undefined && originY !== undefined)) {
         const bbox = t.getBBox();
@@ -556,6 +539,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
 
           switch (elementType) {
             case 'circle':
+            case 'ellipse':
               elementX = parseFloat(element.getAttribute('cx') || '0');
               elementY = parseFloat(element.getAttribute('cy') || '0');
               break;
@@ -599,6 +583,11 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
               let r = 0;
               switch (elementType) {
                 case 'circle':
+                  x = parseFloat(element.getAttribute('cx') || '0');
+                  y = parseFloat(element.getAttribute('cy') || '0');
+                  r = parseFloat(element.getAttribute('r') || '0');
+                  break;
+                case 'ellipse':
                   x = parseFloat(element.getAttribute('cx') || '0');
                   y = parseFloat(element.getAttribute('cy') || '0');
                   r = parseFloat(element.getAttribute('r') || '0');
@@ -652,10 +641,14 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                 const adjustedY = eleData.boxed ? Math.floor(Math.min(Math.max(newY, minY), maxY)) : Math.floor(newY);
 
                 switch (true) {
-                  case !!eleData.circle:
+                  case !!eleData.circle || !!eleData.ellipse:
                     if (eleData.circle) {
                       eleData.circle.cx = adjustedX;
                       eleData.circle.cy = adjustedY;
+                    }
+                    if (eleData.ellipse) {
+                      eleData.ellipse.cx = adjustedX;
+                      eleData.ellipse.cy = adjustedY;
                     }
                     break;
                   case !!eleData.rect || !!eleData.text || !!eleData.image:
@@ -694,6 +687,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                 }
                 switch (elementType) {
                   case 'circle':
+                  case 'ellipse':
                     this.renderer.setAttribute(element, 'cx', adjustedX.toString());
                     this.renderer.setAttribute(element, 'cy', adjustedY.toString());
                     break;
@@ -757,9 +751,8 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     const formattedText = text.replace(/\n/g, '\n').replace(/\n(?!\*{3})/g, '***\n');
     const lines = formattedText.split('\n');
     for (let i = 0; i < lines.length; i++) {
-      lines[i] = lines[i].replace(/\*\*\*/g, '\u00A0');
+      lines[i] = lines[i].replace(/\*\*\*/g, '\u00A0').trim();
     }
-    console.log(lines)
     return lines;
   }
 

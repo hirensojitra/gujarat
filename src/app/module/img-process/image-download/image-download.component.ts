@@ -12,6 +12,8 @@ import { OpenGraphService } from 'src/app/common/services/open-graph.service';
 import { DOCUMENT } from '@angular/common';
 import { BaseUrlService } from 'src/app/common/services/baseuri.service';
 import { LoaderService } from 'src/app/common/services/loader';
+import { SvgRectService } from 'src/app/common/services/svg-rect.service';
+import { SvgCircleService } from 'src/app/common/services/svg-circle.service';
 declare var FB: any;
 interface MatchObject {
   components: string;
@@ -91,6 +93,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     private ogService: OpenGraphService,
     private baseUrlService: BaseUrlService,
     private loaderService: LoaderService,
+    private Rect: SvgRectService,
+    private Circle: SvgCircleService,
   ) {
     this.route.queryParams.subscribe(async params => {
       this.imgParam = params['img'];
@@ -230,7 +234,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           case !!item.text:
             if (item.text) {
               const t = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
-              let { x, y, fs, fw, text, color, fontStyle, textAlign, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = item.text;
+              let { x, y, fs, fw, text, color, fontStyle, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = item.text;
               if (text) {
                 const lines = this.textFormat(text);
                 item.editable && this.renderer.setStyle(t, 'pointer-events', 'none');
@@ -388,19 +392,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           case !!item.rect:
             if (item.rect) {
               const rect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
-              const { x, y, width, height, fill, opacity, originX, originY, rotate } = item.rect;
-              this.renderer.addClass(rect, 'pointer-events-none');
-              this.renderer.setAttribute(rect, 'x', String(x));
-              this.renderer.setAttribute(rect, 'y', String(y));
-              this.renderer.setAttribute(rect, 'width', String(width));
-              this.renderer.setAttribute(rect, 'height', String(height));
-              this.renderer.setAttribute(rect, 'fill', fill);
-              this.renderer.setAttribute(rect, 'opacity', String(opacity));
-              if (rotate || (originX !== undefined && originY !== undefined)) {
-                const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
-                this.renderer.setAttribute(rect, 'transform', transformValue);
-              }
-              this.renderer.setAttribute(rect, 'data-type', 'rect');
+              this.Rect.createRect(rect, item.rect);
               this.renderer.appendChild(svg, rect);
               return rect;
             }
@@ -408,14 +400,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           case !!item.circle:
             if (item.circle) {
               const c = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
-              const { cx, cy, r, fill, opacity } = item.circle;
-              this.renderer.addClass(c, 'pointer-events-none');
-              this.renderer.setAttribute(c, 'cx', String(cx));
-              this.renderer.setAttribute(c, 'cy', String(cy));
-              this.renderer.setAttribute(c, 'r', r.toString());
-              this.renderer.setAttribute(c, 'data-type', 'circle');
-              this.renderer.setAttribute(c, 'fill', fill);
-              this.renderer.setAttribute(c, 'opacity', String(opacity));
+              this.Circle.createCircle(c, item.circle);
               this.renderer.appendChild(svg, c);
               return c;
             }

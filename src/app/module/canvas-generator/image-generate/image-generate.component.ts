@@ -47,6 +47,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   controlSet: ShapeControl[][] = [];
   controlValues: ShapeControls = {
     rect: [
+      { id: 'border', title: 'Border', icon: 'fa-x-border', active: false },
       { id: 'fill', title: 'Fill', icon: 'fa-x-fill', active: false },
       { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
       { id: 'opacity', title: 'Opacity', icon: 'fa-x-opacity', active: false },
@@ -56,6 +57,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       { id: 'control', title: 'Control', icon: 'fa-x-control', active: false }
     ],
     circle: [
+      { id: 'border', title: 'Border', icon: 'fa-x-border', active: false },
       { id: 'fill', title: 'Fill', icon: 'fa-x-fill', active: false },
       { id: 'dimension', title: 'Dimension', icon: 'fa-x-dimension', active: false },
       { id: 'opacity', title: 'Opacity', icon: 'fa-x-opacity', active: false },
@@ -144,7 +146,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
             "italic": false,
             "underline": false
           },
-          "textAlign": "left",
           "rotate": 0,
           "fontFamily": "Noto Sans Gujarati",
           "textShadow": {
@@ -346,13 +347,20 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       rect: this.fb.group({
         x: [r.rect?.x || 0, Validators.required],
         y: [r.rect?.y || 0, Validators.required],
+        rx: [r.rect?.rx || 0, Validators.required],
+        ry: [r.rect?.ry || 0, Validators.required],
         width: [r.rect?.width || 150, Validators.required],
         height: [r.rect?.height || 150, Validators.required],
         fill: [r.rect?.fill || '#000000', Validators.required],
         opacity: [r.rect?.opacity || '1', Validators.required],
         originX: [r.rect?.originX || 0, Validators.required],
         originY: [r.rect?.originY || 0, Validators.required],
-        rotate: [r.rect?.rotate || 0, Validators.required]
+        rotate: [r.rect?.rotate || 0, Validators.required],
+        stroke: [r.rect?.stroke || '#000000', Validators.required],
+        strokeWidth: [r.rect?.strokeWidth || 1, Validators.required],
+        strokeAlignment: [r.rect?.strokeAlignment || 'center', Validators.required],
+        fillOpacity: [r.rect?.fillOpacity || 1, Validators.required],
+        strokeOpacity: [r.rect?.strokeOpacity || 1, Validators.required],
       })
     });
   }
@@ -382,9 +390,14 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         cy: [c.circle?.cy, Validators.required],
         r: [c.circle?.r, Validators.required],
         fill: [c.circle?.fill, Validators.required],
+        fillOpacity: [c.circle?.fillOpacity || 1, Validators.required],
         opacity: [c.circle?.opacity, Validators.required],
         originX: [c.circle?.originX, Validators.required],
-        originY: [c.circle?.originY, Validators.required]
+        originY: [c.circle?.originY, Validators.required],
+        stroke: [c.circle?.stroke || '#FFF', Validators.required],
+        strokeWidth: [c.circle?.strokeWidth || 0, Validators.required],
+        strokeOpacity: [c.circle?.strokeOpacity || 1, Validators.required],
+        strokeAlignment: [c.circle?.strokeAlignment || 'center', Validators.required],
       })
     })
   }
@@ -406,22 +419,28 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   };
   createEllipseFormGroup(e: Data): FormGroup {
     return this.fb.group({
-      title: [e.title, Validators.required],
-      editable: [e.editable],
-      boxed: [e.boxed],
+      title: [e.title || '', Validators.required],
+      editable: [e.editable || false],
+      boxed: [e.boxed || false],
       ellipse: this.fb.group({
-        cx: [e.ellipse?.cx, Validators.required],
-        cy: [e.ellipse?.cy, Validators.required],
-        rx: [e.ellipse?.rx, Validators.required],
-        ry: [e.ellipse?.ry, Validators.required],
-        fill: [e.ellipse?.fill, Validators.required],
-        opacity: [e.ellipse?.opacity, Validators.required],
-        originX: [e.ellipse?.originX, Validators.required],
-        originY: [e.ellipse?.originY, Validators.required],
-        rotate: [e.ellipse?.rotate, Validators.required]
+        cx: [e.ellipse?.cx || 0, Validators.required],
+        cy: [e.ellipse?.cy || 0, Validators.required],
+        rx: [e.ellipse?.rx || 50, Validators.required], // Default rx to 50 if not provided
+        ry: [e.ellipse?.ry || 50, Validators.required], // Default ry to 50 if not provided
+        fill: [e.ellipse?.fill || '#000000', Validators.required],
+        fillOpacity: [e.ellipse?.fillOpacity || 1, Validators.required], // Added fillOpacity with default 1
+        opacity: [e.ellipse?.opacity || 1, Validators.required],
+        originX: [e.ellipse?.originX || 0, Validators.required],
+        originY: [e.ellipse?.originY || 0, Validators.required],
+        rotate: [e.ellipse?.rotate || 0, Validators.required],
+        stroke: [e.ellipse?.stroke || '#000000', Validators.required], // Added stroke with default '#000000'
+        strokeWidth: [e.ellipse?.strokeWidth || 1, Validators.required], // Added strokeWidth with default 1
+        strokeOpacity: [e.ellipse?.strokeOpacity || 1, Validators.required], // Added strokeOpacity with default 1
+        strokeAlignment: [e.ellipse?.strokeAlignment || 'center', Validators.required] // Added strokeAlignment with default 'center'
       })
     });
   }
+  
   lineData = {
     title: "Line 1",
     editable: false,
@@ -474,7 +493,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         italic: false,
         underline: false
       },
-      textAlign: "left",
       rotate: 0,
       fontFamily: "Noto Sans Gujarati",
       textShadow: {
@@ -530,7 +548,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
           italic: [t.text?.fontStyle.italic, Validators.required],
           underline: [t.text?.fontStyle.underline, Validators.required]
         }),
-        textAlign: [t.text?.textAlign, Validators.required],
         rotate: [t.text?.rotate, Validators.required],
         fontFamily: [t.text?.fontFamily, Validators.required],
         textShadow: this.fb.group({

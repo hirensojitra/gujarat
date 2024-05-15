@@ -3,12 +3,18 @@ export interface RectProperties {
     y: number;
     width: number;
     height: number;
-    fill: string;
-    opacity: number;
-    originX: number;
-    originY: number;
-    rotate: number;
-
+    rx?: number;
+    ry?: number;
+    fill?: string;
+    fillOpacity?: number;
+    opacity?: number;
+    rotate?: number;
+    originX?: number;
+    originY?: number;
+    stroke?: string;
+    strokeOpacity?: number;
+    strokeWidth?: number;
+    strokeAlignment?: 'inside' | 'outside' | 'center';
 }
 
 export interface CircleProperties {
@@ -16,10 +22,14 @@ export interface CircleProperties {
     cy: number;
     r: number;
     fill: string;
+    fillOpacity?: number;
     opacity: number;
     originX: number;
     originY: number;
-
+    stroke?: number;
+    strokeWidth?: number;
+    strokeOpacity?: number;
+    strokeAlignment?: 'inside' | 'outside' | 'center';
 }
 
 export interface EllipseProperties {
@@ -28,10 +38,15 @@ export interface EllipseProperties {
     rx: number;
     ry: number;
     fill: string;
+    fillOpacity?: number;
     opacity: number;
     originX: number;
     originY: number;
     rotate: number;
+    stroke?: string;
+    strokeWidth?: number;
+    strokeAlignment?: string;
+    strokeOpacity?: number;
 
 }
 
@@ -92,7 +107,6 @@ export interface TextElement {
     text: string;
     color: string;
     fontStyle: FontStyle;
-    textAlign: string;
     rotate: number;
     fontFamily: string;
     textShadow: TextShadow;
@@ -132,12 +146,12 @@ export interface PostDetails {
     id: string | null;
     deleted: boolean;
     info: string,
-    info_show:boolean,
+    info_show: boolean,
     h: number;
     w: number;
     title: string;
     backgroundurl: string;
-    download_counter:number;
+    download_counter: number;
     data: {
         title: string;
         editable: boolean;
@@ -154,8 +168,8 @@ export interface PostDetails {
 export interface AspectRatio {
     ratio: number;
     divisor: number;
-  }
-  
- export interface AspectRatios {
+}
+
+export interface AspectRatios {
     [key: string]: AspectRatio;
-  }
+}
