@@ -6,6 +6,9 @@
             <input type="text" id="title" class="h4 m-0 border-0 border-secondary" formControlName="title" placeholder="Enter Image Name">
         </div>
         <button class="btn btn-success ms-auto">Save</button>
+        <button class="btn btn-success ms-2" *ngIf="postDetailsForm.get('id')?.value" type="button" (click)="onSubmit(true)">
+            <div class="fa fa-copy"></div>
+        </button>
         <button class="btn btn-danger ms-2" type="button">Cancel</button>
         <button class="btn btn-danger ms-2" type="button" *ngIf="postDetailsForm.get('id')?.value" (click)="confirmDelete.show()"><i class="fa fa-trash"></i></button>
     </div>
@@ -232,7 +235,7 @@
                                                     </select>
                                                 </div>
                                             </ng-container>
-                                            
+
                                             <ng-container formGroupName="ellipse" *ngIf="item.get('ellipse')">
                                                 <div class="form-group col-6">
                                                     <label for="cx" class="form-label">CX</label>

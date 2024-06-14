@@ -440,7 +440,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       })
     });
   }
-  
+
   lineData = {
     title: "Line 1",
     editable: false,
@@ -805,9 +805,13 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     const scrollLeft: number = target.offsetLeft;
     btnGroup.scrollLeft = scrollLeft;
   }
-  onSubmit() {
+  onSubmit(clone?: boolean) {
     if (this.postDetailsForm?.valid) {
       const formData = this.postDetailsForm?.value;
+      if (clone) {
+        formData.id = null;
+        formData.download_counter = 0;
+      };
       if (formData.id === null) {
         const { id, ...formDataWithoutId } = formData;
         this.addPost(formDataWithoutId);
