@@ -6,6 +6,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
 import { FontService } from 'src/app/common/services/fonts.service';
+import { HttpClient } from '@angular/common/http';
 declare const bootstrap: any;
 
 interface Data {
@@ -141,6 +142,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
           "fs": 40,
           "fw": "normal",
           "text": "Sample Text",
+          "type": "text",
           "color": "#FFFFFF",
           "fontStyle": {
             "italic": false,
@@ -188,13 +190,16 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     ]
   }
   confirmDelete: any;
+  apiData: { [key: string]: any[] } = {};
+  selectData: { [key: string]: { title: string, control: FormControl, api: string, dependency: string } } = {};
   constructor(
     private fb: FormBuilder,
     private colorService: ColorService,
     private route: ActivatedRoute,
     private PS: PostDetailService,
     private fontService: FontService,
-    private router: Router
+    private router: Router,
+    private http: HttpClient
   ) {
     this.route.queryParams.subscribe(params => {
       this.imgParam = params['img'];
@@ -488,6 +493,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       fs: 40,
       fw: "normal",
       text: "Sample Text",
+      type: 'text',
       color: "#FFFFFF",
       fontStyle: {
         italic: false,
@@ -533,7 +539,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     }
   };
   createTextFormGroup(t: Data): FormGroup {
-    return this.fb.group({
+    const textForm = this.fb.group({
       title: [t.title, Validators.required],
       editable: [t.editable],
       boxed: [t.boxed],
@@ -542,6 +548,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         y: [t.text?.y, Validators.required],
         fs: [t.text?.fs, Validators.required],
         fw: [t.text?.fw, Validators.required],
+        type: [t.text?.type, Validators.required],
         text: [t.text?.text, Validators.required],
         color: [t.text?.color, Validators.required],
         fontStyle: this.fb.group({
@@ -587,6 +594,80 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         originY: [t.text?.originY]
       })
     });
+    const cn = t.text?.controlName ?? Math.random().toString(36).substring(7);
+    const textFormGroup = textForm.get('text') as FormGroup;
+
+    if (t.text?.type === 'select') {
+      this.addSelectControls(textForm, textFormGroup, t, cn);
+    }
+
+    textForm.get('text.type')?.valueChanges.subscribe((type: any) => {
+      if (type === 'select') {
+        this.addSelectControls(textForm, textFormGroup, t, cn);
+      } else {
+        this.removeSelectControls(textFormGroup);
+      }
+    });
+
+    return textForm;
+  }
+  async fetchDataFromAPI(apiUrl: string, controlName: string): Promise<void> {
+    await this.http.get<any[]>(apiUrl).subscribe({
+      next: data => {
+        console.log(apiUrl)
+        this.apiData[controlName] = data;
+      },
+      error: () => {
+
+      }
+    });
+  }
+  getControlByKey(key: string) {
+    return this.selectData[key];
+  }
+  dependencyList(key: string): { title: string, value: string }[] {
+    const result: { title: string, value: string }[] = [];
+    for (const k in this.selectData) {
+      if (k !== key) {
+        result.push({ title: this.selectData[k].title, value: k });
+      }
+    }
+    console.log(result)
+    return result;
+  }
+  private addSelectControls(textForm: FormGroup, textFormGroup: FormGroup, t: Data, cn: string) {
+    this.selectData[cn] = {
+      title: textForm.get('title')?.value || '',
+      control: textFormGroup.get('text') as FormControl,
+      api: t.text?.api as string,
+      dependency: t.text?.dependency || 'none'
+    };
+    if (!textFormGroup.contains('lang')) {
+      textFormGroup.addControl('lang', new FormControl(t.text?.lang, Validators.required));
+    }
+    if (!textFormGroup.contains('controlName')) {
+      textFormGroup.addControl('controlName', new FormControl(t.text?.controlName, Validators.required));
+    }
+    if (!textFormGroup.contains('dependency')) {
+      textFormGroup.addControl('dependency', new FormControl(t.text?.dependency || 'none', Validators.required));
+    }
+    if (!textFormGroup.contains('api')) {
+      textFormGroup.addControl('api', new FormControl(t.text?.api, Validators.required));
+    }
+  }
+  private removeSelectControls(textFormGroup: FormGroup) {
+    if (textFormGroup.contains('lang')) {
+      textFormGroup.removeControl('lang');
+    }
+    if (textFormGroup.contains('controlName')) {
+      textFormGroup.removeControl('controlName');
+    }
+    if (textFormGroup.contains('dependency')) {
+      textFormGroup.removeControl('dependency');
+    }
+    if (textFormGroup.contains('api')) {
+      textFormGroup.removeControl('api');
+    }
   }
   updateFontWeights(c: AbstractControl<any, any>) {
     let selectedFontFamily = c.value;
@@ -788,6 +869,31 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       (item.image) && this.controlSet.push(this.controlValues.image);
     }
     this.postDetailsForm?.get('data')?.setValue(dataArray);
+    for (const key in this.selectData) {
+      const data = this.selectData[key];
+      if (data.dependency === 'none') {
+        this.loadData(key, data.api);
+      } else {
+        this.setupDependency(key, data);
+      }
+    }
+  }
+  private loadData(key: string, api: string) {
+    if (!this.apiData[key]) {
+      this.fetchDataFromAPI(api, key);
+    }
+  }
+  private setupDependency(key: string, data: { title: string, control: FormControl, api: string, dependency: string }) {
+    if (!data.api.endsWith('/')) {
+      data.api += '/';
+    }
+    const dependencyKey = data.dependency;
+    const dependencyControl = this.selectData[dependencyKey].control;
+
+    dependencyControl.valueChanges.subscribe((value) => {
+      const dependentApi = `${data.api}${value}`;
+      this.fetchDataFromAPI(dependentApi, key);
+    });
   }
   centerActiveButton() {
     setTimeout(() => {
@@ -808,6 +914,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   onSubmit(clone?: boolean) {
     if (this.postDetailsForm?.valid) {
       const formData = this.postDetailsForm?.value;
+      console.log(formData);
       if (clone) {
         formData.id = null;
         formData.download_counter = 0;

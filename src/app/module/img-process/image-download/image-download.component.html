@@ -28,6 +28,13 @@
                     <input type="hidden" class="form-control" id="{{field.id}}" name="{{field.id}}" formControlName="{{field.id}}">
                     <input type="file" class="form-control" id="{{field.id}}-file" name="{{field.id}}-file" formControlName="{{field.id}}-file" (change)="onFileChange($event, field.id,field.index)" accept="image/*">
                 </ng-container>
+                <ng-container *ngIf="field.type === 'select' && field.controlName">
+                    <label for="text" class="form-label">{{field.title}}</label>
+                    <select id="type" class="form-select" formControlName="{{field.id}}">
+                        <option value="" disabled selected>-- Select {{field.title}} --</option>
+                        <option *ngFor="let option of apiData[field.controlName]" [value]="option.id">{{ field.lang=='gu'?option.gu_name:option.name }}</option>
+                    </select>
+                </ng-container>
             </div>
             <div class="col-lg-4 offset-lg-4  col-sm-8 offset-sm-2 col-12 offset-0">
                 <hr>

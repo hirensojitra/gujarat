@@ -13,12 +13,14 @@ import { KeysPipe } from '../pipes/keys.pipe';
 import { SvgProcessorDirective } from '../directives/svg-processor.directive';
 import { ColorService } from '../services/color.service';
 import { ColorPickerComponent } from '../controllers/color-picker/color-picker.component';
+import { PaginationDirective } from '../directives/pagination.directive';
+import { DependencyListPipe } from '../pipes/dependency-list.pipe';
 
 @NgModule({
   imports: [
     ReactiveFormsModule,
     CommonModule,
-    FormsModule 
+    FormsModule
   ],
   declarations: [
     CaptchaDirective,
@@ -30,8 +32,10 @@ import { ColorPickerComponent } from '../controllers/color-picker/color-picker.c
     LocalitySelectorComponent,
     DraggableDirective,
     KeysPipe,
+    DependencyListPipe,
     SvgProcessorDirective,
-    ColorPickerComponent
+    ColorPickerComponent,
+    PaginationDirective
   ],
   exports: [
     CaptchaDirective,
@@ -43,8 +47,10 @@ import { ColorPickerComponent } from '../controllers/color-picker/color-picker.c
     LocalitySelectorComponent,
     DraggableDirective,
     KeysPipe,
+    DependencyListPipe,
     SvgProcessorDirective,
-    ColorPickerComponent
+    ColorPickerComponent,
+    PaginationDirective
   ],
   providers: [KeysPipe, ColorService, ColorPickerComponent]
 })

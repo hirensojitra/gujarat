@@ -7,6 +7,7 @@ import ColorThief from 'colorthief';
 import { FontService } from '../services/fonts.service';
 import { SvgRectService } from '../services/svg-rect.service';
 import { SvgCircleService } from '../services/svg-circle.service';
+import { HttpClient } from '@angular/common/http';
 
 interface Data {
   title: string;
@@ -37,7 +38,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     this.defaultValue = value;
   }
   postDataSet$ = this.postDataSetSubject.asObservable();
-
   @Output() dataChanges = new EventEmitter<{ data: Data, index: number }>();
   @Output() getSelected = new EventEmitter<{ index: number }>();
   postData!: PostDetails;
@@ -45,12 +45,16 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   dataLoaded: boolean = false;
   firstLoad: boolean = true;
   private eventListeners: (() => void)[] = [];
+  apiData: { [key: string]: any[] } = {};
+  selectData: { [key: string]: { lang: string, value: string, api: string, dependency: string, text: SVGAElement } } = {};
   constructor(
     private el: ElementRef<SVGSVGElement>,
     private renderer: Renderer2,
     private fontService: FontService,
     private Rect: SvgRectService,
-    private Circle: SvgCircleService) {
+    private Circle: SvgCircleService,
+    private http: HttpClient
+  ) {
 
   }
   get dataArray(): Data[] {
@@ -321,11 +325,11 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   }
 
 
-  createText(d: Data, i: number) {
+  async createText(d: Data, i: number) {
     if (this.el.nativeElement && d.text) {
       const svg = this.el.nativeElement;
       const t = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
-      const { x, y, fs, fw, text, color, fontStyle, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = d.text;
+      const { x, y, fs, fw, text, type, controlName, api, lang, dependency, color, fontStyle, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = d.text;
       let textAttributes: Record<string, string> = {
         'data-type': 'text',
         'x': x.toString(),
@@ -368,11 +372,20 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
 
       // Add text content if available
       if (text) {
-
         const lines = this.textFormat(text);
         if (lines.length === 1) {
           // If there's only one line of text, create a single tspan element
-          this.renderer.appendChild(t, this.renderer.createText(text));
+          const textElement = this.renderer.createText(text)
+          if (controlName && lang && type && type == "select") {
+            this.selectData[controlName] = {
+              lang: lang,
+              value: text,
+              api: api as string,
+              dependency: dependency || 'none',
+              text: textElement
+            }
+          }
+          this.renderer.appendChild(t, textElement);
         } else {
           // Calculate dy offset based on font size
           const dyOffset = fs * lineHeight || 0;
@@ -427,7 +440,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         }
       }
 
-      
+
       this.renderer.appendChild(svg, t);
       if (rotate || (originX !== undefined && originY !== undefined)) {
         const bbox = t.getBBox();
@@ -440,6 +453,15 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       return t;
     }
     return null;
+  }
+  async fetchDataFromAPI(apiUrl: string, controlName: string): Promise<void> {
+    try {
+      const data = await this.http.get<any[]>(apiUrl).toPromise();
+      console.log(apiUrl)
+      if (controlName && data) { this.apiData[controlName] = data; } else { this.apiData[controlName] = [] }
+    } catch (error) {
+      console.error('Error fetching data from API:', error);
+    }
   }
   async updateElements(data: Data[]) {
     const svg = this.el.nativeElement;
@@ -458,7 +480,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       if (d.ellipse) elements.push(this.createEllipse(d, i));
       if (d.line) elements.push(this.createLine(d, i));
       if (d.image) elements.push(this.createImage(d, i));
-      if (d.text) elements.push(this.createText(d, i));
+      if (d.text) elements.push(await this.createText(d, i));
       // if (d.text) {
       //   try {
       //     const svgElement = await this.generateSVGPathData(d);
@@ -475,8 +497,33 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
     this.removeEventListeners();
     this.addDraggableBehavior(elements);
+    for (const key in this.selectData) {
+      const data = this.selectData[key];
+      if (data.dependency === 'none') {
+        await this.loadData(key, data.api);
+      } else {
+        await this.setupDependency(key, data);
+      }
+      const filteredData = this.apiData[key].filter(item => item.id == data.value);
+      if (filteredData.length) {
+        this.renderer.setValue(data.text, filteredData[0][data.lang == 'gu' ? 'gu_name' : 'name'])
+      }
+    }
   }
-
+  private async loadData(key: string, api: string) {
+    if (!this.apiData[key]) {
+      await this.fetchDataFromAPI(api, key);
+    }
+  }
+  private async setupDependency(key: string, data: { lang: string, value: string, api: string, dependency: string }) {
+    if (!data.api.endsWith('/')) {
+      data.api += '/';
+    }
+    const dependencyKey = data.dependency;
+    const dependencyControl = this.selectData[dependencyKey].value;
+    const dependentApi = `${data.api}${dependencyControl}`;
+    await this.fetchDataFromAPI(dependentApi, key);
+  }
   getTextWidth(text: string, fontSize: number, fontFamily: string): number {
     const svgText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     svgText.setAttribute('font-size', `${fontSize}px`);
@@ -859,37 +906,39 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         const fontSize = textData.fs;
         const pathData = [];
         const yOffset = 0; // Start y position from the text data
-        const lines = textData.text.split('\n');
+        const lines = textData.text?.split('\n');
+        if (lines) {
+          for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            const line = lines[lineIndex];
+            const lineHeightFactor = textData.lineHeight; // Line height factor (e.g., 1.5 for 1.5 times the font size)
+            const ascent = font.ascender / font.unitsPerEm * fontSize;
+            const descent = font.descender / font.unitsPerEm * fontSize;
+            const lineHeight = (ascent - descent) * lineHeightFactor;
+            let yoff = yOffset + lineHeight * lineIndex;
+            let xOffset = 0;
+            switch (textData.textAnchor) {
+              case 'middle':
+                xOffset -= font.getAdvanceWidth(line, fontSize) / 2; // Center align
+                break;
+              case 'end':
+                xOffset -= font.getAdvanceWidth(line, fontSize); // End align
+                break;
+              case 'start':
+              default:
+                break;
+            }
 
-        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-          const line = lines[lineIndex];
-          const lineHeightFactor = textData.lineHeight; // Line height factor (e.g., 1.5 for 1.5 times the font size)
-          const ascent = font.ascender / font.unitsPerEm * fontSize;
-          const descent = font.descender / font.unitsPerEm * fontSize;
-          const lineHeight = (ascent - descent) * lineHeightFactor;
-          let yoff = yOffset + lineHeight * lineIndex;
-          let xOffset = 0;
-          switch (textData.textAnchor) {
-            case 'middle':
-              xOffset -= font.getAdvanceWidth(line, fontSize) / 2; // Center align
-              break;
-            case 'end':
-              xOffset -= font.getAdvanceWidth(line, fontSize); // End align
-              break;
-            case 'start':
-            default:
-              break;
-          }
-
-          for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            console.log(char)
-            const glyph = font.charToGlyph(char);
-            const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
-            pathData.push(glyphPath.toPathData(5));
-            xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
+            for (let i = 0; i < line.length; i++) {
+              const char = line[i];
+              console.log(char)
+              const glyph = font.charToGlyph(char);
+              const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
+              pathData.push(glyphPath.toPathData(5));
+              xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
+            }
           }
         }
+
         const svgPathData = pathData.join(' ');
         const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         pathElement.setAttribute('d', svgPathData);

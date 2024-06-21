@@ -1,19 +1,19 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnInit, Renderer2, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { AspectRatios, ImageElement, PostDetails, TextElement, TextShadow } from 'src/app/common/interfaces/image-element';
+import { ImageElement, PostDetails, TextElement, TextShadow } from 'src/app/common/interfaces/image-element';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
 import * as opentype from 'opentype.js';
 import { FontService } from 'src/app/common/services/fonts.service';
 import { DevelopmentService } from 'src/app/common/services/development.service';
 import { ToastService } from 'src/app/common/services/toast.service';
 import { OpenGraphService } from 'src/app/common/services/open-graph.service';
-import { DOCUMENT } from '@angular/common';
 import { BaseUrlService } from 'src/app/common/services/baseuri.service';
 import { LoaderService } from 'src/app/common/services/loader';
 import { SvgRectService } from 'src/app/common/services/svg-rect.service';
 import { SvgCircleService } from 'src/app/common/services/svg-circle.service';
+import { HttpClient } from '@angular/common/http';
 declare var FB: any;
 interface MatchObject {
   components: string;
@@ -34,6 +34,10 @@ interface data {
   index: string;
   type: string;
   title: string;
+  lang?: string;
+  controlName?: string;
+  dependency?: string;
+  api?: string;
 }
 @Component({
   selector: 'app-image-download',
@@ -79,6 +83,8 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
 
   dataset: data[] = [];
   formData: FormGroup;
+  apiData: { [key: string]: any[] } = {};
+  selectData: { [key: string]: { lang: string, value: string, api: string, dependency: string, text: SVGAElement } } = {};
   constructor(
     private route: ActivatedRoute,
     private PS: PostDetailService,
@@ -95,6 +101,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     private loaderService: LoaderService,
     private Rect: SvgRectService,
     private Circle: SvgCircleService,
+    private http: HttpClient
   ) {
     this.route.queryParams.subscribe(async params => {
       this.imgParam = params['img'];
@@ -188,9 +195,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           this.meta.updateTag({ property: 'og:title', content: this.postDetails.title });
           this.titleService.setTitle(this.postDetails.title);
           this.postStatus = 'Total Download: ' + post.download_counter;
-          await this.drawSVG();
-          this.buildForm();
-
+          this.initialize()
         } else if (post.deleted && post.msg) {
           this.postStatus = post.msg;
         }
@@ -200,6 +205,13 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     } catch (error) {
       this.postStatus = undefined;
       console.error('Error fetching post:', error);
+    }
+  }
+  async initialize(): Promise<void> {
+    try {
+      await Promise.all([this.drawSVG(), this.buildForm()]);
+    } catch (error) {
+      console.error('An error occurred during initialization:', error);
     }
   }
   async drawSVG() {
@@ -234,13 +246,22 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           case !!item.text:
             if (item.text) {
               const t = this.renderer.createElement('text', 'http://www.w3.org/2000/svg');
-              let { x, y, fs, fw, text, color, fontStyle, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = item.text;
+              let { x, y, fs, fw, text, type, controlName, api, lang, dependency, color, fontStyle, rotate, fontFamily, textShadow, backgroundColor, textEffects, textAnchor, alignmentBaseline, letterSpacing, lineHeight, textTransformation, originX, originY, opacity } = item.text;
               if (text) {
                 const lines = this.textFormat(text);
                 item.editable && this.renderer.setStyle(t, 'pointer-events', 'none');
                 if (lines.length === 1) {
-                  // If there's only one line of text, create a single tspan element
-                  this.renderer.appendChild(t, this.renderer.createText(text));
+                  const textElement = this.renderer.createText(text)
+                  if (controlName && lang && type && type == "select") {
+                    this.selectData[controlName] = {
+                      lang: lang,
+                      value: text,
+                      api: api as string,
+                      dependency: dependency || 'none',
+                      text: textElement,
+                    }
+                  }
+                  this.renderer.appendChild(t, textElement);
                 } else {
                   // Calculate dy offset based on font size
                   const dyOffset = fs * lineHeight || 0;
@@ -373,7 +394,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
                 const transformValue = `rotate(${rotate || 0} ${x + width / 2} ${y + height / 2})`;
                 this.renderer.setAttribute(t, 'transform', transformValue);
               }
-              if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, value: '', index: i.toString(), type: 'text', title: item.title }); }
+              if (this.dataset[s] == undefined && item.editable) { this.dataset.push({ id: uniqueId, lang: lang || 'en', value: text || 'Select ' + item.title + '', index: i.toString(), type: type, title: item.title, controlName: controlName, api: api, dependency: dependency }); }
               this.renderer.appendChild(svg, t);
               this.renderer.addClass(t, 'pointer-events-none');
               item.editable && this.renderer.listen(t, 'click', () => {
@@ -530,6 +551,40 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.downloaded = false;
     this.canDownload = false;
     this.formData.reset();
+    for (const key in this.selectData) {
+      const data = this.selectData[key];
+      if (data.dependency === 'none') {
+        await this.loadData(key, data.api);
+      } else {
+        await this.setupDependency(key, data);
+      }
+      const filteredData = this.apiData[key].filter(item => item.id == data.value);
+      if (filteredData.length) {
+        this.renderer.setValue(data.text, filteredData[0][data.lang == 'gu' ? 'gu_name' : 'name'])
+      }
+    }
+  }
+  private async loadData(key: string, api: string) {
+    if (!this.apiData[key]) {
+      await this.fetchDataFromAPI(api, key);
+    }
+  }
+  private async setupDependency(key: string, data: { lang: string, value: string, api: string, dependency: string }) {
+    if (!data.api.endsWith('/')) {
+      data.api += '/';
+    }
+    const dependencyKey = data.dependency;
+    const dependencyControl = this.selectData[dependencyKey].value;
+    const dependentApi = `${data.api}${dependencyControl}`;
+    await this.fetchDataFromAPI(dependentApi, key);
+  }
+  async fetchDataFromAPI(apiUrl: string, controlName: string): Promise<void> {
+    try {
+      const data = await this.http.get<any[]>(apiUrl).toPromise();
+      if (controlName && data) { this.apiData[controlName] = data; } else { this.apiData[controlName] = [] }
+    } catch (error) {
+      console.error('Error fetching data from API:', error);
+    }
   }
   async getImageDataUrl(imageUrl: string): Promise<string> {
     try {
@@ -574,10 +629,11 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
       this.cropperModal.show();
     }
   }
-  buildForm() {
+  async buildForm() {
     Object.keys(this.formData.controls).forEach(key => {
       this.formData.get(key) && this.formData.removeControl(key);
     });
+    const selectData: { [key: string]: { title: string, control: FormControl, api: string, dependency: string } } = {};
     this.dataset.forEach(field => {
       const index = parseInt(field.index, 10);
       if (!isNaN(index) && this.postDetails?.data) {
@@ -589,6 +645,24 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
               textData.text = v;
               field.value = v;
             });
+          }
+        } else if (field.type === 'select') {
+          const textData = this.postDetails.data.filter((_, i) => i === index)[0]?.text;
+          if (textData) {
+            console.log(field)
+            const c = this.formData.addControl(field.id, this.fb.control(field.value, Validators.required));
+            this.formData.get(field.id)?.valueChanges.subscribe((v) => {
+              textData.text = v;
+              field.value = v;
+            });
+            if (field.dependency && field.controlName && field.api) {
+              selectData[field.controlName] = {
+                title: field.title,
+                control: this.formData.get(field.id) as FormControl,
+                api: field.api,
+                dependency: field.dependency,
+              }
+            }
           }
         } else if (field.type === 'image') {
           const textData = this.postDetails.data.filter((_, i) => i === index)[0]?.image;
@@ -603,6 +677,15 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         }
       }
     });
+    for (const key in selectData) {
+      const s = selectData[key]
+      if (selectData[key].dependency !== 'none' && selectData[selectData[key].dependency].control) {
+        selectData[selectData[key].dependency].control.valueChanges.subscribe(async value => {
+          const dependentApi = `${s.api}${value}`;
+          await this.fetchDataFromAPI(dependentApi, key);
+        })
+      }
+    }
   }
   onFileChange(event: any, fieldName: string, index: string): void {
     const i = parseInt(index, 10)
@@ -662,7 +745,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     }
   }
 
-  onSubmitFormData() {
+  async onSubmitFormData() {
     this.commonService.markFormGroupTouched(this.formData);
     if (this.formData.valid) {
       this.dataset.forEach(field => {
@@ -683,7 +766,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
           }
         }
       });
-      this.drawSVG();
+      await this.drawSVG();
       this.canDownload = true;
       this.formData.reset();
     }
@@ -712,7 +795,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     this.textModal.hide();
   }
 
-  onImageSubmit() {
+  async onImageSubmit() {
     this.handleCropEvent()
     if (this.selectedIndex !== null && this.postDetails?.data) {
       this.postDetails.data = this.postDetails.data.map((item, index) => {
@@ -732,7 +815,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         return item;
       });
     }
-    this.drawSVG();
+    await this.drawSVG();
     this.cropperModal.hide();
   }
 
@@ -1089,266 +1172,268 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
         // Preprocess text with "ભ્ર" ligature if it exists
         const ligatureExists = font.charToGlyph("ભ્ર").unicode !== undefined;
         if (ligatureExists) {
-          processedText = processedText.replace(/ભ્ર/g, String.fromCharCode(0x0AB5, 0x0ACD, 0x0AB0)); // Replace "ભ્ર" with "ભ્ર" ligature
+          processedText = processedText?.replace(/ભ્ર/g, String.fromCharCode(0x0AB5, 0x0ACD, 0x0AB0)); // Replace "ભ્ર" with "ભ્ર" ligature
         }
         const pathData: SVGPathElement[] = [];
         const yOffset = 0; // Start y position from the text data
-        const lines = processedText.split('\n');
+        const lines = processedText?.split('\n');
         const groupElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         groupElement.setAttribute('transform', `translate(${textData.x},${textData.y})`);
 
-        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-          const line = lines[lineIndex];
-          const lineHeightFactor = textData.lineHeight; // Line height factor (e.g., 1.5 for 1.5 times the font size)
-          const ascent = font.ascender / font.unitsPerEm * fontSize;
-          const descent = font.descender / font.unitsPerEm * fontSize;
-          const lineHeight = (ascent - descent) * lineHeightFactor;
-          let yoff = yOffset + lineHeight * lineIndex; // Calculate y offset with line height
+        if (lines) {
+          for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            const line = lines[lineIndex];
+            const lineHeightFactor = textData.lineHeight; // Line height factor (e.g., 1.5 for 1.5 times the font size)
+            const ascent = font.ascender / font.unitsPerEm * fontSize;
+            const descent = font.descender / font.unitsPerEm * fontSize;
+            const lineHeight = (ascent - descent) * lineHeightFactor;
+            let yoff = yOffset + lineHeight * lineIndex; // Calculate y offset with line height
 
-          let xOffset = 0;
+            let xOffset = 0;
 
-          // Adjust xOffset based on text alignment
-          switch (textData.textAnchor) {
-            case 'middle':
-              xOffset -= font.getAdvanceWidth(line, fontSize) / 2; // Center align
-              break;
-            case 'end':
-              xOffset -= font.getAdvanceWidth(line, fontSize); // End align
-              break;
-            case 'start':
-            default:
-              break; // Start align (default) does not need adjustment
-          }
-          // Define the ligature mapping
-          const ligatureMapping: any = {
-            "gjK_RA": {
-              "Components": "ક્ર",
-              "Name": "gjK_RA"
-            },
-            "gjKH_RA": {
-              "Components": "ખ્ર",
-              "Name": "gjKH_RA"
-            },
-            "gjG_RA": {
-              "Components": "ગ્ર",
-              "Name": "gjG_RA"
-            },
-            "gjGH_RA": {
-              "Components": "ઘ્ર",
-              "Name": "gjGH_RA"
-            },
-            "gjC_RA": {
-              "Components": "ચ્ર",
-              "Name": "gjC_RA"
-            },
-            "gjCH_RA": {
-              "Components": "છ્ર",
-              "Name": "gjCH_RA"
-            },
-            "gjJ_RA": {
-              "Components": "જ્ર",
-              "Name": "gjJ_RA"
-            },
-            "gjJH_RA": {
-              "Components": "ઝ્ર",
-              "Name": "gjJH_RA"
-            },
-            "gjTT_RA": {
-              "Components": "ટ્ર",
-              "Name": "gjTT_RA"
-            },
-            "gjTTH_RA": {
-              "Components": "ઠ્ર",
-              "Name": "gjTTH_RA"
-            },
-            "gjDD_RA": {
-              "Components": "ડ્ર",
-              "Name": "gjDD_RA"
-            },
-            "gjDDH_RA": {
-              "Components": "ઢ્ર",
-              "Name": "gjDDH_RA"
-            },
-            "gjT_RA": {
-              "Components": "ત્ર",
-              "Name": "gjT_RA"
-            },
-            "gjTH_RA": {
-              "Components": "થ્ર",
-              "Name": "gjTH_RA"
-            },
-            "gjD_RA": {
-              "Components": "દ્ર",
-              "Name": "gjD_RA"
-            },
-            "gjDH_RA": {
-              "Components": "ધ્ર",
-              "Name": "gjDH_RA"
-            },
-            "gjN_RA": {
-              "Components": "ન્ર",
-              "Name": "gjN_RA"
-            },
-            "gjP_RA": {
-              "Components": "પ્ર",
-              "Name": "gjP_RA"
-            },
-            "gjPH_RA": {
-              "Components": "ફ્ર",
-              "Name": "gjPH_RA"
-            },
-            "gjB_RA": {
-              "Components": "બ્ર",
-              "Name": "gjB_RA"
-            },
-            "gjBH_RA": {
-              "Components": "ભ્ર",
-              "Name": "gjBH_RA"
-            },
-            "gjM_RA": {
-              "Components": "મ્ર",
-              "Name": "gjM_RA"
-            },
-            "gjY_RA": {
-              "Components": "ય્ર",
-              "Name": "gjY_RA"
-            },
-            "gjV_RA": {
-              "Components": "વ્ર",
-              "Name": "gjV_RA"
-            },
-            "gjSH_RA": {
-              "Components": "શ્ર",
-              "Name": "gjSH_RA"
-            },
-            "gjS_RA": {
-              "Components": "સ્ર",
-              "Name": "gjS_RA"
-            },
-            "gjH_RA": {
-              "Components": "હ્ર",
-              "Name": "gjH_RA"
+            // Adjust xOffset based on text alignment
+            switch (textData.textAnchor) {
+              case 'middle':
+                xOffset -= font.getAdvanceWidth(line, fontSize) / 2; // Center align
+                break;
+              case 'end':
+                xOffset -= font.getAdvanceWidth(line, fontSize); // End align
+                break;
+              case 'start':
+              default:
+                break; // Start align (default) does not need adjustment
             }
-          };
+            // Define the ligature mapping
+            const ligatureMapping: any = {
+              "gjK_RA": {
+                "Components": "ક્ર",
+                "Name": "gjK_RA"
+              },
+              "gjKH_RA": {
+                "Components": "ખ્ર",
+                "Name": "gjKH_RA"
+              },
+              "gjG_RA": {
+                "Components": "ગ્ર",
+                "Name": "gjG_RA"
+              },
+              "gjGH_RA": {
+                "Components": "ઘ્ર",
+                "Name": "gjGH_RA"
+              },
+              "gjC_RA": {
+                "Components": "ચ્ર",
+                "Name": "gjC_RA"
+              },
+              "gjCH_RA": {
+                "Components": "છ્ર",
+                "Name": "gjCH_RA"
+              },
+              "gjJ_RA": {
+                "Components": "જ્ર",
+                "Name": "gjJ_RA"
+              },
+              "gjJH_RA": {
+                "Components": "ઝ્ર",
+                "Name": "gjJH_RA"
+              },
+              "gjTT_RA": {
+                "Components": "ટ્ર",
+                "Name": "gjTT_RA"
+              },
+              "gjTTH_RA": {
+                "Components": "ઠ્ર",
+                "Name": "gjTTH_RA"
+              },
+              "gjDD_RA": {
+                "Components": "ડ્ર",
+                "Name": "gjDD_RA"
+              },
+              "gjDDH_RA": {
+                "Components": "ઢ્ર",
+                "Name": "gjDDH_RA"
+              },
+              "gjT_RA": {
+                "Components": "ત્ર",
+                "Name": "gjT_RA"
+              },
+              "gjTH_RA": {
+                "Components": "થ્ર",
+                "Name": "gjTH_RA"
+              },
+              "gjD_RA": {
+                "Components": "દ્ર",
+                "Name": "gjD_RA"
+              },
+              "gjDH_RA": {
+                "Components": "ધ્ર",
+                "Name": "gjDH_RA"
+              },
+              "gjN_RA": {
+                "Components": "ન્ર",
+                "Name": "gjN_RA"
+              },
+              "gjP_RA": {
+                "Components": "પ્ર",
+                "Name": "gjP_RA"
+              },
+              "gjPH_RA": {
+                "Components": "ફ્ર",
+                "Name": "gjPH_RA"
+              },
+              "gjB_RA": {
+                "Components": "બ્ર",
+                "Name": "gjB_RA"
+              },
+              "gjBH_RA": {
+                "Components": "ભ્ર",
+                "Name": "gjBH_RA"
+              },
+              "gjM_RA": {
+                "Components": "મ્ર",
+                "Name": "gjM_RA"
+              },
+              "gjY_RA": {
+                "Components": "ય્ર",
+                "Name": "gjY_RA"
+              },
+              "gjV_RA": {
+                "Components": "વ્ર",
+                "Name": "gjV_RA"
+              },
+              "gjSH_RA": {
+                "Components": "શ્ર",
+                "Name": "gjSH_RA"
+              },
+              "gjS_RA": {
+                "Components": "સ્ર",
+                "Name": "gjS_RA"
+              },
+              "gjH_RA": {
+                "Components": "હ્ર",
+                "Name": "gjH_RA"
+              }
+            };
 
-          // Define the text to search within
-          const text = "સોજીત્રા";
+            // Define the text to search within
+            const text = "સોજીત્રા";
 
-          // Define an array to store the filtered results
-          const filteredResults = [];
+            // Define an array to store the filtered results
+            const filteredResults = [];
 
-          // Iterate through each character of the text
-          for (let i = 0; i < text.length; i++) {
-            // Check if the current character and the next two characters form the ligature "ત્ર"
-            const potentialLigature = text.substring(i, i + 3);
-            for (const key in ligatureMapping) {
-              if (ligatureMapping[key].Components === potentialLigature) {
-                // If a match is found, add it to the filtered results
-                filteredResults.push({
-                  Name: ligatureMapping[key].Name,
-                  Components: ligatureMapping[key].Components
-                });
+            // Iterate through each character of the text
+            for (let i = 0; i < text.length; i++) {
+              // Check if the current character and the next two characters form the ligature "ત્ર"
+              const potentialLigature = text.substring(i, i + 3);
+              for (const key in ligatureMapping) {
+                if (ligatureMapping[key].Components === potentialLigature) {
+                  // If a match is found, add it to the filtered results
+                  filteredResults.push({
+                    Name: ligatureMapping[key].Name,
+                    Components: ligatureMapping[key].Components
+                  });
+                }
               }
             }
-          }
 
-          // Print or use the filtered results
-          console.log(filteredResults);
-          // Assuming you've loaded the font file and have access to the font object
+            // Print or use the filtered results
+            console.log(filteredResults);
+            // Assuming you've loaded the font file and have access to the font object
 
-          // Check if the font defines ligature substitution rules for a specific ligature
-          // Assuming you've loaded the font file and have access to the font object
+            // Check if the font defines ligature substitution rules for a specific ligature
+            // Assuming you've loaded the font file and have access to the font object
 
-          // Check if the font defines ligature substitution rules for a specific ligature
-          console.log(font.tables.gsub.features)
-          if (font.tables.gsub && font.tables.gsub.features && font.tables.gsub.features.liga) {
-            // Check if ligature substitution rules exist for the ligature "ત્ર"
-            const ligatureRules = font.tables.gsub.features.liga;
-            const ligatureExists = ligatureRules.some((rule: any) => {
-              return rule.lookupListIndexes.some((index: any) => {
-                const lookupTable = ligatureRules.lookupList[index];
-                return lookupTable && lookupTable.ligatures.some((ligature: any) => {
-                  return ligature.components.join('') === 'ત્ર';
+            // Check if the font defines ligature substitution rules for a specific ligature
+            console.log(font.tables.gsub.features)
+            if (font.tables.gsub && font.tables.gsub.features && font.tables.gsub.features.liga) {
+              // Check if ligature substitution rules exist for the ligature "ત્ર"
+              const ligatureRules = font.tables.gsub.features.liga;
+              const ligatureExists = ligatureRules.some((rule: any) => {
+                return rule.lookupListIndexes.some((index: any) => {
+                  const lookupTable = ligatureRules.lookupList[index];
+                  return lookupTable && lookupTable.ligatures.some((ligature: any) => {
+                    return ligature.components.join('') === 'ત્ર';
+                  });
                 });
               });
-            });
 
-            if (ligatureExists) {
-              console.log("Ligature substitution rules exist for the ligature 'ત્ર'");
-            } else {
-              console.log("No ligature substitution rules found for the ligature 'ત્ર'");
-            }
-          } else {
-            console.log("The font does not support ligature substitution.");
-          }
-
-
-          const gsubTable = font.tables['gsub']['features'][11].feature;
-          console.log(font)
-          console.log(gsubTable)
-          let ll = line;
-          // for (let i = 0; i < ll.length; i++) {
-          //   // Replace the glyph at index i with its substitute based on gsubTable
-          //   let substitutedGlyph = gsubTable.substitute(ll[i]);
-
-          //   // Update the text with substituted glyph
-          //   if (substitutedGlyph !== undefined) {
-          //     ll = text.substring(0, i) + substitutedGlyph + text.substring(i + 1);
-          //   }
-          // }
-
-
-          console.log(ll);
-          const wordArray = line.split(/\s+/);
-          const transformedArray = wordArray.map((word, i) => {
-            const wordGlyphs = Array.from(word, char => {
-              // console.log(font.charToGlyphIndex(char))
-              return font.charToGlyphIndex(char);
-            });
-            const index = wordGlyphs.indexOf(348);
-            if (index !== -1 && index > 0) {
-              const temp = wordGlyphs[index];
-              wordGlyphs[index] = wordGlyphs[index - 1];
-              wordGlyphs[index - 1] = temp;
-            }
-            if (i < wordArray.length - 1) {
-              wordGlyphs.push(3)
-            }
-            return wordGlyphs;
-          });
-          const transformedPaths = transformedArray.map(wordGlyphs => {
-            // Map each glyph index to its corresponding path data
-            const wordPaths = wordGlyphs.map(glyphIndex => {
-              // Get the glyph object for the glyph index
-              const glyph = font.glyphs.get(glyphIndex);
-              // Check if glyph exists
-              if (glyph) {
-                // Get the path data for the glyph
-                const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
-                const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                pathElement.setAttribute('d', glyphPath.toPathData(5));
-                pathData.push(pathElement);
-                xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm;
-                return glyphPath.toPathData(5);
+              if (ligatureExists) {
+                console.log("Ligature substitution rules exist for the ligature 'ત્ર'");
               } else {
-                // Return empty string or handle missing glyph
-                return '';
+                console.log("No ligature substitution rules found for the ligature 'ત્ર'");
               }
+            } else {
+              console.log("The font does not support ligature substitution.");
+            }
+
+
+            const gsubTable = font.tables['gsub']['features'][11].feature;
+            console.log(font)
+            console.log(gsubTable)
+            let ll = line;
+            // for (let i = 0; i < ll.length; i++) {
+            //   // Replace the glyph at index i with its substitute based on gsubTable
+            //   let substitutedGlyph = gsubTable.substitute(ll[i]);
+
+            //   // Update the text with substituted glyph
+            //   if (substitutedGlyph !== undefined) {
+            //     ll = text.substring(0, i) + substitutedGlyph + text.substring(i + 1);
+            //   }
+            // }
+
+
+            console.log(ll);
+            const wordArray = line.split(/\s+/);
+            const transformedArray = wordArray.map((word, i) => {
+              const wordGlyphs = Array.from(word, char => {
+                // console.log(font.charToGlyphIndex(char))
+                return font.charToGlyphIndex(char);
+              });
+              const index = wordGlyphs.indexOf(348);
+              if (index !== -1 && index > 0) {
+                const temp = wordGlyphs[index];
+                wordGlyphs[index] = wordGlyphs[index - 1];
+                wordGlyphs[index - 1] = temp;
+              }
+              if (i < wordArray.length - 1) {
+                wordGlyphs.push(3)
+              }
+              return wordGlyphs;
             });
+            const transformedPaths = transformedArray.map(wordGlyphs => {
+              // Map each glyph index to its corresponding path data
+              const wordPaths = wordGlyphs.map(glyphIndex => {
+                // Get the glyph object for the glyph index
+                const glyph = font.glyphs.get(glyphIndex);
+                // Check if glyph exists
+                if (glyph) {
+                  // Get the path data for the glyph
+                  const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
+                  const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                  pathElement.setAttribute('d', glyphPath.toPathData(5));
+                  pathData.push(pathElement);
+                  xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm;
+                  return glyphPath.toPathData(5);
+                } else {
+                  // Return empty string or handle missing glyph
+                  return '';
+                }
+              });
 
-            return wordPaths.join(" ");
-          });
-          // for (let i = 0; i < line.length; i++) {
-          //   const char = line[i];
-          //   const glyph = font.charToGlyph(char);
-          //   const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
-          //   const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          //   pathElement.setAttribute('d', glyphPath.toPathData(5));
-          //   pathData.push(pathElement);
+              return wordPaths.join(" ");
+            });
+            // for (let i = 0; i < line.length; i++) {
+            //   const char = line[i];
+            //   const glyph = font.charToGlyph(char);
+            //   const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
+            //   const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            //   pathElement.setAttribute('d', glyphPath.toPathData(5));
+            //   pathData.push(pathElement);
 
-          //   // Update xOffset for the next character
-          //   xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
-          // }
+            //   // Update xOffset for the next character
+            //   xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
+            // }
+          }
         }
 
         pathData.forEach(path => groupElement.appendChild(path));

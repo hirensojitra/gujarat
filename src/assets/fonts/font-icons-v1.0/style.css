@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'font-icons';
-  src:  url('fonts/font-icons.eot?n7hkjk');
-  src:  url('fonts/font-icons.eot?n7hkjk#iefix') format('embedded-opentype'),
-    url('fonts/font-icons.ttf?n7hkjk') format('truetype'),
-    url('fonts/font-icons.woff?n7hkjk') format('woff'),
-    url('fonts/font-icons.svg?n7hkjk#font-icons') format('svg');
+  src:  url('fonts/font-icons.eot?icvr6x');
+  src:  url('fonts/font-icons.eot?icvr6x#iefix') format('embedded-opentype'),
+    url('fonts/font-icons.ttf?icvr6x') format('truetype'),
+    url('fonts/font-icons.woff?icvr6x') format('woff'),
+    url('fonts/font-icons.svg?icvr6x#font-icons') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -75,4 +75,16 @@
 }
 .fa-x-border:before {
   content: "\e910";
+}
+.fa-x-first:before {
+  content: "\e911";
+}
+.fa-x-last:before {
+  content: "\e912";
+}
+.fa-x-previous:before {
+  content: "\e913";
+}
+.fa-x-next:before {
+  content: "\e914";
 }

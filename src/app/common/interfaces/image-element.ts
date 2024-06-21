@@ -104,7 +104,12 @@ export interface TextElement {
     y: number;
     fs: number;
     fw: string;
-    text: string;
+    text?: string;
+    api?: string;
+    lang?: string;
+    controlName?: string;
+    dependency?: string;
+    type: 'text' | 'select' | 'textarea';
     color: string;
     fontStyle: FontStyle;
     rotate: number;

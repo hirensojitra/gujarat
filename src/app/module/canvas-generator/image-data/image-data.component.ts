@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { ImageDataService } from 'src/app/common/services/image-data.service';
 import { ImageService } from 'src/app/common/services/image.service';
+import { ToastService } from 'src/app/common/services/toast.service';
 declare const bootstrap: any;
 
 @Component({
@@ -9,14 +10,23 @@ declare const bootstrap: any;
   styleUrls: ['./image-data.component.scss']
 })
 export class ImageDataComponent implements OnInit {
+
   cacheBuster = Math.random().toString(36).substring(7);
   selected: boolean = false;
   selectedImage: File | null = null;
   images: any[] = [];
   currentPage = 1;
-  pageSize = 18;
+  pageSize = 5;
   totalPages = 0;
-  constructor(private imageDataService: ImageDataService, private imageService: ImageService,private elementRef: ElementRef, private renderer: Renderer2) { }
+  totalItems = 0;
+  constructor(
+    private imageDataService: ImageDataService,
+    private imageService: ImageService,
+    private elementRef: ElementRef,
+    private renderer: Renderer2,
+    private toastService: ToastService) {
+
+  }
   imageUrl: string | ArrayBuffer | null = null;
   imageName: string | ArrayBuffer | null = null;
 
@@ -69,6 +79,7 @@ export class ImageDataComponent implements OnInit {
         response => {
           this.images = response.data;
           this.totalPages = response.pagination.totalPages;
+          this.totalItems = response.pagination.totalItems;
         },
         error => {
           console.error('Error fetching images:', error);
@@ -119,47 +130,24 @@ export class ImageDataComponent implements OnInit {
     }
     this.selected = (this.images.filter(img => img.selected).length) ? true : false;
   }
-
-  onPageChange(page: number) {
-    this.currentPage = page;
+  onCurrentPageChange($event: number) {
+    this.currentPage = $event;
     this.loadImages(this.currentPage, this.pageSize);
   }
-  // Method to generate an array of page numbers for pagination
-  getPageNumbers(): number[] {
-    return Array.from({ length: this.totalPages }, (_, index) => index + 1);
-  }
-  onFirstPage() {
-    if (this.currentPage !== 1) {
-      this.currentPage = 1;
-    }
-  }
-
-  onPreviousPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-    }
-  }
-
-  onNextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-    }
-  }
-
-  onLastPage() {
-    if (this.currentPage !== this.totalPages) {
-      this.currentPage = this.totalPages;
-    }
+  onPageSizeChange($event: number) {
+    this.pageSize = $event;
   }
   copyHrefToClipboard(event: MouseEvent, href: string): void {
     event.preventDefault();
-    
+
     const el = this.renderer.createElement('textarea');
     el.value = href;
     this.renderer.appendChild(this.elementRef.nativeElement, el);
     el.select();
     document.execCommand('copy');
     this.renderer.removeChild(this.elementRef.nativeElement, el);
+    this.toastService.show("Image File path copied to clipboard", { title: 'Copy Successed', class: 'bg-success' });
+    
   }
   formatSize(bytes: number): string {
     const KB = bytes / 1024;
