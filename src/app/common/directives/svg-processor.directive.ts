@@ -35,7 +35,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   private destroy$ = new Subject<void>();
   @Input() set postDataSet(value: PostDetails) {
     this.postDataSetSubject.next(value);
-    this.defaultValue = value;
   }
   postDataSet$ = this.postDataSetSubject.asObservable();
   @Output() dataChanges = new EventEmitter<{ data: Data, index: number }>();
@@ -46,7 +45,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   firstLoad: boolean = true;
   private eventListeners: (() => void)[] = [];
   apiData: { [key: string]: any[] } = {};
-  selectData: { [key: string]: { lang: string, value: string, api: string, dependency: string, text: SVGAElement } } = {};
+  selectData: { [key: string]: { lang: string, value: string, api: string, dependency: string, text: SVGAElement, controlName: string, changed: boolean } } = {};
   constructor(
     private el: ElementRef<SVGSVGElement>,
     private renderer: Renderer2,
@@ -377,12 +376,20 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
           // If there's only one line of text, create a single tspan element
           const textElement = this.renderer.createText(text)
           if (controlName && lang && type && type == "select") {
+            const data = this.selectData[controlName];
+            let changed = true;
+            if (data && !data.changed) {
+              changed = data.api !== api;
+            }
+            
             this.selectData[controlName] = {
               lang: lang,
               value: text,
               api: api as string,
               dependency: dependency || 'none',
-              text: textElement
+              text: textElement,
+              controlName: controlName,
+              changed: data ? changed : true
             }
           }
           this.renderer.appendChild(t, textElement);
@@ -457,9 +464,9 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   async fetchDataFromAPI(apiUrl: string, controlName: string): Promise<void> {
     try {
       const data = await this.http.get<any[]>(apiUrl).toPromise();
-      console.log(apiUrl)
       if (controlName && data) { this.apiData[controlName] = data; } else { this.apiData[controlName] = [] }
     } catch (error) {
+      delete this.apiData[controlName];
       console.error('Error fetching data from API:', error);
     }
   }
@@ -497,17 +504,47 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
     this.removeEventListeners();
     this.addDraggableBehavior(elements);
+    
+    if (this.defaultValue) {
+      const promises: Promise<void>[] = [];
+      await Promise.all(this.defaultValue.data.map(async (item, i) => {
+        
+        for (const key in this.selectData) {
+          const data = this.selectData[key];
+
+          // Check if item.text exists and matches controlName
+          if (item.text && item.text.controlName === data.controlName) {
+            // Ensure API strings end with '/'
+            if (!data.api.endsWith('/')) {
+              data.api += '/';
+            }
+            if (item.text.api && !item.text.api.endsWith('/')) {
+              item.text.api += '/';
+            }
+
+            // Check if data has changed or if it's the first load
+            if (data.changed) {
+              // Choose whether to load data or set up dependency
+              const promise = (data.dependency === 'none') ?
+                this.loadData(key, data.api) :
+                this.setupDependency(key, data);
+
+              promises.push(promise);
+            }
+          }
+        }
+      }));
+      await Promise.all(promises);
+    }
     for (const key in this.selectData) {
       const data = this.selectData[key];
-      if (data.dependency === 'none') {
-        await this.loadData(key, data.api);
-      } else {
-        await this.setupDependency(key, data);
+      if (this.apiData[key]) {
+        const filteredData = this.apiData[key].filter(item => item.id == data.value);
+        if (filteredData.length) {
+          this.renderer.setValue(data.text, filteredData[0][data.lang == 'gu' ? 'gu_name' : 'name']);
+        }
       }
-      const filteredData = this.apiData[key].filter(item => item.id == data.value);
-      if (filteredData.length) {
-        this.renderer.setValue(data.text, filteredData[0][data.lang == 'gu' ? 'gu_name' : 'name'])
-      }
+
     }
   }
   private async loadData(key: string, api: string) {
@@ -516,9 +553,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
   }
   private async setupDependency(key: string, data: { lang: string, value: string, api: string, dependency: string }) {
-    if (!data.api.endsWith('/')) {
-      data.api += '/';
-    }
     const dependencyKey = data.dependency;
     const dependencyControl = this.selectData[dependencyKey].value;
     const dependentApi = `${data.api}${dependencyControl}`;
@@ -804,16 +838,19 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.loadOnly && this.initSVG(this.loadOnly);
-  }
-  ngOnInit(): void {
+    let f = true;
     this.postDataSet$.pipe(
       takeUntil(this.destroy$)
-    ).subscribe((value: PostDetails) => {
-      this.initSVG(value);
-    });
+    ).subscribe(async (value: PostDetails) => {
+      await this.initSVG(value);
+      if (f) { this.defaultValue = value; }
+      f = false;
+    })
+
   }
-  initSVG(d: PostDetails) {
+  ngOnInit(): void {
+  }
+  async initSVG(d: PostDetails) {
     const { id, deleted, h, w, title, backgroundurl, data } = d;
 
     this.height = h;
@@ -832,11 +869,11 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
           let removed = this.postData.data.filter(item => !data.includes(item));
           if (added) {
             added.forEach((item) => this.postData.data.push(item))
-            this.updateElements(this.postData.data)
+            await this.updateElements(this.postData.data)
           }
           if (removed) {
             this.postData.data = data
-            this.updateElements(this.postData.data)
+            await this.updateElements(this.postData.data)
           }
         } else {
           let updateRequire = this.postData.data.map((item, index) => data[index] !== this.postData.data[index]);
@@ -847,7 +884,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
               } return data[index] !== item
             });
             if (updated.length > 0) {
-              this.updateElements(this.postData.data)
+              await this.updateElements(this.postData.data)
             }
           }
         }
@@ -856,8 +893,9 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     if (!this.dataLoaded) {
       this.dataLoaded = true;
       this.postData = d;
-      this.updateElements(data);
+      await this.updateElements(data);
     }
+    this.firstLoad = false;
   }
   ngOnDestroy() {
     this.removeEventListeners();

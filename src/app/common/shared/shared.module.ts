@@ -52,6 +52,6 @@ import { DependencyListPipe } from '../pipes/dependency-list.pipe';
     ColorPickerComponent,
     PaginationDirective
   ],
-  providers: [KeysPipe, ColorService, ColorPickerComponent]
+  providers: [KeysPipe, ColorService, ColorPickerComponent, DependencyListPipe]
 })
 export class SharedModule { }

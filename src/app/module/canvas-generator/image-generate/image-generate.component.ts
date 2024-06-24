@@ -191,7 +191,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   }
   confirmDelete: any;
   apiData: { [key: string]: any[] } = {};
-  selectData: { [key: string]: { title: string, control: FormControl, api: string, dependency: string } } = {};
+  selectData: { [key: string]: { title: string, control: FormControl, api: string, dependency: string, lang: string } } = {};
   constructor(
     private fb: FormBuilder,
     private colorService: ColorService,
@@ -229,7 +229,15 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     if (value) {
       const t = value.at(d.index) as FormControl | null;
       if (t) {
-        t.patchValue(d.data, { emitEvent: true });
+        const newData = d.data;
+        if (newData.text) {
+          if (newData.text.x) {
+            t.get('text')?.get('x')?.patchValue(newData.text.x, { emitEvent: true });
+          }
+          if (newData.text.y) {
+            t.get('text')?.get('y')?.patchValue(newData.text.y, { emitEvent: true });
+          }
+        }
       } else {
         console.error(`Form control at index ${d.index} not found.`);
       }
@@ -614,7 +622,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   async fetchDataFromAPI(apiUrl: string, controlName: string): Promise<void> {
     await this.http.get<any[]>(apiUrl).subscribe({
       next: data => {
-        console.log(apiUrl)
+        console.log(data)
         this.apiData[controlName] = data;
       },
       error: () => {
@@ -640,13 +648,14 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       title: textForm.get('title')?.value || '',
       control: textFormGroup.get('text') as FormControl,
       api: t.text?.api as string,
-      dependency: t.text?.dependency || 'none'
+      dependency: t.text?.dependency || 'none',
+      lang: t.text?.lang || 'en'
     };
     if (!textFormGroup.contains('lang')) {
       textFormGroup.addControl('lang', new FormControl(t.text?.lang, Validators.required));
     }
     if (!textFormGroup.contains('controlName')) {
-      textFormGroup.addControl('controlName', new FormControl(t.text?.controlName, Validators.required));
+      textFormGroup.addControl('controlName', new FormControl(t.text?.controlName || cn, Validators.required));
     }
     if (!textFormGroup.contains('dependency')) {
       textFormGroup.addControl('dependency', new FormControl(t.text?.dependency || 'none', Validators.required));
@@ -890,6 +899,8 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     const dependencyKey = data.dependency;
     const dependencyControl = this.selectData[dependencyKey].control;
 
+    const dependentApi = `${data.api}${dependencyControl.value}`;
+    this.fetchDataFromAPI(dependentApi, key);
     dependencyControl.valueChanges.subscribe((value) => {
       const dependentApi = `${data.api}${value}`;
       this.fetchDataFromAPI(dependentApi, key);

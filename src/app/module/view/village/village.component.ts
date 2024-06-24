@@ -221,7 +221,7 @@ export class VillageComponent implements OnInit, AfterViewInit {
     this.loadDeletedVillageLength();
   }
   addNewVillage(): void {
-    debugger;
+    
     this.villageService.addVillage(this.newVillage).subscribe(
       (response) => {
         console.log('Village name updated successfully:', response);
