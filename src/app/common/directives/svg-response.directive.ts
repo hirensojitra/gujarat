@@ -1,13 +1,10 @@
-import { Directive, Input, ElementRef, OnInit, Renderer2, Output, EventEmitter, AfterViewInit } from '@angular/core';
-import { Subject, takeUntil, timer } from 'rxjs';
-import * as opentype from 'opentype.js';
-
-import { PostDetails, RectProperties, CircleProperties, EllipseProperties, LineProperties, TextElement, ImageElement, SvgProperties, TextShadow, AspectRatios } from '../interfaces/image-element';
-import ColorThief from 'colorthief';
-import { FontService } from '../services/fonts.service';
+import { Directive, Input, OnChanges, Output, SimpleChanges, EventEmitter, ElementRef, Renderer2, OnInit } from '@angular/core';
+import { isEqual } from 'lodash';
+import { Subject, Subscription, takeUntil } from 'rxjs';
+import { AspectRatios, CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, TextElement } from '../interfaces/image-element';
 import { SvgRectService } from '../services/svg-rect.service';
 import { SvgCircleService } from '../services/svg-circle.service';
-import { HttpClient } from '@angular/common/http';
+import { SvgEllipseService } from '../services/svg-ellipse.service';
 
 interface Data {
   title: string;
@@ -22,47 +19,162 @@ interface Data {
 }
 
 @Directive({
-  selector: '[svgProcessor]'
+  selector: '[svgDraw]'
 })
-export class SvgProcessorDirective implements OnInit, AfterViewInit {
-  offsetX: number = 0;
-  offsetY: number = 0;
-  width: number = 0;
-  height: number = 0;
-  defaultValue!: PostDetails;
+export class SvgResponseDirective implements OnChanges, OnInit {
+  @Input('svgDraw') formGroupValue: any;
   private postDataSetSubject = new Subject<PostDetails>();
-  @Input() loadOnly!: PostDetails;
   private destroy$ = new Subject<void>();
   @Input() set postDataSet(value: PostDetails) {
     this.postDataSetSubject.next(value);
   }
   postDataSet$ = this.postDataSetSubject.asObservable();
+  @Input() loadOnly: boolean = false;
   @Output() dataChanges = new EventEmitter<{ data: Data, index: number }>();
   @Output() getSelected = new EventEmitter<{ index: number }>();
-  postData!: PostDetails;
-  data: Data[] = [];
-  dataLoaded: boolean = false;
-  firstLoad: boolean = true;
+  formGroupValueChanges: Subject<any> = new Subject<any>();
   private eventListeners: (() => void)[] = [];
-  apiData: { [key: string]: any[] } = {};
-  selectData: { [key: string]: { lang: string, value: string, api: string, dependency: string, text: SVGAElement, controlName: string, changed: boolean } } = {};
+  private previousFormGroupValue: any;
+  private newFormGroupValue: any;
+  private subscription: Subscription;
+  offsetX: number = 0;
+  offsetY: number = 0;
+  width: number = 0;
+  height: number = 0;
+  apiData: { [key: string]: any[] };
+  controlList: { [key: string]: { title: string, control: SVGElement, lang: string, text: string, api: string, dependency: string } } = {};
   constructor(
     private el: ElementRef<SVGSVGElement>,
     private renderer: Renderer2,
-    private fontService: FontService,
     private Rect: SvgRectService,
     private Circle: SvgCircleService,
-    private http: HttpClient
+    private Ellipse: SvgEllipseService,
   ) {
+    this.apiData = {};
+    this.subscription = new Subscription();
+  }
+  ngOnInit(): void {
+    let f = true;
+    this.postDataSet$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(async (value: PostDetails) => {
+      const currentValue = value;
+      this.newFormGroupValue = currentValue;
+      const previousValue: Partial<PostDetails> = this.previousFormGroupValue;
+      const differences = this.findDifferences(previousValue, currentValue);
+      console.log(differences)
+      const { id, deleted, h, w, title, backgroundurl, data, boxed, apiData } = differences;
+      this.formGroupValueChanges.next(differences);
+      if (apiData) {
+        this.apiData = apiData.current;
+        await this.updateElements(currentValue.data || []);
+      }
+      if (backgroundurl && backgroundurl['current']) {
+        await this.updateBackGround(backgroundurl['current']);
+      }
 
+      if (w || h) {
+        const width = w.current || previousValue['w'];
+        const height = h.current || previousValue['h'];
+        this.height = height;
+        this.width = width;
+        w && h && this.updateViewBox(Math.min(Math.max(width, 1024), 1920), Math.min(Math.max(height, 1024), 1920));
+      }
+
+      if (data) {
+        await this.updateElements(data.current);
+      }
+      this.previousFormGroupValue = { ...this.newFormGroupValue };
+      for (let key in this.controlList) {
+        let data = this.controlList[key];
+        this.renderer.setValue(data.control, data.title);
+        if (data) {
+          const a = this.apiData[key]
+          for (let k in a) {
+            let d = a[k]
+            if (d.id == data.text) {
+              this.renderer.setValue(data.control, data['lang'] == 'en' ? d['name'] : data['lang'] == 'gu' ? d['gu_name'] : d['name']);
+              break;
+            }
+          }
+        }
+      }
+    })
   }
-  get dataArray(): Data[] {
-    return this.data;
+  async ngOnChanges(changes: SimpleChanges): Promise<void> {
+    if (changes['formGroupValue']) {
+      // const currentValue = changes['formGroupValue'].currentValue;
+      // this.newFormGroupValue = currentValue;
+      // const previousValue = this.previousFormGroupValue;
+      // const differences = this.findDifferences(previousValue, currentValue);
+      // const { id, deleted, h, w, title, backgroundurl, data, boxed, apiData } = differences;
+      // this.formGroupValueChanges.next(differences);
+      // if (!previousValue||apiData) {
+      //   this.apiData = apiData.current;
+      //   await this.updateElements(currentValue.data || []);
+      // }
+      // if (!previousValue ||backgroundurl && backgroundurl['current']) {
+      //   await this.updateBackGround(backgroundurl['current']);
+      // }
+
+      // if (w || h) {
+      //   const width = w.current || previousValue['w'];
+      //   const height = h.current || previousValue['h'];
+      //   this.height = height;
+      //   this.width = width;
+      //   w && h && this.updateViewBox(Math.min(Math.max(width, 1024), 1920), Math.min(Math.max(height, 1024), 1920));
+      // }
+
+      // if (data) {
+      //   console.log(data.differences)
+      //   console.log(data.previous)
+      //   console.log(data.current)
+      //   await this.updateElements(data.current);
+      // }
+      // this.previousFormGroupValue = { ...this.newFormGroupValue };
+      // for (let key in this.controlList) {
+      //   let data = this.controlList[key];
+      //   this.renderer.setValue(data.control, data.title);
+      //   if (data) {
+      //     const a = this.apiData[key]
+      //     for (let k in a) {
+      //       let d = a[k]
+      //       if (d.id == data.text) {
+      //         this.renderer.setValue(data.control, data['lang'] == 'en' ? d['name'] : data['lang'] == 'gu' ? d['gu_name'] : d['name']);
+      //         break;
+      //       }
+      //     }
+      //   }
+      // }
+    }
   }
 
-  getFontPath(fontFamily: string, fontWeight: string): string {
-    return this.fontService.getFontPath(fontFamily, fontWeight);
+  private findDifferences(previousValue: Partial<PostDetails>, currentValue: Partial<PostDetails>): any {
+    const changes: any = {};
+    for (const key in currentValue) {
+      if (currentValue.hasOwnProperty(key)) {
+        const keyTyped = key as keyof PostDetails;
+        const currentVal = currentValue[keyTyped];
+        if (previousValue) {
+          const previousVal = previousValue[keyTyped];
+          if (previousVal !== currentVal) {
+            changes[keyTyped] = {
+              previous: previousValue?.[keyTyped],
+              current: currentValue[keyTyped]
+            };
+          }
+        } else {
+          changes[keyTyped] = {
+            previous: previousValue?.[keyTyped],
+            current: currentValue[keyTyped]
+          };
+        }
+      }
+    }
+
+    return changes;
   }
+
   async updateBackGround(backgroundurl: string) {
     if (backgroundurl) {
       const svg = this.el.nativeElement;
@@ -76,7 +188,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       this.renderer.setAttribute(b, 'preserveAspectRatio', 'xMidYMid slice'); // Use slice to cover and maintain aspect ratio
       this.renderer.setAttribute(b, 'href', background);
       this.renderer.listen(b, 'click', (event) => {
-        this.getSelected.emit({ index: -1 })
+        this.getSelected.emit({ index: -1 });
       });
       const firstChild = svg.firstChild;
       if (firstChild) {
@@ -88,15 +200,75 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
   }
 
-  rgbToHex(r: number, g: number, b: number): string {
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  async getImageDataUrl(imageUrl: string): Promise<string> {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const convertedImageUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      return convertedImageUrl;
+    } catch (error) {
+      console.error('Error fetching or converting image:', error);
+      throw error;
+    }
   }
+
   updateViewBox(x: number, y: number) {
     if (this.el.nativeElement) {
       const svg = this.el.nativeElement;
       const viewBoxValue = `0 0 ${x} ${y}`;
       svg.setAttribute('viewBox', viewBoxValue);
     }
+  }
+
+  private async updateElements(data: Data[]): Promise<void> {
+
+    const svg = this.el.nativeElement;
+    const children = svg.childNodes;
+    for (let i = children.length - 1; i >= 0; i--) {
+      const child = children[i] as HTMLElement;
+      const dataType = child.getAttribute('data-type');
+      if (dataType !== "background-img") {
+        svg.removeChild(child);
+      }
+    }
+    const elements: SVGSVGElement | SVGGElement[] = [];
+    for (const [i, d] of data.entries()) {
+      if (d.rect) {
+        const rect = await this.createRect(d, i);
+        rect && elements.push(rect)
+      };
+      if (d.circle) {
+        const circle = await this.createCircle(d, i);
+        circle && elements.push(circle)
+      };
+      if (d.ellipse) {
+        const ellipse = await this.createEllipse(d, i);
+        ellipse && elements.push(ellipse)
+      };
+      if (d.line) elements.push(this.createLine(d, i));
+      if (d.image) elements.push(this.createImage(d, i));
+      if (d.text) elements.push(await this.createText(d, i));
+      // if (d.text) {
+      //   try {
+      //     const svgElement = await this.generateSVGPathData(d);
+      //     if (svgElement) {
+      //       this.renderer.appendChild(svg, svgElement);
+      //       elements.push(svgElement);
+      //     } else {
+      //       console.error('Failed to generate SVG path data for element:', d);
+      //     }
+      //   } catch (error) {
+      //     console.error('Error generating SVG path data:', error);
+      //   }
+      // }
+    }
+    this.removeEventListeners();
+    !this.loadOnly && this.addDraggableBehavior(elements);
   }
   createRect(d: Data, i: number) {
     if (this.el.nativeElement && d.rect) {
@@ -107,7 +279,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
     return null;
   }
-
   createCircle(d: Data, i: number) {
     if (this.el.nativeElement && d.circle) {
       const svg = this.el.nativeElement;
@@ -120,18 +291,9 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
   createEllipse(d: Data, i: number) {
     if (this.el.nativeElement && d.ellipse) {
       const svg = this.el.nativeElement;
-      const e = this.renderer.createElement('ellipse', 'http://www.w3.org/2000/svg');
-      const { cx, cy, rx, ry, fill, opacity, rotate } = d.ellipse; // Assuming cx, cy, rx, ry, fill, opacity, and rotate are properties of the ellipse
-      this.renderer.setAttribute(e, 'cx', String(cx));
-      this.renderer.setAttribute(e, 'cy', String(cy));
-      this.renderer.setAttribute(e, 'rx', String(rx));
-      this.renderer.setAttribute(e, 'ry', String(ry));
-      this.renderer.setAttribute(e, 'fill', fill);
-      this.renderer.setAttribute(e, 'opacity', String(opacity));
-      this.renderer.setAttribute(e, 'transform', `rotate(${rotate} ${cx} ${cy})`); // Apply rotate
-      this.renderer.setAttribute(e, 'data-type', 'ellipse');
-      this.renderer.appendChild(svg, e);
-      return e;
+      const c = this.Ellipse.createEllipse(d.ellipse)
+      this.renderer.appendChild(svg, c);
+      return c;
     }
     return null;
   }
@@ -153,38 +315,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
       return line;
     }
     return null;
-  }
-  calculateWH(image: ImageElement): { w: number, h: number } {
-    let w = 320;
-    let h = 320;
-    const shape = image.shape;
-    const aspectRatios: AspectRatios = {
-      'circle': { ratio: 1, divisor: 1 },
-      'ellipse': { ratio: 1, divisor: 1 },
-      'rect': { ratio: 1, divisor: 1 },
-      'rect_3_2': { ratio: 3, divisor: 2 },
-      'rect_4_3': { ratio: 4, divisor: 3 },
-      'rect_16_9': { ratio: 16, divisor: 9 },
-      'rect_1_1': { ratio: 1, divisor: 1 },
-      'rect_5_4': { ratio: 5, divisor: 4 },
-      'rect_3_1': { ratio: 3, divisor: 1 },
-      'rect_7_5': { ratio: 7, divisor: 5 },
-      'rect_2_3': { ratio: 2, divisor: 3 },
-      'rect_3_4': { ratio: 3, divisor: 4 },
-      'rect_9_16': { ratio: 9, divisor: 16 },
-      'rect_4_5': { ratio: 4, divisor: 5 },
-      'rect_5_7': { ratio: 5, divisor: 7 }
-    };
-    const closestMatch = aspectRatios[shape];
-    if (closestMatch) {
-      const r = image.r; // Assuming r is the radius
-      w = r * 2;
-      h = (w * closestMatch.ratio) / closestMatch.divisor;
-    } else {
-      console.error('Aspect ratio not defined for shape:', shape);
-    }
-
-    return { w, h };
   }
   createImage(d: Data, i: number) {
     if (this.el.nativeElement && d.image) {
@@ -300,8 +430,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
     return null;
   }
-
-
   async createText(d: Data, i: number) {
     if (this.el.nativeElement && d.text) {
       const svg = this.el.nativeElement;
@@ -354,21 +482,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
           // If there's only one line of text, create a single tspan element
           const textElement = this.renderer.createText(text)
           if (controlName && lang && type && type == "select") {
-            const data = this.selectData[controlName];
-            let changed = true;
-            if (data && !data.changed) {
-              changed = data.api !== api;
-            }
-
-            this.selectData[controlName] = {
-              lang: lang,
-              value: text,
-              api: api as string,
-              dependency: dependency || 'none',
-              text: textElement,
-              controlName: controlName,
-              changed: data ? changed : true
-            }
+            this.controlList[controlName] = { title: d.title, control: textElement, lang: lang, text: text, api: api || '', dependency: dependency || '' }
           }
           this.renderer.appendChild(t, textElement);
         } else {
@@ -439,109 +553,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     }
     return null;
   }
-  async fetchDataFromAPI(apiUrl: string, controlName: string): Promise<void> {
-    try {
-      const data = await this.http.get<any[]>(apiUrl).toPromise();
-      if (controlName && data) { this.apiData[controlName] = data; } else { this.apiData[controlName] = [] }
-    } catch (error) {
-      delete this.apiData[controlName];
-      console.error('Error fetching data from API:', error);
-    }
-  }
-  async updateElements(data: Data[]) {
-    const svg = this.el.nativeElement;
-    const children = svg.childNodes;
-    for (let i = children.length - 1; i >= 0; i--) {
-      const child = children[i] as HTMLElement;
-      const dataType = child.getAttribute('data-type');
-      if (dataType !== "background-img") {
-        svg.removeChild(child);
-      }
-    }
-    const elements: SVGSVGElement | SVGGElement[] = [];
-    for (const [i, d] of data.entries()) {
-      if (d.rect) {
-        const rect = this.createRect(d, i);
-        rect && elements.push()
-      };
-      if (d.circle) {
-        const circle = this.createCircle(d, i);
-        circle && elements.push(circle)
-      };
-      if (d.ellipse) elements.push(this.createEllipse(d, i));
-      if (d.line) elements.push(this.createLine(d, i));
-      if (d.image) elements.push(this.createImage(d, i));
-      if (d.text) elements.push(await this.createText(d, i));
-      // if (d.text) {
-      //   try {
-      //     const svgElement = await this.generateSVGPathData(d);
-      //     if (svgElement) {
-      //       this.renderer.appendChild(svg, svgElement);
-      //       elements.push(svgElement);
-      //     } else {
-      //       console.error('Failed to generate SVG path data for element:', d);
-      //     }
-      //   } catch (error) {
-      //     console.error('Error generating SVG path data:', error);
-      //   }
-      // }
-    }
-    this.removeEventListeners();
-    this.addDraggableBehavior(elements);
-
-    if (this.defaultValue) {
-      const promises: Promise<void>[] = [];
-      await Promise.all(this.defaultValue.data.map(async (item, i) => {
-
-        for (const key in this.selectData) {
-          const data = this.selectData[key];
-
-          // Check if item.text exists and matches controlName
-          if (item.text && item.text.controlName === data.controlName) {
-            // Ensure API strings end with '/'
-            if (!data.api.endsWith('/')) {
-              data.api += '/';
-            }
-            if (item.text.api && !item.text.api.endsWith('/')) {
-              item.text.api += '/';
-            }
-
-            // Check if data has changed or if it's the first load
-            if (data.changed) {
-              // Choose whether to load data or set up dependency
-              const promise = (data.dependency === 'none') ?
-                this.loadData(key, data.api) :
-                this.setupDependency(key, data);
-
-              promises.push(promise);
-            }
-          }
-        }
-      }));
-      await Promise.all(promises);
-    }
-    for (const key in this.selectData) {
-      const data = this.selectData[key];
-      if (this.apiData[key]) {
-        const filteredData = this.apiData[key].filter(item => item.id == data.value);
-        if (filteredData.length) {
-          this.renderer.setValue(data.text, filteredData[0][data.lang == 'gu' ? 'gu_name' : 'name']);
-        }
-      }
-
-    }
-  }
-  private async loadData(key: string, api: string) {
-    if (!this.apiData[key]) {
-      await this.fetchDataFromAPI(api, key);
-    }
-  }
-  private async setupDependency(key: string, data: { lang: string, value: string, api: string, dependency: string }) {
-    const dependencyKey = data.dependency;
-    const dependencyControl = this.selectData[dependencyKey].value;
-    const dependentApi = `${data.api}${dependencyControl}`;
-    await this.fetchDataFromAPI(dependentApi, key);
-  }
   getTextWidth(text: string, fontSize: number, fontFamily: string): number {
     const svgText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     svgText.setAttribute('font-size', `${fontSize}px`);
@@ -552,30 +563,56 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     document.body.removeChild(svgText);
     return width;
   }
-
-  async getImageDataUrl(imageUrl: string): Promise<string> {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const convertedImageUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      return convertedImageUrl;
-    } catch (error) {
-      console.error('Error fetching or converting image:', error);
-      throw error;
+  textFormat(text: string): string[] {
+    const formattedText = text.replace(/\n/g, '\n').replace(/\n(?!\*{3})/g, '***\n');
+    const lines = formattedText.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      lines[i] = lines[i].replace(/\*\*\*/g, '\u00A0').trim();
     }
+    return lines;
   }
+  calculateWH(image: ImageElement): { w: number, h: number } {
+    let w = 320;
+    let h = 320;
+    const shape = image.shape;
+    const aspectRatios: AspectRatios = {
+      'circle': { ratio: 1, divisor: 1 },
+      'ellipse': { ratio: 1, divisor: 1 },
+      'rect': { ratio: 1, divisor: 1 },
+      'rect_3_2': { ratio: 3, divisor: 2 },
+      'rect_4_3': { ratio: 4, divisor: 3 },
+      'rect_16_9': { ratio: 16, divisor: 9 },
+      'rect_1_1': { ratio: 1, divisor: 1 },
+      'rect_5_4': { ratio: 5, divisor: 4 },
+      'rect_3_1': { ratio: 3, divisor: 1 },
+      'rect_7_5': { ratio: 7, divisor: 5 },
+      'rect_2_3': { ratio: 2, divisor: 3 },
+      'rect_3_4': { ratio: 3, divisor: 4 },
+      'rect_9_16': { ratio: 9, divisor: 16 },
+      'rect_4_5': { ratio: 4, divisor: 5 },
+      'rect_5_7': { ratio: 5, divisor: 7 }
+    };
+    const closestMatch = aspectRatios[shape];
+    if (closestMatch) {
+      const r = image.r; // Assuming r is the radius
+      w = r * 2;
+      h = (w * closestMatch.ratio) / closestMatch.divisor;
+    } else {
+      console.error('Aspect ratio not defined for shape:', shape);
+    }
+
+    return { w, h };
+  }
+
   addDraggableBehavior(elements: any): void {
     const svg = this.el.nativeElement as SVGSVGElement;
     const showControls = elements.map(() => {
       return false;
     })
     elements.forEach((element: any, index: number) => {
-      const eleData = this.postData.data[index]
+
+      const eleData = this.newFormGroupValue.data[index]
+      const { boxed } = eleData;
       if (element) {
         let isDragging = false;
         let isDragged = false;
@@ -584,7 +621,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         const y = bbox.y;
         const width = bbox.width;
         const height = bbox.height;
-
         this.renderer.setAttribute(element, 'cursor', 'grab');
         const elementType = element.getAttribute('data-type');
         const onMouseDown = (event: MouseEvent) => {
@@ -608,16 +644,13 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
               elementX = parseFloat(element.getAttribute('cx') || '0');
               elementY = parseFloat(element.getAttribute('cy') || '0');
               break;
-            case 'rectangle':
-
-              break;
             case 'svg':
               const pathBoundingBox = element.getBBox(); // Get the bounding box of the path
               elementX = pathBoundingBox.x;
               elementY = pathBoundingBox.y;
               break;
             case 'image':
-              // Logic for handling image elements
+
               break;
             case 'g':
               const transformAttribute = element.getAttribute('transform');
@@ -641,17 +674,12 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         const onMouseMove = (event: MouseEvent) => {
           if (isDragging) {
             isDragged = true;
-
             const svgPoint = this.getMousePosition(event, svg);
             if (element) {
               let x, y;
               let r = 0;
               switch (elementType) {
                 case 'circle':
-                  x = parseFloat(element.getAttribute('cx') || '0');
-                  y = parseFloat(element.getAttribute('cy') || '0');
-                  r = parseFloat(element.getAttribute('r') || '0');
-                  break;
                 case 'ellipse':
                   x = parseFloat(element.getAttribute('cx') || '0');
                   y = parseFloat(element.getAttribute('cy') || '0');
@@ -672,15 +700,18 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                   y = parseFloat(element.getAttribute('y') || '0');
                   break;
               }
+
               if (x !== undefined && y !== undefined) {
                 const oX = svgPoint.x - x + this.offsetX;
                 const oY = svgPoint.y - y + this.offsetY;
                 const newX = x + oX;
                 const newY = y + oY;
+
                 let minX = 30 + r;
                 let minY = 30 + r;
                 let maxX = this.width - (element.getBBox().width + minX) + 2 * r;
                 let maxY = this.height - (element.getBBox().height + minY) + 2 * r;
+
                 const textAnchor = element.getAttribute('text-anchor');
                 if (textAnchor) {
                   minY += element.getBBox().height / 2;
@@ -691,19 +722,18 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                       maxX += element.getBBox().width / 2;
                       break;
                     case 'start':
-
                       break;
                     case 'end':
                       minX += element.getBBox().width;
                       maxX += element.getBBox().width;
                       break;
                     default:
-                      // Handle other cases if needed
                       break;
                   }
                 }
-                const adjustedX = eleData.boxed ? Math.floor(Math.min(Math.max(newX, minX), maxX)) : Math.floor(newX);
-                const adjustedY = eleData.boxed ? Math.floor(Math.min(Math.max(newY, minY), maxY)) : Math.floor(newY);
+
+                const adjustedX = boxed ? Math.max(minX, Math.min(newX, maxX)) : newX;
+                const adjustedY = boxed ? Math.max(minY, Math.min(newY, maxY)) : newY;
 
                 switch (true) {
                   case !!eleData.circle || !!eleData.ellipse:
@@ -720,7 +750,9 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                     if (eleData.rect) {
                       eleData.rect.x = adjustedX;
                       eleData.rect.y = adjustedY;
-                      const transformValue = `rotate(${eleData.rect.rotate || 0} ${x + width / 2} ${y + height / 2})`;
+                      const width = element.getBBox().width;
+                      const height = element.getBBox().height;
+                      const transformValue = `rotate(${eleData.rect.rotate || 0} ${adjustedX + width / 2} ${adjustedY + height / 2})`;
                       this.renderer.setAttribute(element, 'transform', transformValue);
                     }
                     if (eleData.text) {
@@ -742,7 +774,9 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                     if (eleData.image) {
                       eleData.image.x = adjustedX;
                       eleData.image.y = adjustedY;
-                      const transformValue = `rotate(${eleData.image.rotate || 0} ${x + width / 2} ${y + height / 2})`;
+                      const width = element.getBBox().width;
+                      const height = element.getBBox().height;
+                      const transformValue = `rotate(${eleData.image.rotate || 0} ${adjustedX + width / 2} ${adjustedY + height / 2})`;
                       this.renderer.setAttribute(element, 'transform', transformValue);
                     }
                     break;
@@ -750,6 +784,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                     console.log('Element data not found');
                     break;
                 }
+
                 switch (elementType) {
                   case 'circle':
                   case 'ellipse':
@@ -774,12 +809,11 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
                     this.renderer.setAttribute(element, 'y', adjustedY.toString());
                     break;
                 }
-
-
               }
             }
           }
         };
+
         const onMouseUp = () => {
           isDragging && isDragged && this.dataChanges.emit({ data: eleData, index: index });
           isDragging = false;
@@ -792,8 +826,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
         const mouseupListener = this.renderer.listen(svg, 'mouseup', onMouseUp);
         const mouseleaveListener = this.renderer.listen(svg, 'mouseleave', onMouseUp);
         const touchendListener = this.renderer.listen(svg, 'touchend', onMouseUp);
-
-        this.eventListeners.push(mousedownListener, touchstartListener, mousemoveListener,
+        !this.loadOnly && this.eventListeners.push(mousedownListener, touchstartListener, mousemoveListener,
           touchmoveListener, mouseupListener, mouseleaveListener,
           touchendListener);
       }
@@ -812,77 +845,6 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     this.eventListeners.forEach(removeListener => removeListener());
     this.eventListeners = [];
   }
-  textFormat(text: string): string[] {
-    const formattedText = text.replace(/\n/g, '\n').replace(/\n(?!\*{3})/g, '***\n');
-    const lines = formattedText.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-      lines[i] = lines[i].replace(/\*\*\*/g, '\u00A0').trim();
-    }
-    return lines;
-  }
-
-  ngAfterViewInit(): void {
-
-
-  }
-  ngOnInit(): void {
-    let f = true;
-    this.postDataSet$.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(async (value: PostDetails) => {
-      await this.initSVG(value);
-      if (f) { }
-      this.defaultValue = value;
-      f = false;
-    })
-  }
-  async initSVG(d: PostDetails) {
-    const { id, deleted, h, w, title, backgroundurl, data } = d;
-
-    this.height = h;
-    this.width = w;
-    if (!this.postData || backgroundurl !== this.postData.backgroundurl) {
-      this.updateBackGround(backgroundurl);
-    }
-    if (!this.postData || w !== this.postData.w || h !== this.postData.h) {
-      this.updateViewBox(Math.min(Math.max(w, 1024), 1920), Math.min(Math.max(h, 1024), 1920));
-    }
-    if (data && this.postData) {
-      if (data != this.postData.data || this.firstLoad) {
-        if (data.length !== this.postData.data.length) {
-
-          let added = data.filter(item => !this.postData.data.includes(item));
-          let removed = this.postData.data.filter(item => !data.includes(item));
-          if (added) {
-            added.forEach((item) => this.postData.data.push(item))
-            await this.updateElements(this.postData.data)
-          }
-          if (removed) {
-            this.postData.data = data
-            await this.updateElements(this.postData.data)
-          }
-        } else {
-          let updateRequire = this.postData.data.map((item, index) => data[index] !== this.postData.data[index]);
-          if (updateRequire) {
-            let updated = this.postData.data.filter((item, index) => {
-              if (data[index] !== item) {
-                this.postData.data[index] = data[index];
-              } return data[index] !== item
-            });
-            if (updated.length > 0) {
-              await this.updateElements(this.postData.data)
-            }
-          }
-        }
-      }
-    }
-    if (!this.dataLoaded) {
-      this.dataLoaded = true;
-      this.postData = d;
-      await this.updateElements(data);
-    }
-    this.firstLoad = false;
-  }
   ngOnDestroy() {
     this.removeEventListeners();
     this.destroy$.next();
@@ -891,140 +853,4 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
     this.destroy$.next();
     this.destroy$.complete();
   }
-  getEventListeners(element: HTMLElement): { [event: string]: EventListener[] } {
-    const eventListeners: { [event: string]: EventListener[] } = {};
-    const registeredEvents = this.getRegisteredEvents(element);
-    for (const event in registeredEvents) {
-      if (registeredEvents.hasOwnProperty(event)) {
-        const listeners: EventListener[] = [];
-        registeredEvents[event].forEach((listener: EventListener) => { // Specify EventListener type
-          listeners.push(listener);
-        });
-        eventListeners[event] = listeners;
-      }
-    }
-    return eventListeners;
-  }
-  private getRegisteredEvents(element: HTMLElement): { [event: string]: EventListener[] } {
-    const registeredEvents: { [event: string]: EventListener[] } = {};
-    const listeners = this.renderer.data['get'](element);
-    if (listeners) {
-      Object.keys(listeners).forEach(eventName => {
-        const eventListeners = listeners[eventName].map((listener: EventListenerObject) => listener.handleEvent);
-        registeredEvents[eventName] = eventListeners;
-      });
-    }
-    return registeredEvents;
-  }
-
-  async generateSVGPathData(t: { title: string; editable: boolean; boxed: boolean; text?: TextElement; }): Promise<SVGGElement> {
-    try {
-      if (!t.text) {
-        console.error('Font loading failed');
-        throw new Error('Font loading failed');
-      } else {
-        const fontUrl = this.getFontPath(t.text?.fontFamily, t.text?.fw)
-        const font = await this.loadFont(`assets/fonts/${fontUrl}.ttf`);
-        if (!font || !t.text) {
-          console.error('Font loading failed');
-          throw new Error('Font loading failed');
-        }
-        const textData = t.text;
-        const fontSize = textData.fs;
-        const pathData = [];
-        const yOffset = 0; // Start y position from the text data
-        const lines = textData.text?.split('\n');
-        if (lines) {
-          for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-            const line = lines[lineIndex];
-            const lineHeightFactor = textData.lineHeight; // Line height factor (e.g., 1.5 for 1.5 times the font size)
-            const ascent = font.ascender / font.unitsPerEm * fontSize;
-            const descent = font.descender / font.unitsPerEm * fontSize;
-            const lineHeight = (ascent - descent) * lineHeightFactor;
-            let yoff = yOffset + lineHeight * lineIndex;
-            let xOffset = 0;
-            switch (textData.textAnchor) {
-              case 'middle':
-                xOffset -= font.getAdvanceWidth(line, fontSize) / 2; // Center align
-                break;
-              case 'end':
-                xOffset -= font.getAdvanceWidth(line, fontSize); // End align
-                break;
-              case 'start':
-              default:
-                break;
-            }
-
-            for (let i = 0; i < line.length; i++) {
-              const char = line[i];
-              console.log(char)
-              const glyph = font.charToGlyph(char);
-              const glyphPath = glyph.getPath(xOffset, yoff, fontSize);
-              pathData.push(glyphPath.toPathData(5));
-              xOffset += glyph.advanceWidth * fontSize / font.unitsPerEm; // Adjust for glyph width
-            }
-          }
-        }
-
-        const svgPathData = pathData.join(' ');
-        const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pathElement.setAttribute('d', svgPathData);
-
-        // Create SVG element
-        const lineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        lineGroup.setAttribute('transform', `translate(${textData.x},${textData.y})`);
-
-        for (const prop in textData) {
-          if (Object.prototype.hasOwnProperty.call(textData, prop) && prop !== 'text') {
-            const propValue = textData[prop as keyof TextElement];
-            if (propValue !== undefined && propValue !== null) {
-              let p: string | null = null;
-              let v: string | null = null
-              switch (prop) {
-                case 'color':
-                  p = 'fill';
-                  v = propValue as string;
-                  break;
-                case 'letterSpacing':
-                  break;
-                case 'lineHeight':
-                  break;
-                case 'textTransform':
-                  break;
-                case 'textShadow':
-                  p = 'filter';
-                  const t = propValue as TextShadow;
-                  v = `drop-shadow(${t.offsetX}px ${t.offsetY}px ${t.blur}px ${t.color})` || 'none';
-                  break; // Handle textShadow separately if needed
-                default:
-                  break;
-              }
-              if (p && v) {
-                pathElement.setAttribute(p, v); // Convert propValue to string
-              }
-            }
-          }
-        }
-        this.renderer.setAttribute(lineGroup, 'data-type', 'g')
-        lineGroup.appendChild(pathElement);
-        return lineGroup;
-      }
-    } catch (error) {
-      console.error('Error generating SVG path data:', error);
-      throw error; // Propagate the error
-    }
-  }
-
-  loadFont(fontUrl: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      opentype.load(fontUrl, (err, font) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(font);
-        }
-      });
-    });
-  }
 }
-

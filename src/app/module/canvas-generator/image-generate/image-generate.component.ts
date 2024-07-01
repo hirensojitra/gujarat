@@ -130,7 +130,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     "title": "image",
     "info": "",
     "info_show": true,
-    "backgroundurl": "https://images.unsplash.com/photo-1564053489984-317bbd824340?q=80&w=2096&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "backgroundurl": "https://images.unsplash.com/photo-1536663094815-aa7e99627504?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "data": [
       {
         "title": "Text 1",
@@ -192,6 +192,8 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   confirmDelete: any;
   apiData: { [key: string]: any[] } = {};
   selectData: { [key: string]: { title: string, control: FormControl, api: string, dependency: string, lang: string } } = {};
+
+  positionShuffle: boolean = false;
   constructor(
     private fb: FormBuilder,
     private colorService: ColorService,
@@ -232,10 +234,42 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         const newData = d.data;
         if (newData.text) {
           if (newData.text.x) {
-            t.get('text')?.get('x')?.patchValue(newData.text.x, { emitEvent: true });
+            t.get('text')?.get('x')?.patchValue(newData.text.x, { emitEvent: false });
           }
           if (newData.text.y) {
-            t.get('text')?.get('y')?.patchValue(newData.text.y, { emitEvent: true });
+            t.get('text')?.get('y')?.patchValue(newData.text.y, { emitEvent: false });
+          }
+        }
+        if (newData.image) {
+          if (newData.image.x) {
+            t.get('image')?.get('x')?.patchValue(newData.image.x, { emitEvent: false });
+          }
+          if (newData.image.y) {
+            t.get('image')?.get('y')?.patchValue(newData.image.y, { emitEvent: false });
+          }
+        }
+        if (newData.rect) {
+          if (newData.rect.x) {
+            t.get('rect')?.get('x')?.patchValue(newData.rect.x, { emitEvent: false });
+          }
+          if (newData.rect.y) {
+            t.get('rect')?.get('y')?.patchValue(newData.rect.y, { emitEvent: false });
+          }
+        }
+        if (newData.circle) {
+          if (newData.circle.cx) {
+            t.get('circle')?.get('cx')?.patchValue(newData.circle.cx, { emitEvent: false });
+          }
+          if (newData.circle.cy) {
+            t.get('circle')?.get('cy')?.patchValue(newData.circle.cy, { emitEvent: false });
+          }
+        }
+        if (newData.ellipse) {
+          if (newData.ellipse.cx) {
+            t.get('ellipse')?.get('cx')?.patchValue(newData.ellipse.cx, { emitEvent: false });
+          }
+          if (newData.ellipse.cy) {
+            t.get('ellipse')?.get('cy')?.patchValue(newData.ellipse.cy, { emitEvent: false });
           }
         }
       } else {
@@ -275,8 +309,9 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       backgroundurl: [this.postDetails.backgroundurl, Validators.required],
       download_counter: [this.postDetails.download_counter, Validators.required],
       info: [this.postDetails.info || '', Validators.required],
-      info_show: [this.postDetails.info_show || '', Validators.required],
-      data: this.fb.array([])
+      info_show: [this.postDetails.info_show || false, Validators.required],
+      data: this.fb.array([]),
+      apiData: this.apiData
     });
     this.postDetailsForm?.get('backgroundurl')?.valueChanges.subscribe(async (v) => {
       this.postDetails.backgroundurl = v;
@@ -556,7 +591,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
         y: [t.text?.y, Validators.required],
         fs: [t.text?.fs, Validators.required],
         fw: [t.text?.fw, Validators.required],
-        type: [t.text?.type, Validators.required],
+        type: [t.text?.type || 'text', Validators.required],
         text: [t.text?.text, Validators.required],
         color: [t.text?.color, Validators.required],
         fontStyle: this.fb.group({
@@ -622,7 +657,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   async fetchDataFromAPI(apiUrl: string, controlName: string): Promise<void> {
     await this.http.get<any[]>(apiUrl).subscribe({
       next: data => {
-        console.log(data)
         this.apiData[controlName] = data;
       },
       error: () => {
@@ -814,6 +848,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   //   this.offsetX -= deltaX;
   //   this.offsetY -= deltaY;
   // }
+
   moveDown(index: number) {
     const data = this.postDetailsForm?.get('data')?.value;
     if (index > 0) {
@@ -822,7 +857,9 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       data[index] = temp;
       this.selectedElement = index - 1;
     }
+    this.positionShuffle = true;
     this.rebuild(data);
+    this.positionShuffle = false;
     return false;
   }
   moveUp(index: number) {
@@ -833,7 +870,9 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       data[index + 1] = temp;
       this.selectedElement = index + 1;
     }
+    this.positionShuffle = true;
     this.rebuild(data);
+    this.positionShuffle = false;
     return false;
   }
 
@@ -845,7 +884,9 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       data.unshift(temp);
       this.selectedElement = 0;
     }
+    this.positionShuffle = true;
     this.rebuild(data);
+    this.positionShuffle = false;
     return false;
   }
   moveToTop(index: number) {
@@ -856,10 +897,12 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       data.push(temp);
       this.selectedElement = data.length - 1;
     }
+    this.positionShuffle = true;
     this.rebuild(data);
+    this.positionShuffle = false;
     return false;
   }
-  rebuild(dataArray: Data[]) {
+  async rebuild(dataArray: Data[]) {
     this.dataArray.clear();
     this.controlSet = [];
     for (let i = 0; i < dataArray.length; i++) {
@@ -878,14 +921,28 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       (item.image) && this.controlSet.push(this.controlValues.image);
     }
     this.postDetailsForm?.get('data')?.setValue(dataArray);
-    for (const key in this.selectData) {
-      const data = this.selectData[key];
-      if (data.dependency === 'none') {
-        this.loadData(key, data.api);
-      } else {
-        this.setupDependency(key, data);
+    if (this.positionShuffle == false) {
+      for (const key in this.selectData) {
+        const data = this.selectData[key];
+        if (data.dependency === 'none') {
+          await this.loadData(key, data.api);
+        } else {
+          await this.setupDependency(key, data);
+        }
       }
     }
+  }
+  findInvalidControls() {
+    const invalidControls = [];
+    if (this.postDetailsForm) {
+      const controls = this.postDetailsForm.controls;
+      for (const name in controls) {
+        if (controls[name].invalid) {
+          invalidControls.push(name);
+        }
+      }
+    }
+    return invalidControls;
   }
   private loadData(key: string, api: string) {
     if (!this.apiData[key]) {
@@ -901,9 +958,10 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
 
     const dependentApi = `${data.api}${dependencyControl.value}`;
     this.fetchDataFromAPI(dependentApi, key);
-    dependencyControl.valueChanges.subscribe((value) => {
+    dependencyControl.valueChanges.subscribe(async (value) => {
       const dependentApi = `${data.api}${value}`;
-      this.fetchDataFromAPI(dependentApi, key);
+      await this.fetchDataFromAPI(dependentApi, key);
+      data.control.setValue(data.title, { emitEvent: true })
     });
   }
   centerActiveButton() {

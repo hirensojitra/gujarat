@@ -14,6 +14,7 @@ import { LoaderService } from 'src/app/common/services/loader';
 import { SvgRectService } from 'src/app/common/services/svg-rect.service';
 import { SvgCircleService } from 'src/app/common/services/svg-circle.service';
 import { HttpClient } from '@angular/common/http';
+import { SvgEllipseService } from 'src/app/common/services/svg-ellipse.service';
 declare var FB: any;
 interface MatchObject {
   components: string;
@@ -101,6 +102,7 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
     private loaderService: LoaderService,
     private Rect: SvgRectService,
     private Circle: SvgCircleService,
+    private Ellipse: SvgEllipseService,
     private http: HttpClient
   ) {
     this.route.queryParams.subscribe(async params => {
@@ -412,18 +414,23 @@ export class ImageDownloadComponent implements AfterViewInit, OnInit {
             break;
           case !!item.rect:
             if (item.rect) {
-              const rect = this.renderer.createElement('rect', 'http://www.w3.org/2000/svg');
-              this.Rect.createRect(rect, item.rect);
+              const rect = this.Rect.createRect(item.rect);
               this.renderer.appendChild(svg, rect);
               return rect;
             }
             break;
           case !!item.circle:
             if (item.circle) {
-              const c = this.renderer.createElement('circle', 'http://www.w3.org/2000/svg');
-              this.Circle.createCircle(c, item.circle);
+              const c = this.Circle.createCircle(item.circle);
               this.renderer.appendChild(svg, c);
               return c;
+            }
+            break;
+          case !!item.ellipse:
+            if (item.ellipse) {
+              const e = this.Ellipse.createEllipse(item.ellipse);
+              this.renderer.appendChild(svg, e);
+              return e;
             }
             break;
           case !!item.image:

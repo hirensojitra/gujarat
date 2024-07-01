@@ -15,6 +15,7 @@ import { ColorService } from '../services/color.service';
 import { ColorPickerComponent } from '../controllers/color-picker/color-picker.component';
 import { PaginationDirective } from '../directives/pagination.directive';
 import { DependencyListPipe } from '../pipes/dependency-list.pipe';
+import { SvgResponseDirective } from '../directives/svg-response.directive';
 
 @NgModule({
   imports: [
@@ -35,7 +36,8 @@ import { DependencyListPipe } from '../pipes/dependency-list.pipe';
     DependencyListPipe,
     SvgProcessorDirective,
     ColorPickerComponent,
-    PaginationDirective
+    PaginationDirective,
+    SvgResponseDirective
   ],
   exports: [
     CaptchaDirective,
@@ -50,7 +52,8 @@ import { DependencyListPipe } from '../pipes/dependency-list.pipe';
     DependencyListPipe,
     SvgProcessorDirective,
     ColorPickerComponent,
-    PaginationDirective
+    PaginationDirective,
+    SvgResponseDirective
   ],
   providers: [KeysPipe, ColorService, ColorPickerComponent, DependencyListPipe]
 })

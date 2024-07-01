@@ -12,30 +12,31 @@ export class SvgCircleService {
         this.renderer = rendererFactory.createRenderer(null, null);
     }
 
-    createCircle(c: SVGGElement, circleData: CircleProperties): SVGGElement {
+    createCircle(circleData: CircleProperties): SVGCircleElement {
+        const circle: SVGCircleElement = this.renderer.createElement('circle', 'svg');
         const { cx, cy, r, fill, fillOpacity, opacity, stroke, strokeWidth, strokeOpacity, strokeAlignment } = circleData;
-        this.renderer.addClass(c, 'pointer-events-none');
-        this.renderer.setAttribute(c, 'cx', String(cx));
-        this.renderer.setAttribute(c, 'cy', String(cy));
-        this.renderer.setAttribute(c, 'r', r.toString());
-        this.renderer.setAttribute(c, 'data-type', 'circle');
-        this.renderer.setAttribute(c, 'fill', fill);
-        this.renderer.setAttribute(c, 'opacity', String(opacity));
+        
+        this.renderer.setAttribute(circle, 'cx', String(cx));
+        this.renderer.setAttribute(circle, 'cy', String(cy));
+        this.renderer.setAttribute(circle, 'r', String(r));
+        this.renderer.setAttribute(circle, 'data-type', 'circle');
+        this.renderer.setAttribute(circle, 'fill', fill);
+        this.renderer.setAttribute(circle, 'opacity', String(opacity));
         if (fillOpacity !== undefined) {
-            this.renderer.setAttribute(c, 'fill-opacity', String(fillOpacity));
+            this.renderer.setAttribute(circle, 'fill-opacity', String(fillOpacity));
         }
         if (stroke !== undefined) {
-            this.renderer.setAttribute(c, 'stroke', String(stroke));
+            this.renderer.setAttribute(circle, 'stroke', String(stroke));
         }
         if (strokeWidth !== undefined) {
-            this.renderer.setAttribute(c, 'stroke-width', String(strokeWidth));
+            this.renderer.setAttribute(circle, 'stroke-width', String(strokeWidth));
         }
         if (strokeOpacity !== undefined) {
-            this.renderer.setAttribute(c, 'stroke-opacity', String(strokeOpacity));
+            this.renderer.setAttribute(circle, 'stroke-opacity', String(strokeOpacity));
         }
         if (strokeAlignment !== undefined) {
-            this.renderer.setAttribute(c, 'stroke-alignment', String(strokeAlignment));
+            this.renderer.setAttribute(circle, 'stroke-alignment', String(strokeAlignment));
         }
-        return c
+        return circle;
     }
 }

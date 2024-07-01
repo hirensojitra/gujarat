@@ -5,19 +5,19 @@
             <label for="title" class="me-2 h4 m-0"><i class="fa fa-edit"></i></label>
             <input type="text" id="title" class="h4 m-0 border-0 border-secondary" formControlName="title" placeholder="Enter Image Name">
         </div>
-        <button class="btn btn-success ms-auto">Save</button>
-        <button class="btn btn-success ms-2" *ngIf="postDetailsForm.get('id')?.value" type="button" (click)="onSubmit(true)">
-            <div class="fa fa-copy"></div>
-        </button>
-        <button class="btn btn-danger ms-2" type="button">Cancel</button>
-        <button class="btn btn-danger ms-2" type="button" *ngIf="postDetailsForm.get('id')?.value" (click)="confirmDelete.show()"><i class="fa fa-trash"></i></button>
+        <button class="btn btn-success ms-auto" title="Save"><i class="fa fa-save"></i></button>
+        <button class="btn btn-success ms-2" *ngIf="postDetailsForm.get('id')?.value" type="button" (click)="onSubmit(true)" title="Copy"><i class="fa fa-copy"></i></button>
+        <button class="btn btn-danger ms-2" type="button" title="Cancel"><i class="fa fa-close"></i></button>
+        <button class="btn btn-danger ms-2" type="button" title="Delete" *ngIf="postDetailsForm.get('id')?.value" (click)="confirmDelete.show()"><i class="fa fa-trash"></i></button>
     </div>
     <div class="d-flex align-items-center w-100 flex-grow-1 flex-column position-relative">
         <div class="w-100 h-100 posistion-absolute overflow-y-auto">
             <div class="row d-flex h-100 g-3">
                 <div class="col-md-6 col-lg-7 py-3 position-relative min-h-200-px">
                     <div class="position-absolute w-100 overflow-hidden start-0 top-0 bg-light p-3 svg-container" (touchmove)="onTouch($event)">
-                        <svg version="2" xmlns="https://www.w3.org/2000/svg" svgProcessor class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [style.transform]="'scale(' + scaleFactor + ')'" (dataChanges)="updateValue($event)" (getSelected)="getSelected($event);centerActiveButton()" [postDataSet]="postDetailsForm.value"></svg>
+                        <!-- <svg version="2" xmlns="https://www.w3.org/2000/svg" svgProcessor class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [style.transform]="'scale(' + scaleFactor + ')'" (dataChanges)="updateValue($event)" (getSelected)="getSelected($event);centerActiveButton()" [postDataSet]="postDetailsForm.value"></svg> -->
+                        <svg version="2" xmlns="https://www.w3.org/2000/svg" class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [style.transform]="'scale(' + scaleFactor + ')'" (dataChanges)="updateValue($event)" (getSelected)="getSelected($event);centerActiveButton()" svgDraw [postDataSet]="postDetailsForm.value"></svg>
+                        <!-- <svg version="2" xmlns="https://www.w3.org/2000/svg" class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [style.transform]="'scale(' + scaleFactor + ')'" [svgDraw]="postDetailsForm.value" (dataChanges)="updateValue($event)" (getSelected)="getSelected($event);centerActiveButton()"></svg> -->
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-5 py-3 d-flex flex-column">
@@ -75,27 +75,27 @@
                                                 </div>
                                             </div>
                                             <div class="col-4 d-flex" [class.d-none]="!getActiveControl(i,'control')">
-                                                <button class="btn btn-sm btn-danger ms-auto" (click)="removeData(i)"><i class="fa fa-trash"></i></button>
+                                                <button class="btn btn-sm btn-danger ms-auto" type="button" (click)="removeData(i)"><i class="fa fa-trash"></i></button>
                                             </div>
                                             <div class="form-group col-12 col-md-6 offset-0 offset-md-3" [class.d-none]="!getActiveControl(i,'position')">
                                                 <div class="row g-3">
                                                     <div class="col-6">
-                                                        <button class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100" (click)="i>0&&moveDown(i)" [class.disabled]="i==0">
+                                                        <button class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100" type="button" (click)="i>0&&moveDown(i)" [class.disabled]="i==0">
                                                             <i class="fa fa-x-layer-backward fa-2x me-2"></i> Backward
                                                         </button>
                                                     </div>
                                                     <div class="col-6">
-                                                        <button class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100" (click)="i<dataArray.controls.length-1&&moveUp(i)" [class.disabled]="i==dataArray.controls.length-1">
+                                                        <button class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100" type="button" (click)="i<dataArray.controls.length-1&&moveUp(i)" [class.disabled]="i==dataArray.controls.length-1">
                                                             <i class="fa fa-x-layer-forward fa-2x me-2"></i> Forward
                                                         </button>
                                                     </div>
                                                     <div class="col-6">
-                                                        <button class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100" (click)="i>0&&moveToBack(i)" [class.disabled]="i==0">
+                                                        <button class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100" type="button" (click)="i>0&&moveToBack(i)" [class.disabled]="i==0">
                                                             <i class="fa fa-x-back fa-2x me-2"></i> To Back
                                                         </button>
                                                     </div>
                                                     <div class="col-6">
-                                                        <button class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100" (click)="i<dataArray.controls.length-1&&moveToTop(i)" [class.disabled]="i==dataArray.controls.length-1">
+                                                        <button class="btn btn-flat d-flex align-items-center text-decoration-none text-dark d-block rounded-2 border-dark border-1 border p-2 w-100" type="button" (click)="i<dataArray.controls.length-1&&moveToTop(i)" [class.disabled]="i==dataArray.controls.length-1">
                                                             <i class="fa fa-x-front fa-2x me-2"></i> To Top
                                                         </button>
                                                     </div>
@@ -353,7 +353,7 @@
                                                     <div *ngSwitchCase="'select'" class="form-group col-12" [class.d-none]="!getActiveControl(i,'edit')">
                                                         <label for="text" class="form-label">Input Text</label>
                                                         <select id="type" class="form-select" formControlName="text" *ngIf="item.get('text')?.get('controlName')">
-                                                            <option value="Sample Text" disabled selected>-- Select Option --</option>
+                                                            <option [value]="item.get('title')?.value" disabled selected>{{item.get('title')?.value}}</option>
                                                             <option *ngFor="let option of apiData[item.get('text')?.get('controlName')?.value]" [value]="option.id">{{ item.get('text')?.get('lang')?.value=='en'?option.name:option.gu_name }}</option>
                                                         </select>
                                                     </div>

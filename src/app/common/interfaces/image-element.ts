@@ -169,6 +169,7 @@ export interface PostDetails {
         image?: ImageElement;
     }[];
     msg?: string;
+    apiData?: { [key: string]: any[] };
 }
 export interface AspectRatio {
     ratio: number;
