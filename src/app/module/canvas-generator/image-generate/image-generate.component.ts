@@ -193,7 +193,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   confirmDelete: any;
   apiData: { [key: string]: any[] } = {};
   selectData: { [key: string]: { title: string, control: FormControl, api: string, dependency: string, lang: string } } = {};
-
   positionShuffle: boolean = false;
   constructor(
     private fb: FormBuilder,

@@ -1,4 +1,4 @@
-import { Directive, Input, OnChanges, Output, SimpleChanges, EventEmitter, ElementRef, Renderer2, OnInit } from '@angular/core';
+import { Directive, Input, OnChanges, Output, SimpleChanges, EventEmitter, ElementRef, Renderer2, OnInit, AfterViewInit } from '@angular/core';
 import { isEqual } from 'lodash';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { AspectRatios, CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, TextElement } from '../interfaces/image-element';
@@ -21,11 +21,13 @@ interface Data {
 @Directive({
   selector: '[svgDraw]'
 })
-export class SvgResponseDirective implements OnChanges, OnInit {
+export class SvgResponseDirective implements OnChanges, AfterViewInit {
   @Input('svgDraw') formGroupValue: any;
   private postDataSetSubject = new Subject<PostDetails>();
   private destroy$ = new Subject<void>();
+  private postData!: PostDetails;
   @Input() set postDataSet(value: PostDetails) {
+    this.postData = value;
     this.postDataSetSubject.next(value);
   }
   postDataSet$ = this.postDataSetSubject.asObservable();
@@ -53,50 +55,53 @@ export class SvgResponseDirective implements OnChanges, OnInit {
     this.apiData = {};
     this.subscription = new Subscription();
   }
-  ngOnInit(): void {
-    let f = true;
+  ngAfterViewInit(): void {
     this.postDataSet$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(async (value: PostDetails) => {
-      const currentValue: Partial<PostDetails> = value;
-      this.newFormGroupValue = currentValue;
-      const previousValue: Partial<PostDetails> = this.previousFormGroupValue;
-      const differences = this.findDifferences(previousValue, currentValue);
-      const { id, deleted, h, w, title, backgroundurl, data, boxed, apiData } = differences;
-      this.formGroupValueChanges.next(differences);
-      if (apiData) {
-        this.apiData = apiData.current;
-        await this.updateElements(currentValue.data || []);
-      }
-      if (backgroundurl && backgroundurl['current']) {
-        await this.updateBackGround(backgroundurl['current']);
-      }
+      this.drawSVG(value)
+    })
+    this.loadOnly && this.drawSVG(this.postData)
+  }
+  private async drawSVG(value: PostDetails) {
+    const currentValue: Partial<PostDetails> = value;
+    this.newFormGroupValue = currentValue;
+    const previousValue: Partial<PostDetails> = this.previousFormGroupValue;
+    const differences = this.findDifferences(previousValue, currentValue);
+    const { id, deleted, h, w, title, backgroundurl, data, boxed, apiData } = differences;
+    this.formGroupValueChanges.next(differences);
+    if (apiData) {
+      this.apiData = apiData.current;
+      await this.updateElements(currentValue.data || []);
+    }
+    if (backgroundurl && backgroundurl['current']) {
+      await this.updateBackGround(backgroundurl['current']);
+    }
 
-      if (w || h) {
-        if (w) { this.width = w.current }
-        if (h) { this.height = h.current }
-        this.updateViewBox(Math.min(Math.max(this.width, 1024), 1920), Math.min(Math.max(this.height, 1024), 1920));
-      }
+    if (w || h) {
+      if (w) { this.width = w.current }
+      if (h) { this.height = h.current }
+      this.updateViewBox(Math.min(Math.max(this.width, 1024), 1920), Math.min(Math.max(this.height, 1024), 1920));
+    }
 
+    if (data) {
+      await this.updateElements(data.current);
+    }
+    this.previousFormGroupValue = { ...this.newFormGroupValue };
+    for (let key in this.controlList) {
+      let data = this.controlList[key];
+      this.renderer.setValue(data.control, data.title);
       if (data) {
-        await this.updateElements(data.current);
-      }
-      this.previousFormGroupValue = { ...this.newFormGroupValue };
-      for (let key in this.controlList) {
-        let data = this.controlList[key];
-        this.renderer.setValue(data.control, data.title);
-        if (data) {
-          const a = this.apiData[key]
-          for (let k in a) {
-            let d = a[k]
-            if (d.id == data.text) {
-              this.renderer.setValue(data.control, data['lang'] == 'en' ? d['name'] : data['lang'] == 'gu' ? d['gu_name'] : d['name']);
-              break;
-            }
+        const a = this.apiData[key]
+        for (let k in a) {
+          let d = a[k]
+          if (d.id == data.text) {
+            this.renderer.setValue(data.control, data['lang'] == 'en' ? d['name'] : data['lang'] == 'gu' ? d['gu_name'] : d['name']);
+            break;
           }
         }
       }
-    })
+    }
   }
   async ngOnChanges(changes: SimpleChanges): Promise<void> {
     if (changes['formGroupValue']) {
@@ -365,7 +370,7 @@ export class SvgResponseDirective implements OnChanges, OnInit {
 
       if (element !== null) {
         // Set common attributes for all shapes
-        const id = 'image-pattern-' + i;
+        const id = Math.random().toString(36).substring(7);
         this.renderer.setAttribute(element, 'fill', 'url(#' + id + ')');
         this.renderer.setStyle(element, 'cursor', 'grab');
         this.renderer.setStyle(element, 'filter', 'url(#shadow)');
