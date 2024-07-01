@@ -238,7 +238,7 @@ export class SvgProcessorDirective implements OnInit, AfterViewInit {
 
       if (element !== null) {
         // Set common attributes for all shapes
-        const id = 'image-pattern-' + i;
+        const id = Math.random().toString(36).substring(7);
         this.renderer.setAttribute(element, 'fill', 'url(#' + id + ')');
         this.renderer.setStyle(element, 'cursor', 'grab');
         this.renderer.setStyle(element, 'filter', 'url(#shadow)');
