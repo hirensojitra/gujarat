@@ -58,11 +58,10 @@ export class SvgResponseDirective implements OnChanges, OnInit {
     this.postDataSet$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(async (value: PostDetails) => {
-      const currentValue = value;
+      const currentValue: Partial<PostDetails> = value;
       this.newFormGroupValue = currentValue;
       const previousValue: Partial<PostDetails> = this.previousFormGroupValue;
       const differences = this.findDifferences(previousValue, currentValue);
-      console.log(differences)
       const { id, deleted, h, w, title, backgroundurl, data, boxed, apiData } = differences;
       this.formGroupValueChanges.next(differences);
       if (apiData) {
@@ -74,11 +73,9 @@ export class SvgResponseDirective implements OnChanges, OnInit {
       }
 
       if (w || h) {
-        const width = w.current || previousValue['w'];
-        const height = h.current || previousValue['h'];
-        this.height = height;
-        this.width = width;
-        w && h && this.updateViewBox(Math.min(Math.max(width, 1024), 1920), Math.min(Math.max(height, 1024), 1920));
+        if (w) { this.width = w.current }
+        if (h) { this.height = h.current }
+        this.updateViewBox(Math.min(Math.max(this.width, 1024), 1920), Math.min(Math.max(this.height, 1024), 1920));
       }
 
       if (data) {

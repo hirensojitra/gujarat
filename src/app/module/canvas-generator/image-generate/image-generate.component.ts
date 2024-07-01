@@ -7,6 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PostDetailService } from 'src/app/common/services/post-detail.service';
 import { FontService } from 'src/app/common/services/fonts.service';
 import { HttpClient } from '@angular/common/http';
+import { ToastService } from 'src/app/common/services/toast.service';
 declare const bootstrap: any;
 
 interface Data {
@@ -201,7 +202,8 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     private PS: PostDetailService,
     private fontService: FontService,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private toastService: ToastService
   ) {
     this.route.queryParams.subscribe(params => {
       this.imgParam = params['img'];
@@ -367,10 +369,39 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     this.selectedElement = this.dataArray.length;
   }
   removeData(index: number) {
-    this.dataArray.removeAt(index);
-    this.postDetails = this.postDetailsForm?.value;
-    this.rebuild(this.postDetails.data);
+    const d = this.dataArray.at(index);
+    const cn = d.get('text')?.get('controlName')?.value;
+    let canDelete: string[] = [];
+    if (cn) {
+      canDelete = this.checkDependency(cn, index);
+    }
+    if (!canDelete.length) {
+      this.dataArray.removeAt(index);
+      this.postDetails = this.postDetailsForm?.value;
+      this.rebuild(this.postDetails.data);
+      this.toastService.show(d.get('title')?.value + " is deleted successfully.", { class: 'bg-success' });
+    } else {
+      this.toastService.show(canDelete.join(', ') + (canDelete.length > 1 ? " are" : ' is') + " depend on " + d.get('title')?.value + ".", { title: d.get('title')?.value + " can't be deleted.", class: 'bg-danger' });
+    }
   }
+  private checkDependency(controlName: string, index: number): string[] {
+
+    const hasDependency: string[] = [];
+    this.dataArray.controls.some((control, i) => {
+      if (i !== index) {
+        const cn = control.get('text')?.get('dependency')?.value;
+
+        if (cn === controlName) {
+          hasDependency.push(control.get('title')?.value)
+        }
+        return cn === controlName;
+      }
+      return false;
+    });
+
+    return hasDependency;
+  }
+
   rectData = {
     title: "Rect",
     editable: false,
