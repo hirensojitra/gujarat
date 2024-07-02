@@ -46,6 +46,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   isExpanded: boolean = false;
   selectedElement: number | null = null;
   colorSet: string[] = [];
+  activeControlIndex!: number;
   controlSet: ShapeControl[][] = [];
   controlValues: ShapeControls = {
     rect: [
@@ -375,9 +376,12 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       canDelete = this.checkDependency(cn, index);
     }
     if (!canDelete.length) {
+      this.apiData[cn] && delete this.apiData[cn];
       this.dataArray.removeAt(index);
       this.postDetails = this.postDetailsForm?.value;
+      this.positionShuffle = true;
       this.rebuild(this.postDetails.data);
+      this.positionShuffle = false;
       this.toastService.show(d.get('title')?.value + " is deleted successfully.", { class: 'bg-success' });
     } else {
       this.toastService.show(canDelete.join(', ') + (canDelete.length > 1 ? " are" : ' is') + " depend on " + d.get('title')?.value + ".", { title: d.get('title')?.value + " can't be deleted.", class: 'bg-danger' });
@@ -694,6 +698,29 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       }
     });
   }
+  async syncData(control: AbstractControl | null) {
+    if (!(control instanceof FormGroup)) {
+      console.error('Invalid form group');
+      return;
+    }
+
+    const dependency = control.get('dependency')?.value;
+    const cn = control.get('controlName')?.value;
+    let api = control.get('api')?.value;
+
+    if (cn && api) {
+      api = api.endsWith('/') ? api : `${api}/`;
+      if (dependency) {
+        const m = this.selectData[dependency]?.control?.value;
+        if (m) {
+          api += m;
+        }
+      }
+      await this.fetchDataFromAPI(api, cn);
+    }
+  }
+
+
   getControlByKey(key: string) {
     return this.selectData[key];
   }
@@ -826,6 +853,13 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
   setActiveControl(rectIndex: number, controlIndex: number) {
     this.controlSet[rectIndex].forEach((control, index) => {
       control.active = index === controlIndex;
+    });
+    this.controlSet.forEach((controls, i) => {
+      controls.forEach((control, index) => {
+        if (control.active) {
+          this.activeControlIndex = index;
+        }
+      });
     });
   }
   getActiveControl(rectIndex: number, controlId: string): boolean {
@@ -995,14 +1029,21 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     });
   }
   centerActiveButton() {
-    setTimeout(() => {
-      const btnGroup: HTMLElement = this.controlGroup.nativeElement;
-      const activeButton: HTMLElement | null = btnGroup.querySelector('.btn.active');
-      if (activeButton) {
-        const scrollLeft: number = activeButton.offsetLeft;
-        btnGroup.scrollLeft = scrollLeft;
-      }
-    }, 500);
+    // setTimeout(() => {
+    //   const container = HTMLElement = this.controlGroup.nativeElement;
+    //   const items = container.children;
+    //   if (this.activeControlIndex >= 0 && this.activeControlIndex < items.length) {
+    //     const activeItem = items[this.activeControlIndex] as HTMLElement;
+    //     const containerWidth = container.offsetWidth;
+    //     const itemWidth = activeItem.offsetWidth;
+    //     const offsetLeft = activeItem.offsetLeft;
+    //     const scrollPosition = offsetLeft - (containerWidth / 2) + (itemWidth / 2);
+    //     container.scroll({
+    //       left: scrollPosition,
+    //       behavior: 'smooth'
+    //     });
+    //   }
+    // }, 1500);
   }
   scrollToCenter(event: MouseEvent) {
     const target = event.currentTarget as HTMLElement;
