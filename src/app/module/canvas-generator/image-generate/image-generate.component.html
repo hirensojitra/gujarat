@@ -42,7 +42,7 @@
                                     <label for="w" class="form-label">Width</label>
                                     <input type="text" id="w" class="form-control" formControlName="w">
                                 </div>
-                                <div class="form-group col-12">
+                                <div class="form-group col-12" [class.d-none]="selectedElement!==-1">
                                     <label for="backgroundurl" class="form-label">Background URL</label>
                                     <input type="text" id="backgroundurl" class="form-control" formControlName="backgroundurl">
                                 </div>
@@ -54,12 +54,14 @@
                                                 <div class="position-relative">
                                                     <div class="btn-group btn-group-toggle w-100 rounded-0 control-group" #controlGroup scrollCenter [activeIndexSet]="activeControlIndex" [selectedIndexSet]="selectedElement||-1">
                                                         <ng-container *ngFor="let control of controlSet[i]; let j = index">
-                                                            <span class="btn btn-lg rounded-4 mx-1 p-0 fw-bold btn-outline-dark" [ngClass]="{
-                                                                'border-white': !control.active,
-                                                                'pe-none': control.active
-                                                              }">
+                                                            <span class="p-0 fw-bold min-w-20-p" [ngClass]="{'pe-none': control.active}">
                                                                 <input type="radio" class="btn-check" [id]="'control-' + i + '-' + j" [value]="control.id" [checked]="control.active" (change)="setActiveControl(i, j);">
-                                                                <label class="d-flex flex-column align-items-center justify-content-center px-2 py-1 min-w-100-px link" [for]="'control-' + i + '-' + j" [title]="control.id" (click)="scrollToCenter($event)"><i [ngClass]="'mt-1 fa '+control.icon"></i>
+                                                                <label class="d-flex flex-column align-items-center justify-content-center px-2 py-1 link" [for]="'control-' + i + '-' + j" [title]="control.id" (click)="scrollToCenter($event)">
+                                                                    <i [class]="'d-flex align-items-center justify-content-center rounded-2 mt-1 w-25-px h-25-px fa ' + control.icon" [ngClass]="{
+                                                                        'bg-secondary': control.active,
+                                                                        'text-light': control.active,
+                                                                        }"></i>
+
                                                                     <small class="d-block text-nowrap mt-1">{{control.title}}</small></label>
                                                             </span>
                                                         </ng-container>
@@ -114,74 +116,83 @@
                                                         <label for="x" class="form-label">X</label>
                                                         <input type="text" id="x" class="form-control" formControlName="x">
                                                     </div>
-                                                    <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'position')">
+                                                    <div class="form-group col-6">
                                                         <label for="y" class="form-label">Y</label>
                                                         <input type="text" id="y" class="form-control" formControlName="y">
                                                     </div>
                                                 </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'dimension')">
-                                                    <label for="width" class="form-label">Width</label>
-                                                    <input type="text" id="width" class="form-control" formControlName="width">
+                                                <div class="row g-3" [class.d-none]="!getActiveControl(i,'dimension')">
+                                                    <div class="form-group col-6">
+                                                        <label for="width" class="form-label">Width</label>
+                                                        <input type="text" id="width" class="form-control" formControlName="width">
+                                                    </div>
+                                                    <div class="form-group col-6">
+                                                        <label for="height" class="form-label">Height</label>
+                                                        <input type="text" id="height" class="form-control" formControlName="height">
+                                                    </div>
                                                 </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'dimension')">
-                                                    <label for="height" class="form-label">Height</label>
-                                                    <input type="text" id="height" class="form-control" formControlName="height">
-                                                </div>
-                                                <div class="col-12" [class.d-none]="!getActiveControl(i,'fill')">
-                                                    <div class="form-group">
+                                                <div class="row g-3" [class.d-none]="!getActiveControl(i,'fill')">
+                                                    <div class="col-12 form-group">
                                                         <label class="form-label d-block">Fill</label>
                                                         <color-picker [colorSet]="colorSet" [getActiveControl]="getActiveControl" formControlName="fill"></color-picker>
                                                     </div>
+                                                    <div class="form-group col-12">
+                                                        <label [for]="'fillOpacity'+i" class="form-label">Opacity</label>
+                                                        <input type="range" [id]="'fillOpacity'+i" class="form-range" min="0" max="1" step="0.01" formControlName="fillOpacity">
+                                                    </div>
                                                 </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'fill')">
-                                                    <label [for]="'fillOpacity'+i" class="form-label">Opacity</label>
-                                                    <input type="range" [id]="'fillOpacity'+i" class="form-range" min="0" max="1" step="0.01" formControlName="fillOpacity">
+                                                <div class="row g-3" [class.d-none]="!getActiveControl(i,'opacity')">
+                                                    <div class="form-group col-12">
+                                                        <label [for]="'opacity'+i" class="form-label">Opacity</label>
+                                                        <input type="range" [id]="'opacity'+i" class="form-range" min="0" max="1" step="0.01" formControlName="opacity">
+                                                    </div>
                                                 </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'opacity')">
-                                                    <label [for]="'opacity'+i" class="form-label">Opacity</label>
-                                                    <input type="range" [id]="'opacity'+i" class="form-range" min="0" max="1" step="0.01" formControlName="opacity">
+                                                <div class="row g-3" [class.d-none]="!getActiveControl(i,'origin')">
+                                                    <div class="form-group col-12">
+                                                        <label for="originX" class="form-label">Origin X</label>
+                                                        <input type="text" id="originX" class="form-control" formControlName="originX">
+                                                    </div>
+                                                    <div class="form-group col-12">
+                                                        <label for="originY" class="form-label">Origin Y</label>
+                                                        <input type="text" id="originY" class="form-control" formControlName="originY">
+                                                    </div>
                                                 </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'origin')">
-                                                    <label for="originX" class="form-label">Origin X</label>
-                                                    <input type="text" id="originX" class="form-control" formControlName="originX">
-                                                </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'origin')">
-                                                    <label for="originY" class="form-label">Origin Y</label>
-                                                    <input type="text" id="originY" class="form-control" formControlName="originY">
-                                                </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'rotate')">
-                                                    <label [for]="'rotate'+i" class="form-label">Rotate</label>
-                                                    <input type="range" [id]="'rotate'+i" class="form-range" min="0" max="360" step="1" formControlName="rotate">
+                                                <div class="row g-3" [class.d-none]="!getActiveControl(i,'rotate')">
+                                                    <div class="form-group col-6">
+                                                        <label [for]="'rotate'+i" class="form-label">Rotate</label>
+                                                        <input type="range" [id]="'rotate'+i" class="form-range" min="0" max="360" step="1" formControlName="rotate">
+                                                    </div>
                                                 </div>
                                                 <!-- Border Properties -->
-                                                <div class="form-group col-12" [class.d-none]="!getActiveControl(i,'border')">
-                                                    <label [for]="'stroke'+i" class="form-label">Stroke</label>
-                                                    <color-picker [colorSet]="colorSet" [getActiveControl]="getActiveControl" formControlName="stroke"></color-picker>
-                                                </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'border')">
-                                                    <label [for]="'strokeWidth'+i" class="form-label">Stroke Width</label>
-                                                    <input type="text" [id]="'strokeWidth'+i" class="form-control" formControlName="strokeWidth">
-                                                </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'border')">
-                                                    <label [for]="'rx-'+i" class="form-label">RX({{item.get('rect')?.get('rx')?.value}})</label>
-                                                    <input type="range" [id]="'rx-'+i" class="form-range" min="0" [max]="item.get('rect')?.get('width')?.value" step="0.01" formControlName="rx">
-                                                </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'border')">
-                                                    <label [for]="'ry-'+i" class="form-label">RY</label>
-                                                    <input type="range" [id]="'ry-'+i" class="form-range" min="0" [max]="item.get('rect')?.get('height')?.value" step="0.01" formControlName="ry">
-                                                </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'border')">
-                                                    <label [for]="'strokeOpacity'+i" class="form-label">Opacity</label>
-                                                    <input type="range" [id]="'strokeOpacity'+i" class="form-range" min="0" max="1" step="0.01" formControlName="strokeOpacity">
-                                                </div>
-                                                <div class="form-group col-6" [class.d-none]="!getActiveControl(i,'border')">
-                                                    <label [for]="'strokeAlignment'+i" class="form-label">Stroke Width</label>
-                                                    <select [id]="'strokeAlignment'+i" class="form-select" formControlName="strokeAlignment">
-                                                        <option value="inside">Inside</option>
-                                                        <option value="outside">Outside</option>
-                                                        <option value="center">Center</option>
-                                                    </select>
-
+                                                <div class="row g-3" [class.d-none]="!getActiveControl(i,'border')">
+                                                    <div class="form-group col-12">
+                                                        <label [for]="'stroke'+i" class="form-label">Stroke</label>
+                                                        <color-picker [colorSet]="colorSet" [getActiveControl]="getActiveControl" formControlName="stroke"></color-picker>
+                                                    </div>
+                                                    <div class="form-group col-6">
+                                                        <label [for]="'strokeWidth'+i" class="form-label">Stroke Width</label>
+                                                        <input type="text" [id]="'strokeWidth'+i" class="form-control" formControlName="strokeWidth">
+                                                    </div>
+                                                    <div class="form-group col-6">
+                                                        <label [for]="'rx-'+i" class="form-label">RX({{item.get('rect')?.get('rx')?.value}})</label>
+                                                        <input type="range" [id]="'rx-'+i" class="form-range" min="0" [max]="item.get('rect')?.get('width')?.value" step="0.01" formControlName="rx">
+                                                    </div>
+                                                    <div class="form-group col-6">
+                                                        <label [for]="'ry-'+i" class="form-label">RY</label>
+                                                        <input type="range" [id]="'ry-'+i" class="form-range" min="0" [max]="item.get('rect')?.get('height')?.value" step="0.01" formControlName="ry">
+                                                    </div>
+                                                    <div class="form-group col-6">
+                                                        <label [for]="'strokeOpacity'+i" class="form-label">Opacity</label>
+                                                        <input type="range" [id]="'strokeOpacity'+i" class="form-range" min="0" max="1" step="0.01" formControlName="strokeOpacity">
+                                                    </div>
+                                                    <div class="form-group col-6">
+                                                        <label [for]="'strokeAlignment'+i" class="form-label">Stroke Width</label>
+                                                        <select [id]="'strokeAlignment'+i" class="form-select" formControlName="strokeAlignment">
+                                                            <option value="inside">Inside</option>
+                                                            <option value="outside">Outside</option>
+                                                            <option value="center">Center</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </ng-container>
 
