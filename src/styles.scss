@@ -69,6 +69,12 @@ input[type=number] {
     overflow-y: hidden !important;
 }
 
+@for $i from 0 through 100 {
+    .z-#{$i} {
+        z-index: #{$i} !important;
+    }
+}
+
 @for $i from 5 through 100 {
     .min-vh-#{$i} {
         min-height: #{$i}vh !important;
@@ -102,6 +108,10 @@ input[type=number] {
 }
 
 @for $i from 1 through 100 {
+    .z-index-#{$i} {
+        z-index: #{$i} !important;
+    }
+
     .max-h-#{$i}-vh {
         max-height: #{$i}vh !important;
     }
@@ -195,7 +205,9 @@ $fab-background-color-2: inherit;
     align-items: end;
     padding-bottom: 30px;
     padding-right: 30px;
-
+    .sub-button{
+        bottom: -60px;
+    }
     &.expanded {
         height: 100%;
         width: 100%;
@@ -207,11 +219,12 @@ $fab-background-color-2: inherit;
 
         @for $i from 2 through 8 {
             .sub-button:nth-child(#{$i}) {
-                transform: translateY(-(60px * ($i - 1)) - 60px);
+                transform: translateY(-(60px * ($i - 1)));
             }
         }
 
         .sub-button {
+            bottom: 0;
             a {
                 &:hover {
                     background: #408253;
@@ -314,5 +327,50 @@ $fab-background-color-2: inherit;
             font-size: 70%;
             white-space: nowrap;
         }
+    }
+}
+.cdk-drag-placeholder {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    border: 2px solid #4E5DC6 !important;
+    background: #F5F5F5;
+    border-radius: 0 !important;
+    * {
+        opacity: 0;
+    }
+}
+
+.cdk-drag-preview {
+    background: #FFF;
+
+    .accordion-button {
+        padding: 1rem 1.25rem !important
+    }
+
+    &.cdk-drag {
+        &.list-group-item {
+            overflow: hidden;
+            padding: 0.7rem 1.25rem !important;
+        }
+    }
+
+    .accordion-body {
+        padding: 0 1.25rem 1rem !important;
+    }
+}
+
+.cdk-drag-animating {
+    transition: transform 300ms ease;
+    background: #F5F5F5;
+}
+
+.cdk-drop-list-dragging {
+    .cdk-drag {
+        transition: transform 300ms ease;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        order: 1px dashed #4E5DC6 !important;
     }
 }

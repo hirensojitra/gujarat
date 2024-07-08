@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CircleProperties, EllipseProperties, ImageElement, LineProperties, PostDetails, RectProperties, SvgProperties, TextElement } from 'src/app/common/interfaces/image-element';
 import { ColorService } from 'src/app/common/services/color.service';
@@ -8,6 +8,7 @@ import { PostDetailService } from 'src/app/common/services/post-detail.service';
 import { FontService } from 'src/app/common/services/fonts.service';
 import { HttpClient } from '@angular/common/http';
 import { ToastService } from 'src/app/common/services/toast.service';
+import { animate, style, transition, trigger } from '@angular/animations';
 declare const bootstrap: any;
 
 interface Data {
@@ -39,7 +40,18 @@ interface ShapeControls {
 @Component({
   selector: 'app-image-generate',
   templateUrl: './image-generate.component.html',
-  styleUrls: ['./image-generate.component.scss']
+  styleUrls: ['./image-generate.component.scss'],
+  animations: [
+    trigger('itemAnim', [
+      transition('void => *', [
+        style({ opacity: 0, transform: 'scale(0.95)' }),
+        animate('200ms', style({ opacity: 1, transform: 'scale(1)' }))
+      ]),
+      transition('* => void', [
+        animate('200ms', style({ opacity: 0, transform: 'scale(0.95)' }))
+      ])
+    ])
+  ]
 })
 export class ImageGenerateComponent implements OnInit, AfterViewInit {
   @ViewChild('controlGroup') controlGroup!: ElementRef;
@@ -280,6 +292,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     } else {
       console.error(`Form array 'data' not found.`);
     }
+    this.postDetails.data = value?.value;
   }
   getSelected(d: { index: number }) {
     this.selectedElement = d.index;
@@ -318,6 +331,9 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     this.postDetailsForm?.get('backgroundurl')?.valueChanges.subscribe(async (v) => {
       this.postDetails.backgroundurl = v;
       await this.getColors(v, 20);
+    });
+    this.postDetailsForm.valueChanges.subscribe(async (v) => {
+      this.postDetails = v;
     });
     this.getColors(this.postDetails.backgroundurl, 10);
     this.postDetails.data.forEach((d) => {
@@ -843,12 +859,11 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       })
     });
   }
-  drop(event: CdkDragDrop<string[]>) {
-    const dataArray = this.postDetailsForm?.get('data')?.value; // Retrieve the array of data
-    if (dataArray) {
-      moveItemInArray(dataArray, event.previousIndex, event.currentIndex);
-    }
-    this.rebuild(dataArray)
+  async drop(event: CdkDragDrop<any[]>) {
+    moveItemInArray(this.postDetails.data, event.previousIndex, event.currentIndex);
+    this.positionShuffle = true;
+    await this.rebuild(this.postDetails.data);
+    this.positionShuffle = false;
   }
   setActiveControl(rectIndex: number, controlIndex: number) {
     this.controlSet[rectIndex].forEach((control, index) => {
@@ -1027,23 +1042,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       await this.fetchDataFromAPI(dependentApi, key);
       data.control.setValue(data.title, { emitEvent: true })
     });
-  }
-  centerActiveButton() {
-    // setTimeout(() => {
-    //   const container = HTMLElement = this.controlGroup.nativeElement;
-    //   const items = container.children;
-    //   if (this.activeControlIndex >= 0 && this.activeControlIndex < items.length) {
-    //     const activeItem = items[this.activeControlIndex] as HTMLElement;
-    //     const containerWidth = container.offsetWidth;
-    //     const itemWidth = activeItem.offsetWidth;
-    //     const offsetLeft = activeItem.offsetLeft;
-    //     const scrollPosition = offsetLeft - (containerWidth / 2) + (itemWidth / 2);
-    //     container.scroll({
-    //       left: scrollPosition,
-    //       behavior: 'smooth'
-    //     });
-    //   }
-    // }, 1500);
   }
   scrollToCenter(event: MouseEvent) {
     const target = event.currentTarget as HTMLElement;

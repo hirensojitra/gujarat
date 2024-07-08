@@ -1,29 +1,31 @@
 <form class="container-fluid p-0 h-100 d-flex flex-column" [formGroup]="postDetailsForm" *ngIf="postDetailsForm" (ngSubmit)="onSubmit()">
     <div class="d-flex align-items-center w-100 p-3 shadow border-bottom">
-        <div class="form-group">
+        <div class="form-group d-flex">
             <div class="form-label d-none">Name</div>
             <label for="title" class="me-2 h4 m-0"><i class="fa fa-edit"></i></label>
-            <input type="text" id="title" class="h4 m-0 border-0 border-secondary" formControlName="title" placeholder="Enter Image Name">
+            <input type="text" id="title" class="h4 m-0 border-0 border-secondary w-auto max-w-200-px" formControlName="title" placeholder="Enter Image Name">
         </div>
-        <button class="btn btn-success ms-auto" title="Save"><i class="fa fa-save"></i></button>
-        <button class="btn btn-success ms-2" *ngIf="postDetailsForm.get('id')?.value" type="button" (click)="onSubmit(true)" title="Copy"><i class="fa fa-copy"></i></button>
-        <button class="btn btn-danger ms-2" type="button" title="Cancel"><i class="fa fa-close"></i></button>
-        <button class="btn btn-danger ms-2" type="button" title="Delete" *ngIf="postDetailsForm.get('id')?.value" (click)="confirmDelete.show()"><i class="fa fa-trash"></i></button>
+        <div class="ms-auto text-nowrap w-100 d-flex">
+            <button class="btn btn-success ms-2" title="Save"><i class="fa fa-save"></i></button>
+            <button class="btn btn-success ms-2" *ngIf="postDetailsForm.get('id')?.value" type="button" (click)="onSubmit(true)" title="Copy"><i class="fa fa-copy"></i></button>
+            <button class="btn btn-danger ms-2" type="button" title="Cancel"><i class="fa fa-close"></i></button>
+            <button class="btn btn-danger ms-2" type="button" title="Delete" *ngIf="postDetailsForm.get('id')?.value" (click)="confirmDelete.show()"><i class="fa fa-trash"></i></button>
+        </div>
     </div>
     <div class="d-flex align-items-center w-100 flex-grow-1 flex-column position-relative">
         <div class="w-100 h-100 posistion-absolute overflow-y-auto">
-            <div class="row d-flex h-100 g-3">
-                <div class="col-md-6 col-lg-7 py-3 position-relative min-h-200-px">
+            <div class="row d-flex h-100 g-0 g-md-3">
+                <div class="col-md-6 col-lg-7 py-3 position-relative min-h-180-px">
                     <div class="position-absolute w-100 overflow-hidden start-0 top-0 bg-light p-3 svg-container" (touchmove)="onTouch($event)">
                         <!-- <svg version="2" xmlns="https://www.w3.org/2000/svg" svgProcessor class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [style.transform]="'scale(' + scaleFactor + ')'" (dataChanges)="updateValue($event)" (getSelected)="getSelected($event);centerActiveButton()" [postDataSet]="postDetailsForm.value"></svg> -->
-                        <svg version="2" xmlns="https://www.w3.org/2000/svg" class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [style.transform]="'scale(' + scaleFactor + ')'" (dataChanges)="updateValue($event)" (getSelected)="getSelected($event);centerActiveButton()" svgDraw [postDataSet]="postDetailsForm.value"></svg>
+                        <svg version="2" xmlns="https://www.w3.org/2000/svg" class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [style.transform]="'scale(' + scaleFactor + ')'" (dataChanges)="updateValue($event)" (getSelected)="getSelected($event);" svgDraw [postDataSet]="postDetailsForm.value"></svg>
                         <!-- <svg version="2" xmlns="https://www.w3.org/2000/svg" class="svg-content max-w-100-p max-h-100-p img-fluid mx-auto d-block" preserveAspectRatio="xMidYMid meet" [style.transform]="'scale(' + scaleFactor + ')'" [svgDraw]="postDetailsForm.value" (dataChanges)="updateValue($event)" (getSelected)="getSelected($event);centerActiveButton()"></svg> -->
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-5 py-3 d-flex flex-column">
-                    <div class="flex-grow-1 position-relative">
-                        <div class="position-absolute w-100 p-3 overflow-auto">
-                            <div class="row g-3">
+                <div class="col-md-6 col-lg-5 d-flex flex-column position-relative py-none py-md-3">
+                    <div class="flex-grow-1 position-relative mb-2">
+                        <div class="position-absolute w-100 px-3 overflow-auto h-100 py-none py-md-3">
+                            <div class="row g-3" [class.d-none]="selectedElement==postDetails.data.length">
                                 <input type="hidden" id="id" class="form-control" formControlName="id">
                                 <input type="hidden" id="deleted" class="form-control" formControlName="deleted">
                                 <div class="form-group col-12" [class.d-none]="selectedElement!==-1">
@@ -50,24 +52,6 @@
                                     <!-- Use ngFor to iterate over each element in the data form array -->
                                     <div *ngFor="let item of dataArray.controls; let i = index" class="row g-3" [class.d-none]="selectedElement!==i">
                                         <ng-container [formGroupName]="i">
-                                            <div class="col-12">
-                                                <div class="position-relative">
-                                                    <div class="btn-group btn-group-toggle w-100 rounded-0 control-group" #controlGroup scrollCenter [activeIndexSet]="activeControlIndex" [selectedIndexSet]="selectedElement||-1">
-                                                        <ng-container *ngFor="let control of controlSet[i]; let j = index">
-                                                            <span class="p-0 fw-bold min-w-20-p" [ngClass]="{'pe-none': control.active}">
-                                                                <input type="radio" class="btn-check" [id]="'control-' + i + '-' + j" [value]="control.id" [checked]="control.active" (change)="setActiveControl(i, j);">
-                                                                <label class="d-flex flex-column align-items-center justify-content-center px-2 py-1 link" [for]="'control-' + i + '-' + j" [title]="control.id" (click)="scrollToCenter($event)">
-                                                                    <i [class]="'d-flex align-items-center justify-content-center rounded-2 mt-1 w-25-px h-25-px fa ' + control.icon" [ngClass]="{
-                                                                        'bg-secondary': control.active,
-                                                                        'text-light': control.active,
-                                                                        }"></i>
-
-                                                                    <small class="d-block text-nowrap mt-1">{{control.title}}</small></label>
-                                                            </span>
-                                                        </ng-container>
-                                                    </div>
-                                                </div>
-                                            </div>
                                             <div class="form-group col-12" [class.d-none]="!getActiveControl(i,'control')">
                                                 <label class="form-label">Title</label>
                                                 <input type="text" class="form-control" formControlName="title">
@@ -271,14 +255,14 @@
                                                     <label for="ry" class="form-label">RY</label>
                                                     <input type="text" id="ry" class="form-control" formControlName="ry">
                                                 </div>
-                                                <div class="col-6">
+                                                <div class="col-12">
                                                     <div class="form-group">
                                                         <label class="form-label d-block">Fill</label>
                                                         <color-picker [colorSet]="colorSet" [getActiveControl]="getActiveControl" formControlName="fill"></color-picker>
                                                     </div>
                                                 </div>
 
-                                                <div class="form-group col-6">
+                                                <div class="form-group col-12">
                                                     <label [for]="'opacity'+i" class="form-label">Opacity</label>
                                                     <input type="range" [id]="'opacity'+i" class="form-range" min="0" max="1" step="0.01" formControlName="opacity">
                                                 </div>
@@ -290,9 +274,9 @@
                                                     <label for="originY" class="form-label">Origin Y</label>
                                                     <input type="text" id="originY" class="form-control" formControlName="originY">
                                                 </div>
-                                                <div class="form-group col-6">
-                                                    <label for="rotate" class="form-label">Rotation</label>
-                                                    <input type="text" id="rotate" class="form-control" formControlName="rotate">
+                                                <div class="form-group col-12">
+                                                    <label [for]="'rotate'+i" class="form-label">Rotation</label>
+                                                    <input type="range" [id]="'rotate'+i" class="form-range" min="0" max="360" step="0.5" formControlName="rotate">
                                                 </div>
                                             </ng-container>
                                             <ng-container formGroupName="line" *ngIf="item.get('line')">
@@ -490,15 +474,15 @@
                                                 </ng-container>
                                                 <ng-container formGroupName="textShadow">
                                                     <div [class.d-none]="!getActiveControl(i,'textShadow')">
-
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" value="" formControlName="enable" [id]="'text-shadow-'+i">
-                                                            <label class="form-check-label h5 m-0" [for]="'text-shadow-'+i">Text Shadow</label>
+                                                        <div class="col-12">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" value="" formControlName="enable" [id]="'text-shadow-'+i">
+                                                                <label class="form-check-label h6 m-0" [for]="'text-shadow-'+i">Text Shadow</label>
+                                                            </div>
                                                         </div>
                                                         <ng-container *ngIf="item.get('text')?.get('textShadow')?.get('enable')?.value">
-                                                            <div class="form-group col-6">
-                                                                <label for="shadowColor" class="form-label">Shadow
-                                                                    Color</label>
+                                                            <div class="form-group col-12 col-sm-6">
+                                                                <label for="shadowColor" class="form-label">Shadow Color</label>
                                                                 <div class="btn-group rounded-0 d-block" role="group" data-toggle="buttons">
                                                                     <ng-container *ngFor="let color of colorSet">
                                                                         <input type="radio" class="btn-check" [id]="'shadow-color-' + color+i" formControlName="color" [value]="color" autocomplete="off">
@@ -512,25 +496,20 @@
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div class="col-6 d-flex align-items-end">
+                                                            <div class="col-12 col-sm-6 d-flex align-items-end">
                                                                 <input type="text" class="form-control" [value]="item.get('text')?.get('textShadow')?.get('color')?.value" (input)="updateColor($event, item.get('text')?.get('textShadow')?.get('color'))">
                                                             </div>
                                                             <div class="form-group col-12">
-                                                                <label for="shadowBlur" class="form-label">Shadow
-                                                                    Blur</label>
+                                                                <label for="shadowBlur" class="form-label">Shadow Blur</label>
                                                                 <input type="range" class="form-range" [attr.min]="0" [attr.max]="item.get('text')?.get('fs')?.value" step="0.1" formControlName="blur">
 
                                                             </div>
                                                             <div class="form-group col-12">
-                                                                <label for="shadowOffsetX" class="form-label">Shadow
-                                                                    Offset
-                                                                    X</label>
+                                                                <label for="shadowOffsetX" class="form-label">Shadow Offset X</label>
                                                                 <input type="range" class="form-range" [attr.min]="-item.get('text')?.get('fs')?.value" [attr.max]="item.get('text')?.get('fs')?.value" step="0.1" formControlName="offsetX">
                                                             </div>
                                                             <div class="form-group col-12">
-                                                                <label for="shadowOffsetY" class="form-label">Shadow
-                                                                    Offset
-                                                                    Y</label>
+                                                                <label for="shadowOffsetY" class="form-label">Shadow Offset Y</label>
                                                                 <input type="range" class="form-range" [attr.min]="-item.get('text')?.get('fs')?.value" [attr.max]="item.get('text')?.get('fs')?.value" step="0.1" formControlName="offsetY">
                                                             </div>
                                                         </ng-container>
@@ -760,19 +739,51 @@
                                     </div>
                                 </div>
                             </div>
+                            <div cdkDropList [cdkDropListData]="postDetails.data" (cdkDropListDropped)="drop($event)" *ngIf="selectedElement==postDetails.data.length">
+                                <div *ngFor="let item of postDetails.data; let i = index" cdkDrag class="drag-item h-40-px pe-5 position-relative d-flex rounded-3 overflow-hidden">
+                                    <div cdkDragHandle class=" position-absolute h-100 w-40-px end-0 top-0 d-flex align-items-center justify-content-center bg-secondary text-white">
+                                        <i class="fa fa-arrows"></i>
+                                    </div>
+                                    <button *ngIf="item.title" class="btn btn-flat outline-0 min-h-100-p w-100 p-2 d-flex align-items-center" (click)="selectedElement=i">{{ item.title }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-item-center justify-content-stretch position-static w-100-p shadow start-0 bottom-0 p-2 bg-white">
+                        <button type="button" class="add-container min-w-40-px min-h-40-px rounded-circle btn btn-secondary p-0" (click)="toggleExpand($event)" *ngIf="selectedElement==postDetails.data.length">
+                            <i class="fa w-40-px h-40-px d-flex align-items-center justify-content-center" [class.fa-plus]="!isExpanded" [class.fa-close]="isExpanded"></i>
+                        </button>
+                        <button type="button" class="add-container min-w-40-px min-h-40-px rounded-0 border-0 btn btn-flat border-end p-0" *ngIf="selectedElement!==postDetails.data.length" (click)="selectedElement=postDetails.data.length">
+                            <i class="fa w-40-px h-40-px d-flex align-items-center justify-content-center fa-close"></i>
+                        </button>
+                        <div class="control-container flex-grow-1 px-3 overflow-auto">
+                            <div *ngFor="let item of dataArray.controls; let i = index" class="row g-3" [class.d-none]="selectedElement!==i">
+                                <div class="col-12">
+                                    <div class="position-relative">
+                                        <div class="btn-group btn-group-toggle w-100 rounded-0 control-group" #controlGroup scrollCenter [activeIndexSet]="activeControlIndex" [selectedIndexSet]="selectedElement||-1">
+                                            <ng-container *ngFor="let control of controlSet[i]; let j = index">
+                                                <span class="p-0 fw-bold min-w-80-px" [ngClass]="{'pe-none': control.active}">
+                                                    <input type="radio" class="btn-check" [id]="'control-' + i + '-' + j" [value]="control.id" [checked]="control.active" (change)="setActiveControl(i, j);">
+                                                    <label class="d-flex flex-column align-items-center justify-content-center px-2 py-1 link" [for]="'control-' + i + '-' + j" [title]="control.id" (click)="scrollToCenter($event)">
+                                                        <i [class]="'d-flex align-items-center justify-content-center rounded-2 mt-1 w-25-px h-25-px fa ' + control.icon" [ngClass]="{
+                                                        'bg-secondary': control.active,
+                                                        'text-light': control.active,
+                                                        }"></i>
+
+                                                        <small class="d-block text-nowrap mt-1">{{control.title}}</small></label>
+                                                </span>
+                                            </ng-container>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
     <div class="fab-container" [class.expanded]="isExpanded" (click)="toggleExpand($event)">
-        <div class="fab shadow btn btn-flat border-0" (click)="toggleExpand($event)">
-            <div class="fab-content">
-                <i class="fa" [class.fa-plus]="!isExpanded" [class.fa-close]="isExpanded"></i>
-            </div>
-        </div>
         <div class="sub-button">
             <a href="#" class="shadow" (click)="addData('rect');false;">
                 <i class="fa fa-square"></i><span class="shadow">Rect</span>
@@ -805,7 +816,6 @@
         </div>
     </div>
 </form>
-
 <div id="confirmDelete" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
