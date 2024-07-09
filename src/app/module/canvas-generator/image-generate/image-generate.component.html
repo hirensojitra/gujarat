@@ -5,7 +5,7 @@
             <label for="title" class="me-2 h4 m-0"><i class="fa fa-edit"></i></label>
             <input type="text" id="title" class="h4 m-0 border-0 border-secondary w-auto max-w-200-px" formControlName="title" placeholder="Enter Image Name">
         </div>
-        <div class="ms-auto text-nowrap w-100 d-flex">
+        <div class="ms-auto text-nowrap d-flex">
             <button class="btn btn-success ms-2" title="Save"><i class="fa fa-save"></i></button>
             <button class="btn btn-success ms-2" *ngIf="postDetailsForm.get('id')?.value" type="button" (click)="onSubmit(true)" title="Copy"><i class="fa fa-copy"></i></button>
             <button class="btn btn-danger ms-2" type="button" title="Cancel"><i class="fa fa-close"></i></button>
@@ -756,27 +756,25 @@
                         <button type="button" class="add-container min-w-40-px min-h-40-px rounded-0 border-0 btn btn-flat border-end p-0" *ngIf="selectedElement!==postDetails.data.length" (click)="selectedElement=postDetails.data.length">
                             <i class="fa w-40-px h-40-px d-flex align-items-center justify-content-center fa-close"></i>
                         </button>
-                        <div class="control-container flex-grow-1 px-3 overflow-auto">
-                            <div *ngFor="let item of dataArray.controls; let i = index" class="row g-3" [class.d-none]="selectedElement!==i">
-                                <div class="col-12">
-                                    <div class="position-relative">
-                                        <div class="btn-group btn-group-toggle w-100 rounded-0 control-group" #controlGroup scrollCenter [activeIndexSet]="activeControlIndex" [selectedIndexSet]="selectedElement||-1">
-                                            <ng-container *ngFor="let control of controlSet[i]; let j = index">
-                                                <span class="p-0 fw-bold min-w-80-px" [ngClass]="{'pe-none': control.active}">
-                                                    <input type="radio" class="btn-check" [id]="'control-' + i + '-' + j" [value]="control.id" [checked]="control.active" (change)="setActiveControl(i, j);">
-                                                    <label class="d-flex flex-column align-items-center justify-content-center px-2 py-1 link" [for]="'control-' + i + '-' + j" [title]="control.id" (click)="scrollToCenter($event)">
-                                                        <i [class]="'d-flex align-items-center justify-content-center rounded-2 mt-1 w-25-px h-25-px fa ' + control.icon" [ngClass]="{
-                                                        'bg-secondary': control.active,
-                                                        'text-light': control.active,
-                                                        }"></i>
+                        <div class="control-container flex-grow-1 px-0 overflow-auto">
+                            <ng-container *ngFor="let item of dataArray.controls; let i = index" class="row g-3" [class.d-none]="selectedElement!==i">
+                                <div class="position-relative" *ngIf="selectedElement==i">
+                                    <div class="btn-group btn-group-toggle w-100 rounded-0 control-group" #controlGroup scrollCenter [activeIndexSet]="activeControlIndex" [selectedIndexSet]="selectedElement||-1">
+                                        <ng-container *ngFor="let control of controlSet[i]; let j = index">
+                                            <span class="p-0 fw-bold min-w-80-px" [ngClass]="{'pe-none': control.active}">
+                                                <input type="radio" class="btn-check" [id]="'control-' + i + '-' + j" [value]="control.id" [checked]="control.active" (change)="setActiveControl(i, j);">
+                                                <label class="d-flex flex-column align-items-center justify-content-center px-2 py-1 link" [for]="'control-' + i + '-' + j" [title]="control.id">
+                                                    <i [class]="'d-flex align-items-center justify-content-center rounded-2 mt-1 w-25-px h-25-px fa ' + control.icon" [ngClass]="{
+                                                'bg-secondary': control.active,
+                                                'text-light': control.active,
+                                                }"></i>
 
-                                                        <small class="d-block text-nowrap mt-1">{{control.title}}</small></label>
-                                                </span>
-                                            </ng-container>
-                                        </div>
+                                                    <small class="d-block text-nowrap mt-1">{{control.title}}</small></label>
+                                            </span>
+                                        </ng-container>
                                     </div>
                                 </div>
-                            </div>
+                            </ng-container>
                         </div>
                     </div>
                 </div>

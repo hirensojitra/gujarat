@@ -54,7 +54,6 @@ interface ShapeControls {
   ]
 })
 export class ImageGenerateComponent implements OnInit, AfterViewInit {
-  @ViewChild('controlGroup') controlGroup!: ElementRef;
   isExpanded: boolean = false;
   selectedElement: number | null = null;
   colorSet: string[] = [];
@@ -1043,12 +1042,7 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
       data.control.setValue(data.title, { emitEvent: true })
     });
   }
-  scrollToCenter(event: MouseEvent) {
-    const target = event.currentTarget as HTMLElement;
-    const btnGroup: HTMLElement = this.controlGroup.nativeElement;
-    const scrollLeft: number = target.offsetLeft;
-    btnGroup.scrollLeft = scrollLeft;
-  }
+  
   onSubmit(clone?: boolean) {
     if (this.postDetailsForm?.valid) {
       const formData = this.postDetailsForm?.value;
@@ -1123,13 +1117,6 @@ export class ImageGenerateComponent implements OnInit, AfterViewInit {
     const element = event.target;
     // Synchronize the horizontal scroll position with the vertical scroll position
     element.scrollLeft = element.scrollLeft;
-  }
-
-  onWheel(event: any) {
-    const delta = Math.max(-1, Math.min(1, (event.deltaY || -event.detail)));
-    // Horizontal scrolling only
-    this.controlGroup.nativeElement.scrollLeft -= (delta * 40);
-    event.preventDefault();
   }
   ngAfterViewInit(): void {
 

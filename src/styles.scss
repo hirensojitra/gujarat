@@ -205,9 +205,11 @@ $fab-background-color-2: inherit;
     align-items: end;
     padding-bottom: 30px;
     padding-right: 30px;
-    .sub-button{
+
+    .sub-button {
         bottom: -60px;
     }
+
     &.expanded {
         height: 100%;
         width: 100%;
@@ -225,6 +227,7 @@ $fab-background-color-2: inherit;
 
         .sub-button {
             bottom: 0;
+
             a {
                 &:hover {
                     background: #408253;
@@ -317,6 +320,7 @@ $fab-background-color-2: inherit;
 
     -ms-overflow-style: none;
     scrollbar-width: none;
+
     label {
         &.btn {
             display: block !important;
@@ -329,13 +333,14 @@ $fab-background-color-2: inherit;
         }
     }
 }
+
 .cdk-drag-placeholder {
     box-sizing: border-box;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
-    border: 2px solid #4E5DC6 !important;
-    background: #F5F5F5;
-    border-radius: 0 !important;
+    background: #D5D5D5;
+    border-radius: var(--bs-border-radius-lg) !important;
+
     * {
         opacity: 0;
     }
@@ -372,5 +377,41 @@ $fab-background-color-2: inherit;
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
         order: 1px dashed #4E5DC6 !important;
+    }
+}
+
+.position-relative {
+    &.overflowing-start {
+        &:after {
+            position: absolute;
+            content: '';
+            display: block;
+            top: 0;
+            left: -30px;
+            height: 100%;
+            width: 20px;
+            background: #CC0000;
+            z-index: 1;
+            pointer-events: none;
+            border-radius: 50%;
+            box-shadow: 0px 0px 50px #000;
+        }
+    }
+
+    &.overflowing-end {
+        &:before {
+            position: absolute;
+            content: '';
+            display: block;
+            top: 0;
+            right: -30px;
+            height: 100%;
+            width: 20px;
+            background: #CC0000;
+            z-index: 1;
+            pointer-events: none;
+            border-radius: 50%;
+            box-shadow: 0px 0px 50px #000;
+        }
     }
 }
