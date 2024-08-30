@@ -1,3 +1,3 @@
 export const environment = {
-  MasterApi : "https://gujarat-api.onrender.com/api/v1"
+  MasterApi: "https://vmi2070714.contaboserver.net/api/v1"
 };
