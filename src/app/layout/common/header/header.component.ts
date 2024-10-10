@@ -81,18 +81,18 @@ export class HeaderComponent {
       label: 'Canvas Generator',
       icon: 'fa-image',
       link: '/images',
-      subItems:[{
-        label:'Image List',
-        link:'/images/list'
-      },{
-        label:'Image Editor',
-        link:'/images/generate'
-      },{
-        label:'Upload Images',
-        link:'/images/uploaded-images'
-      },{
-        label:'Image Deleted',
-        link:'/images/deleted'
+      subItems: [{
+        label: 'Image List',
+        link: '/images/list'
+      }, {
+        label: 'Image Editor',
+        link: '/images/generate'
+      }, {
+        label: 'Upload Images',
+        link: '/images/uploaded-images'
+      }, {
+        label: 'Image Deleted',
+        link: '/images/deleted'
       }]
     }, {
       label: 'User Profile',
@@ -106,12 +106,12 @@ export class HeaderComponent {
       label: 'Canvas',
       icon: 'fa-image',
       link: '/canvas',
-      subItems:[{
-        label:'Image List',
-        link:'/canvas/list'
-      },{
-        label:'Image Editor',
-        link:'/canvas/editor'
+      subItems: [{
+        label: 'Image List',
+        link: '/canvas/list'
+      }, {
+        label: 'Image Editor',
+        link: '/canvas/editor'
       }]
     }
   ];
@@ -153,9 +153,9 @@ export class HeaderComponent {
     return imageUrl || `https://dummyimage.com/300x300/F4F4F4/000000&text=${this.imageText()}`;
   }
   imageText(): string {
-    if (this.user && this.user.firstname && this.user.lastname) {
-      const firstCharFirstName = this.user.firstname.charAt(0);
-      const firstCharLastName = this.user.lastname.charAt(0);
+    if (this.user && this.user['firstname'] && this.user['lastname']) {
+      const firstCharFirstName = this.user['firstname'].charAt(0);
+      const firstCharLastName = this.user['lastname'].charAt(0);
       return `${firstCharFirstName}${firstCharLastName}`;
     } else {
       return 'USER';
@@ -165,7 +165,7 @@ export class HeaderComponent {
     this.US.getUser().subscribe((value) => {
       if (value) {
         this.user = value;
-        this.userFullName = this.user.firstname+' '+this.user.lastname;
+        this.userFullName = this.user['firstname'] + ' ' + this.user['lastname'];
       }
     })
   }

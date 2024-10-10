@@ -69,7 +69,7 @@ export class UserProfileComponent implements OnInit, AfterViewInit {
       if (user) {
         this.user = user;
         this.profilePictureForm.get('username')?.setValue(user.username);
-        this.getVillage(user.village_id);
+        this.getVillage(user['village_id']);
         if (!this.user.image) { this.imageSelect.show(); }
       }
     });
@@ -103,7 +103,7 @@ export class UserProfileComponent implements OnInit, AfterViewInit {
           scalable: true,
           viewMode: 1, // Ensure the crop box is always within the container
           crop: (event) => {
-            
+
           },
           autoCropArea: 1, // Ensure the initial crop area covers the entire image
           dragMode: 'move', // Allow dragging to move the image within the container

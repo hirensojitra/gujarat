@@ -139,7 +139,6 @@ export class ImageDataComponent implements OnInit {
   }
   copyHrefToClipboard(event: MouseEvent, href: string): void {
     event.preventDefault();
-
     const el = this.renderer.createElement('textarea');
     el.value = href;
     this.renderer.appendChild(this.elementRef.nativeElement, el);
@@ -147,7 +146,7 @@ export class ImageDataComponent implements OnInit {
     document.execCommand('copy');
     this.renderer.removeChild(this.elementRef.nativeElement, el);
     this.toastService.show("Image File path copied to clipboard", { title: 'Copy Successed', class: 'bg-success' });
-    
+
   }
   formatSize(bytes: number): string {
     const KB = bytes / 1024;

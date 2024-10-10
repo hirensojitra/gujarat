@@ -21,7 +21,7 @@ export class AuthenticationService {
     private toastService: ToastService,
     private router: Router
   ) { }
-  
+
   registerUser(userData: any): Observable<boolean> {
     return this.http.post<any>(`${this.apiUrl}/register`, userData).pipe(
       map((response) => {
@@ -66,23 +66,43 @@ export class AuthenticationService {
       );
     };
   }
-  login(credentials: { username: string; password: string; }): Observable<boolean> {
-    console.log(credentials)
-    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
+  login(username: string, password: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/login`, { username, password }).pipe(
       map((response) => {
-        console.log(response)
+        console.log("API Response:", response);
         if (response.token) {
-          const user = response.user; // Assuming the API returns user details
-          const token = response.token; // Assuming the API returns user details
-          this.userService.setUser(user);
-          this.storeToken(token)
+          // Construct the user object from the API response
+          const user = {
+            id: response.id,
+            username: response.username,
+            email: response.email,
+            roles: response.roles,
+            emailVerified: response.emailverified,
+            image: response.image,
+            firstName: response.firstname,
+            lastName: response.lastname,
+            mobile: response.mobile,
+            districtId: response.district_id,
+            talukaId: response.taluka_id,
+            villageId: response.village_id,
+            isDeleted: response.is_deleted,
+            verificationToken: response.verificationtoken,
+            tokenExpiration: response.tokenexpiration,
+          };
+
+          console.log("User Object:", user);
+
+          const token = response.token;
+          this.userService.setUser(user);  // Pass the full user object
+          this.storeToken(token);  // Store the token
           return true;
         } else {
           return false;
         }
       }),
       catchError((error) => {
-        this.toastService.show(error.error.message, { class: 'bg-danger' });
+        console.error("Login error:", error);
+        this.toastService.show(error.error?.message || 'Login failed', { class: 'bg-danger' });
         return of(false);
       })
     );

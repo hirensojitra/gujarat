@@ -53,8 +53,8 @@ export class CanvasEditorComponent {
     this.US.getUser().subscribe(async (value) => {
       if (value) {
         this.user = value;
-        this.userFullName = this.user.firstname + ' ' + this.user.lastname;
-        this.getVillage(this.user.taluka_id);
+        this.userFullName = this.user['firstname'] + ' ' + this.user['lastname'];
+        this.getVillage(this.user['taluka_id']);
       }
     });
   }
@@ -268,7 +268,7 @@ export class CanvasEditorComponent {
           'x': element.x.toString(),
           'y': element.y.toString(),
           'font-size': element.fs,
-          'fill': element.color||'#FFF',
+          'fill': element.color || '#FFF',
           'text-anchor': this.IMG.textPosition(element.textAlign),
           'dominant-baseline': 'reset-size',
         };

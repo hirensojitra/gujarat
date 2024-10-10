@@ -1,14 +1,19 @@
 export interface User {
+    id: string;
     username: string;
     email: string;
     roles: string;
-    image: any;
-    firstname: string;
-    lastname: string;
+    emailVerified: boolean;
+    image: string;
+    firstName: string;
+    lastName: string;
     mobile: string;
-    district_id: string,
-    taluka_id: string,
-    village_id: string,
+    districtId: number;
+    talukaId: number;
+    villageId: number;
+    isDeleted: boolean;
+    verificationToken: string;
+    tokenExpiration: string;
     [key: string]: any
 }
 

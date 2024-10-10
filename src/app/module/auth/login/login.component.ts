@@ -28,24 +28,26 @@ export class LoginComponent implements OnInit {
   }
   login() {
     const pass = this.loginForm.get('password')?.value;
-    const md5 = new Md5();
     this.loginForm.get('password')?.setValue(pass as string);
     if (this.loginForm.valid) {
       const { username, password } = this.loginForm.value;
-      this.authService.login({ username, password }).subscribe(
+      console.log("Username:", username);
+      console.log("Password:", password);
+
+      this.authService.login(username, password).subscribe(
         (success) => {
           if (success) {
             this.router.navigate(['/view']);
           } else {
-            // Registration failed, handle error
+            console.error("Login failed, check credentials");
           }
         },
         (error) => {
-          console.log(error.statusText)
+          console.log("Subscription error:", error);
         }
       );
     } else {
-      this.DS.markFormGroupTouched(this.loginForm)
+      this.DS.markFormGroupTouched(this.loginForm);
     }
     this.loginForm.get('password')?.setValue(pass);
   }

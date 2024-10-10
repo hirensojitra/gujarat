@@ -1,6 +1,5 @@
 <div class="header-container d-flex flex-md-row">
-  <abs [menuData]="menu" [menuHover]="true" [toggleOutside]="true" [logo]="'assets/images/svg/logo.svg'"
-    [compactLogo]="'assets/images/svg/compact-logo.svg'"></abs>
+  <abs [menuData]="menu" [menuHover]="true" [toggleOutside]="true" [logo]="'assets/images/svg/logo.svg'" [compactLogo]="'assets/images/svg/compact-logo.svg'"></abs>
   <button class="btn btn-primary menu-toggle m-0" (click)="toggleMenu()">
     <span class="fa fa-bars" [style.transform]="(menuStatus | async) ? 'rotate(-45deg)' : 'none'"></span>
   </button>
@@ -28,9 +27,8 @@
       <span class="badge bg-danger">5</span>
     </div>
     <div class="dropdown border-start">
-      <a class="btn dropdown-toggle py-0" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown"
-        aria-expanded="false">
-        <img [src]="validateImage(user.image)" class="img-thumbnail rounded-circle p-0" alt="{{user.firstname}}">
+      <a class="btn dropdown-toggle py-0" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <img [src]="validateImage(user.image)" class="img-thumbnail rounded-circle p-0" alt="{{user['firstname']}}">
         <span class="d-none d-md-block">{{userFullName ||"User Name"}}</span>
       </a>
       <ul class="dropdown-menu dropdown-menu-end pb-0 pt-md-2" aria-labelledby="userDropdown">

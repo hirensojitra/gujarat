@@ -14,10 +14,10 @@ export class UserService {
   private userSubject: BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
   private apiUrl = environment.MasterApi + '/auth';
   private token: string | null = localStorage.getItem('token'); // Retrieve token from local storage
-  constructor(private http: HttpClient,private router: Router) {
+  constructor(private http: HttpClient, private router: Router) {
     // Initialize the user subject based on stored user details
     const storedUser = localStorage.getItem('user');
-    
+
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -35,15 +35,8 @@ export class UserService {
   }
 
   setUser(user: User): void {
-    // Store user details in the service and update the subject
     this.userSubject.next(user);
-    // Optionally, store user details in local storage
     localStorage.setItem('user', JSON.stringify(user));
-    if (!user.image) {
-      setTimeout(() => {
-        this.router.navigate(['/user-profile/view']);
-      }, 1500);
-    }
   }
 
   clearUser(): void {
@@ -51,11 +44,14 @@ export class UserService {
     this.userSubject.next(null);
     localStorage.removeItem('user');
   }
-  updateUserData(user: string, updatedData: any): Observable<any> {
+  updateUserData(userid: string, updatedData: Partial<User>): Observable<any> {
     const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.token}`,
+      'Authorization': `Bearer ${this.token}`
     });
-    return this.http.post(`${this.apiUrl}/updateUser/${user}`, updatedData, { headers });
+
+    // API endpoint for updating user data
+    const fullUrl = `${this.apiUrl}/updateUser/${userid}`;
+
+    return this.http.put(fullUrl, updatedData, { headers });
   }
 }

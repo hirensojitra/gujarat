@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute, Router, NavigationEnd, ActivatedRouteSnapshot } from '@angular/router'; // Import ActivatedRouteSnapshot
-import { BreadcrumbService } from '../common/services/breadcrumb';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-layout',

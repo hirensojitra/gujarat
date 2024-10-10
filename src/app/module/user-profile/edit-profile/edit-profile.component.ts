@@ -51,12 +51,12 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       if (user) {
         this.user = user;
         const filteredValue = {
-          firstname: user.firstname || '',
-          lastname: user.lastname || '',
+          firstname: user['firstname'] || '',
+          lastname: user['lastname'] || '',
           mobile: user.mobile || '',
-          district_id: user.district_id || '',
-          taluka_id: user.taluka_id || '',
-          village_id: user.village_id || ''
+          district_id: user['district_id'] || '',
+          taluka_id: user['taluka_id'] || '',
+          village_id: user['village_id'] || ''
         };
         this.userForm.setValue(filteredValue);
         this.loadDistricts();
@@ -94,7 +94,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     ).subscribe((districts: District[]) => {
       this.districts = districts;
       if (districts.length) {
-        this.selectedDistrict = districts.find(district => district.id === this.user?.district_id);
+        this.selectedDistrict = districts.find(district => district.id === this.user?.['district_id']);
         this.userForm.get('district_id')?.setValue(this.selectedDistrict?.id || null);
       }
     });
@@ -110,7 +110,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       ).subscribe((talukas: Taluka[]) => {
         this.talukas = talukas;
         if (talukas.length) {
-          this.selectedTaluka = talukas.find(taluka => taluka.id === this.user?.taluka_id);
+          this.selectedTaluka = talukas.find(taluka => taluka.id === this.user?.['taluka_id']);
           this.userForm.get('taluka_id')?.setValue(this.selectedTaluka?.id || null);
         }
       });
@@ -126,7 +126,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       ).subscribe((villages: Village[]) => {
         this.villages = villages;
         if (villages.length) {
-          this.selectedVillage = villages.find(village => village.id === this.user?.village_id);
+          this.selectedVillage = villages.find(village => village.id === this.user?.['village_id']);
           this.userForm.get('village_id')?.setValue(this.selectedVillage?.id || null);
         }
       });
@@ -170,9 +170,9 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     return imageUrl || `https://dummyimage.com/300x300/F4F4F4/000000&text=${this.imageText()}`;
   }
   imageText(): string {
-    if (this.user && this.user.firstname && this.user.lastname) {
-      const firstCharFirstName = this.user.firstname.charAt(0);
-      const firstCharLastName = this.user.lastname.charAt(0);
+    if (this.user && this.user['firstname'] && this.user['lastname']) {
+      const firstCharFirstName = this.user['firstname'].charAt(0);
+      const firstCharLastName = this.user['lastname'].charAt(0);
       return `${firstCharFirstName}${firstCharLastName}`;
     } else {
       return 'USER';
